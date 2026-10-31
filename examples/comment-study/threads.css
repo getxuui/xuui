@@ -1,0 +1,22 @@
+.comments-example {
+  inline-size: min(var(--comment-panel-width), calc(100vw - 64px));
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--card);
+  color: var(--card-foreground);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: start;
+}
+.comments-example-scroll {
+  max-block-size: 500px;
+  overflow-y: auto;
+  padding: 2px;
+  margin: -2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  scroll-padding-block: 8px;
+}

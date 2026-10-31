@@ -1,0 +1,240 @@
+import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+
+async function commentOnHeading(page: Page, body: string) {
+  await page.getByRole('button', { name: 'Comment mode', exact: true }).click();
+  await page.locator('[data-xuui-design] h2').click();
+  const editor = page.getByRole('dialog', { name: 'Element comment' });
+  await expect(editor).toBeVisible();
+  await editor.getByPlaceholder('What should change?').fill(body);
+  await editor
+    .getByRole('button', { name: 'Add comment', exact: true })
+    .click();
+  await expect(editor).toHaveCount(0);
+}
+
+test('Agentation comments collect across variants, edit, persist, and submit as the same copyable file record', async ({
+  page,
+  context,
+  request,
+}) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/?variant=paper-v1');
+  await commentOnHeading(page, 'Give this heading more room.');
+  const drafts = page.getByRole('list', { name: 'Draft comments' });
+  await expect(drafts.getByRole('listitem')).toHaveCount(1);
+  await page
+    .getByRole('button', { name: 'Edit comment 1', exact: true })
+    .click();
+  const editor = page.getByRole('dialog', { name: 'Element comment' });
+  await editor
+    .getByPlaceholder('What should change?')
+    .fill('Give this heading 8px more room.');
+  await editor.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(drafts).toContainText('Give this heading 8px more room.');
+  await page.keyboard.press('ArrowDown');
+  await expect(page).toHaveURL(/variant=after-hours-v1/);
+  await expect(page.locator('[data-comment-pin]')).toHaveCount(0);
+  await commentOnHeading(page, 'Keep this darker direction.');
+  await expect(drafts.getByRole('listitem')).toHaveCount(2);
+  await page
+    .getByRole('button', { name: 'Edit comment 1', exact: true })
+    .click();
+  await expect(page).toHaveURL(/variant=paper-v1/);
+  await expect(editor.getByPlaceholder('What should change?')).toHaveValue(
+    'Give this heading 8px more room.',
+  );
+  await editor.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(editor).toHaveCount(0);
+  await page.keyboard.press('ArrowDown');
+  await page.reload();
+  await expect(drafts.getByRole('listitem')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Comment mode', exact: true }).click();
+  await expect(page.locator('[data-comment-pin]')).toHaveCount(1);
+  const posted = page.waitForResponse(
+    (response) =>
+      response.url().endsWith('/__xuui/reviews') &&
+      response.request().method() === 'POST',
+  );
+  await page
+    .getByRole('button', { name: 'Submit review', exact: true })
+    .click();
+  const response = await posted;
+  expect(response.status()).toBe(201);
+  const saved = await response.json();
+  expect(
+    saved.comments.map(
+      (comment: { iterationId: string }) => comment.iterationId,
+    ),
+  ).toEqual(['paper-v1', 'after-hours-v1']);
+  expect(saved.comments[0].agentation.comment).toBe(
+    'Give this heading 8px more room.',
+  );
+  expect(saved.comments[0].agentation.elementPath).toContain(
+    'data-variant-id="paper-v1"',
+  );
+  expect(saved.comments[0].target.tagName).toBe('h2');
+  const stored = JSON.parse(
+    await readFile(resolve('.xuui-test/reviews', `${saved.id}.json`), 'utf8'),
+  );
+  expect(stored).toEqual(saved);
+  await expect(drafts.getByRole('listitem')).toHaveCount(0);
+  const submittedCards = page.locator(`[data-review-id="${saved.id}"]`);
+  await expect(submittedCards).toHaveCount(2);
+  await expect(submittedCards.first()).toContainText(
+    'Give this heading 8px more room.',
+  );
+  await expect(submittedCards.last()).toContainText(
+    'Keep this darker direction.',
+  );
+  const reviewCopy = page
+    .getByRole('button', { name: 'Copy submitted review', exact: true })
+    .first();
+  await reviewCopy.click();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toContain(saved.id);
+  expect(JSON.parse(copied.split('Full record:\n')[1])).toEqual(saved);
+  expect(await (await request.get('/__xuui/reviews')).json()).toContainEqual(
+    saved,
+  );
+  await page.reload();
+  await expect(
+    page.getByRole('list', { name: 'Submitted comments' }),
+  ).toContainText('Keep this darker direction.');
+});
+
+test('drafts stay with their study, cancel and delete work, and All variants binds comments to the clicked variant', async ({
+  page,
+}) => {
+  await page.goto('/?study=sunday-tickets&variant=ticket-botanical-v1');
+  await page.keyboard.press('c');
+  await page.locator('[data-xuui-design] h2').click();
+  const editor = page.getByRole('dialog', { name: 'Element comment' });
+  await editor
+    .getByPlaceholder('What should change?')
+    .fill('Discard this unsaved comment.');
+  await page.keyboard.press('Escape');
+  await expect(editor).toHaveCount(0);
+  const drafts = page.getByRole('list', { name: 'Draft comments' });
+  await expect(drafts.getByRole('listitem')).toHaveCount(0);
+  await commentOnHeading(page, 'Keep the ticket treatment.');
+  await page.locator('[data-comment-pin]').click();
+  await editor
+    .getByRole('button', { name: 'Delete annotation', exact: true })
+    .click();
+  await expect(drafts.getByRole('listitem')).toHaveCount(0);
+  await commentOnHeading(page, 'Make this ticket title smaller.');
+  const studyPicker = page.getByRole('combobox', {
+    name: 'Study',
+    exact: true,
+  });
+  await studyPicker.click();
+  await page
+    .getByRole('option', { name: 'Card exploration', exact: true })
+    .click();
+  await expect(drafts.getByRole('listitem')).toHaveCount(0);
+  await commentOnHeading(page, 'Keep this card title.');
+  const picker = page.getByRole('combobox', { name: 'Variant', exact: true });
+  await picker.click();
+  await page.getByRole('option', { name: 'All variants', exact: true }).click();
+  await page
+    .locator('[data-variant-id="after-hours-v1"] h2')
+    .click({ position: { x: 5, y: 5 } });
+  await editor
+    .getByPlaceholder('What should change?')
+    .fill('This comment belongs to After hours.');
+  await editor
+    .getByRole('button', { name: 'Add comment', exact: true })
+    .click();
+  await expect(page).toHaveURL(/variant=paper-v1&view=all/);
+  await expect(drafts).toContainText('After hours');
+  await expect(page.locator('[data-comment-pin]')).toHaveCount(2);
+  await studyPicker.click();
+  await page
+    .getByRole('option', { name: 'Sunday tickets', exact: true })
+    .click();
+  await expect(drafts.getByRole('listitem')).toHaveCount(1);
+  await expect(drafts).toContainText('Make this ticket title smaller.');
+  const posted = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'POST' &&
+      response.url().endsWith('/__xuui/reviews'),
+  );
+  await page
+    .getByRole('button', { name: 'Submit review', exact: true })
+    .click();
+  const response = await posted;
+  expect(response.status()).toBe(201);
+  const review = await response.json();
+  expect(review.projectId).toBe('sunday-tickets');
+  expect(review.comments[0].iterationId).toBe('ticket-botanical-v1');
+});
+
+test('comment pins follow pan and zoom, annotation mode blocks interactions, and a failed submission keeps drafts', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  await page
+    .getByRole('button', { name: 'Interact with preview', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Save a seat', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'You’re on the list', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Comment mode', exact: true }).click();
+  await page
+    .getByRole('button', { name: 'You’re on the list', exact: true })
+    .click();
+  const editor = page.getByRole('dialog', { name: 'Element comment' });
+  await editor
+    .getByPlaceholder('What should change?')
+    .fill('Keep the reserved state clear.');
+  await editor
+    .getByRole('button', { name: 'Add comment', exact: true })
+    .click();
+  await expect(
+    page.getByRole('button', { name: 'You’re on the list', exact: true }),
+  ).toBeVisible();
+  const pin = page.locator('[data-comment-pin]');
+  const target = page.locator('[data-xuui-design] .reserve-button');
+  const offset = async () => {
+    const p = (await pin.boundingBox())!;
+    const t = (await target.boundingBox())!;
+    return { x: (p.x + 3 - t.x) / t.width, y: (p.y + 3 - t.y) / t.height };
+  };
+  const initial = await offset();
+  const canvas = page.getByRole('region', { name: 'Canvas', exact: true });
+  const bounds = (await canvas.boundingBox())!;
+  await page.mouse.move(bounds.x + 90, bounds.y + 150);
+  await page.mouse.wheel(70, 40);
+  await page.keyboard.down('Control');
+  await page.mouse.wheel(0, -20);
+  await page.keyboard.up('Control');
+  await expect
+    .poll(async () => Math.abs((await offset()).x - initial.x))
+    .toBeLessThan(0.01);
+  await expect
+    .poll(async () => Math.abs((await offset()).y - initial.y))
+    .toBeLessThan(0.01);
+  await page.route('**/__xuui/reviews', (route) =>
+    route.request().method() === 'POST'
+      ? route.fulfill({ status: 500, json: { error: 'Unavailable' } })
+      : route.continue(),
+  );
+  await page
+    .getByRole('button', { name: 'Submit review', exact: true })
+    .click();
+  await expect(page.getByRole('alert')).toContainText('Your comments are kept');
+  await expect(
+    page.getByRole('list', { name: 'Draft comments' }).getByRole('listitem'),
+  ).toHaveCount(1);
+  await page.unroute('**/__xuui/reviews');
+  await page
+    .getByRole('button', { name: 'Submit review', exact: true })
+    .click();
+  await expect(
+    page.getByRole('list', { name: 'Draft comments' }).getByRole('listitem'),
+  ).toHaveCount(0);
+});

@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "id": "f1b65d0a-7066-4354-ad15-c44e0af37764",
+  "projectId": "card-exploration",
+  "iterations": [
+    {
+      "id": "paper-v1",
+      "name": "Paper",
+      "description": "Warm, tactile, and a little slower.",
+      "parentIds": [],
+      "rationale": "Lead with a quiet botanical study. A generous image and a simple hierarchy make the session feel considered and approachable.",
+      "informedBy": []
+    },
+    {
+      "id": "after-hours-v1",
+      "name": "After hours",
+      "description": "A bold invitation to switch off.",
+      "parentIds": [],
+      "rationale": "Try a darker, typographic direction. High contrast and an oversized headline give a quiet activity an unexpected presence.",
+      "informedBy": []
+    },
+    {
+      "id": "index-v1",
+      "name": "Index",
+      "description": "The details, brought into focus.",
+      "parentIds": [],
+      "rationale": "Borrow the structure of an index card. Rules, a numbered edition, and compact details give recurring sessions a recognizable format.",
+      "informedBy": []
+    },
+    {
+      "id": "soft-focus-v1",
+      "name": "Soft focus",
+      "description": "A gentle, more expressive direction.",
+      "parentIds": [],
+      "rationale": "Let the illustration spill into a softer composition. Keep the action clear while making more space for warmth and personality.",
+      "informedBy": []
+    },
+    {
+      "id": "essential-v1",
+      "name": "Essential",
+      "description": "Only what earns its place.",
+      "parentIds": [],
+      "rationale": "Remove the illustration and bring the useful information forward. A compact alternative for a list of sessions or a smaller surface.",
+      "informedBy": []
+    }
+  ],
+  "comments": [
+    {
+      "id": "19ad93d6-c85b-46b1-a71d-7d237288a16e",
+      "iterationId": "paper-v1",
+      "body": "meg",
+      "target": {
+        "selector": "[data-variant-id=\"paper-v1\"] [data-xuui-design] > article:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "tagName": "span",
+        "text": "A SUNDAY SESSION",
+        "accessibleName": "A SUNDAY SESSION",
+        "bounds": {
+          "x": 664.6953125,
+          "y": 380.6875,
+          "width": 87.3046875,
+          "height": 11.1953125
+        },
+        "viewport": {
+          "width": 1512,
+          "height": 827
+        },
+        "pin": {
+          "x": 0.11803131991051455,
+          "y": 0.6531751570132589
+        }
+      },
+      "createdAt": "2026-10-30T23:11:54.522Z",
+      "agentation": {
+        "id": "19ad93d6-c85b-46b1-a71d-7d237288a16e",
+        "x": 44.642857142857146,
+        "y": 388,
+        "comment": "meg",
+        "element": "\"A SUNDAY SESSION\"",
+        "elementPath": "[data-variant-id=\"paper-v1\"] [data-xuui-design] > article:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "timestamp": 1793401914522,
+        "url": "http://127.0.0.1:4400/?study=card-exploration&variant=paper-v1",
+        "boundingBox": {
+          "x": 664.6953125,
+          "y": 380.6875,
+          "width": 87.3046875,
+          "height": 11.1953125
+        },
+        "fullPath": "[data-variant-id=\"paper-v1\"] [data-xuui-design] > article:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "cssClasses": "",
+        "nearbyText": "[before: \"FIELDNOTES\"] A SUNDAY SESSION",
+        "computedStyles": "{\"display\":\"block\",\"position\":\"static\",\"width\":\"87.3047px\",\"height\":\"11.1953px\",\"padding\":\"0px\",\"gap\":\"normal\",\"font-family\":\"ui-monospace, monospace\",\"font-size\":\"8px\",\"font-weight\":\"400\",\"line-height\":\"11.2px\",\"color\":\"rgb(36, 44, 34)\",\"background-color\":\"rgba(0, 0, 0, 0)\",\"border-radius\":\"0px\"}",
+        "accessibility": "{\"name\":\"A SUNDAY SESSION\",\"role\":null}",
+        "attributes": {
+          "data-xuui-variant": "paper-v1"
+        }
+      }
+    }
+  ],
+  "submittedAt": "2026-10-30T23:12:07.077Z"
+}

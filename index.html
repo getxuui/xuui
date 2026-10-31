@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <script>
+      try {
+        document.documentElement.classList.toggle(
+          'dark',
+          localStorage.getItem('xuui-theme') !== 'light',
+        );
+      } catch {}
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#fafaf8" />
+    <meta
+      name="description"
+      content="A local workbench for exploring UI together."
+    />
+    <title>Card exploration · xuui</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

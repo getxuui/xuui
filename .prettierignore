@@ -1,0 +1,8 @@
+dist/
+node_modules/
+.xuui/
+.xuui-test/
+test-results/
+playwright-report/
+package-lock.json
+xuui-spec-draft.md
