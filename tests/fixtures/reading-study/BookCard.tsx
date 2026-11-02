@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { ArrowUpRight, BookOpen, Check, Heart, Plus } from 'lucide-react';
-import type { StudioBindings } from '../../src/xuui/parameters';
+import type { StudioBindings } from '../../../src/xuui/parameters';
 import './books.css';
 import '@fontsource-variable/newsreader';
 import '@fontsource-variable/fraunces';

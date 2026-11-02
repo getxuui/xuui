@@ -1,4 +1,4 @@
-import { defineProject } from '../../src/xuui/model';
+import { defineProject } from '../../../src/xuui/model';
 import { cardControls } from '../card-study/project';
 import { BotanicalTicket, NightTicket, MorningTicket } from './TicketCard';
 

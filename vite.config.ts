@@ -8,7 +8,17 @@ export default defineConfig(({ mode }) => ({
   // Independent servers must not invalidate each other's optimized React files.
   cacheDir: `node_modules/.vite-xuui-${mode}`,
   resolve: {
-    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '#xuui-studies': fileURLToPath(
+        new URL(
+          mode === 'test'
+            ? './tests/fixtures/studies.ts'
+            : './examples/studies.ts',
+          import.meta.url,
+        ),
+      ),
+    },
   },
   plugins: [
     react(),

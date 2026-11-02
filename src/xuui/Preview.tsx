@@ -28,6 +28,7 @@ import type { LayerProperties } from './layerProperties';
 import { LayerPanel } from './LayerPanel';
 import { useLayerTree } from './useLayerTree';
 import { StudyControls } from './StudyControls';
+import { VariantLabel } from './VariantLabel';
 
 export default function Preview({
   project,
@@ -135,6 +136,31 @@ export default function Preview({
     }
   });
   useStudioTheme();
+
+  useEffect(() => {
+    const copyLink = (event: KeyboardEvent) => {
+      if (
+        event.key.toLowerCase() !== 'l' ||
+        !(event.metaKey || event.ctrlKey) ||
+        event.altKey ||
+        event.repeat ||
+        (event.target instanceof HTMLElement &&
+          (event.target.isContentEditable ||
+            event.target.closest(
+              'input, textarea, select, [role="textbox"], [data-xuui-comment-editor]',
+            )))
+      )
+        return;
+      event.preventDefault();
+      canvas.current
+        ?.querySelector<HTMLButtonElement>(
+          `[data-copy-variant-link="${CSS.escape(iterationId)}"]`,
+        )
+        ?.click();
+    };
+    window.addEventListener('keydown', copyLink, true);
+    return () => window.removeEventListener('keydown', copyLink, true);
+  }, [iterationId]);
 
   const changeMode = (next: CanvasMode) => {
     setPendingComment(null);
@@ -389,18 +415,13 @@ export default function Preview({
                       onVariationChange(variant.id);
                   }}
                 >
-                  {allVariants && (
-                    <Button
-                      data-workspace-control
-                      variant="ghost"
-                      size="sm"
-                      className="absolute -top-9 left-0"
-                      aria-pressed={variant.id === iterationId}
-                      onClick={() => onVariationChange(variant.id)}
-                    >
-                      {variant.name}
-                    </Button>
-                  )}
+                  <VariantLabel
+                    studyId={project.id}
+                    variant={variant}
+                    active={variant.id === iterationId}
+                    comparison={allVariants}
+                    onSelect={() => onVariationChange(variant.id)}
+                  />
                   <VariantSurface
                     iteration={variant}
                     bindings={parameters.bindingsFor(

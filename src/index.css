@@ -387,6 +387,14 @@
 .studio-chrome {
   color: var(--foreground);
 }
+.frame-title-name,
+.frame-title-name:hover {
+  background: transparent;
+}
+[data-frame-title]:has(:focus-visible) .frame-title-copy {
+  opacity: 1;
+  pointer-events: auto;
+}
 .studio-chrome .cursor-default {
   cursor: var(--cursor-default);
 }

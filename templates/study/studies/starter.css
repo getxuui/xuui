@@ -1,0 +1,38 @@
+.starter-card {
+  box-sizing: border-box;
+  width: 320px;
+  padding: 28px;
+  border-radius: 16px;
+  background: #eef0e8;
+  color: #243c30;
+  font:
+    400 14px/1.5 system-ui,
+    sans-serif;
+}
+.starter-card .starter-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.starter-card h2 {
+  margin: 24px 0 12px;
+  font-size: 32px;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.starter-card p {
+  margin: 0 0 24px;
+}
+.starter-card button {
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-radius: 8px;
+  background: #243c30;
+  color: white;
+  font: inherit;
+}
+.starter-card button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}

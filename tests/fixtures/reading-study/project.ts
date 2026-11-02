@@ -1,5 +1,5 @@
-import { defineProject } from '../../src/xuui/model';
-import type { Controls } from '../../src/xuui/parameters';
+import { defineProject } from '../../../src/xuui/model';
+import type { Controls } from '../../../src/xuui/parameters';
 import { CoverCard, EditorialCard, NightCard } from './BookCard';
 
 function bookControls(

@@ -1,18 +1,14 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
-import { ArrowRight, Check, Heart, Sun } from '@phosphor-icons/react';
+import { ArrowRight, Check, Heart } from '@phosphor-icons/react';
 import type { StudioBindings } from '../../src/xuui/parameters';
 import './cards.css';
 
-type CardVariant =
-  'paper' | 'after-hours' | 'index' | 'soft-focus' | 'essential';
+type CardVariant = 'paper' | 'after-hours';
 
-function LeafStudy({ compact = false }: { compact?: boolean }) {
+function LeafStudy() {
   return (
-    <div
-      className={`leaf-study ${compact ? 'compact' : ''}`}
-      aria-hidden="true"
-    >
+    <div className="leaf-study" aria-hidden="true">
       <span className="sun-disc" />
       <span className="stem" data-xuui-layer-name="Stem" />
       {Array.from({ length: 6 }, (_, index) => (
@@ -58,16 +54,6 @@ function SundayCard({
       style={{ borderRadius, '--card-accent': color } as CSSProperties}
     >
       {variant === 'paper' && <LeafStudy />}
-      {variant === 'soft-focus' && (
-        <div className="soft-art">
-          <LeafStudy />
-        </div>
-      )}
-      {variant === 'essential' && (
-        <div className="essential-icon">
-          <Sun size={30} weight="light" />
-        </div>
-      )}
       <div className="card-content">
         <div className="card-eyebrow">
           <span className="card-brand">
@@ -78,13 +64,7 @@ function SundayCard({
               aria-label={favourited ? 'Favourited' : 'Not favourited'}
             />
           </span>
-          <span>
-            {loggedIn
-              ? 'WELCOME BACK'
-              : variant === 'index'
-                ? 'NO. 003'
-                : 'A SUNDAY SESSION'}
-          </span>
+          <span>{loggedIn ? 'WELCOME BACK' : 'A SUNDAY SESSION'}</span>
         </div>
         {variant === 'after-hours' && (
           <span className="night-orbit" aria-hidden="true">
@@ -187,13 +167,4 @@ export function PaperCard(bindings: StudioBindings) {
 }
 export function AfterHoursCard(bindings: StudioBindings) {
   return <CardPreview variant="after-hours" {...bindings} />;
-}
-export function IndexCard(bindings: StudioBindings) {
-  return <CardPreview variant="index" {...bindings} />;
-}
-export function SoftFocusCard(bindings: StudioBindings) {
-  return <CardPreview variant="soft-focus" {...bindings} />;
-}
-export function EssentialCard(bindings: StudioBindings) {
-  return <CardPreview variant="essential" {...bindings} />;
 }

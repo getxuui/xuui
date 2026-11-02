@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { ArrowUpRight, Check, Heart, Sprout } from 'lucide-react';
-import type { StudioBindings } from '../../src/xuui/parameters';
+import type { StudioBindings } from '../../../src/xuui/parameters';
 import './tickets.css';
 
 function TicketCard({

@@ -11,9 +11,13 @@ Turn the work in the current conversation into a running, reviewable xuui study.
 
 Use the requested UI, reference, or recent work as the brief. Present an existing implementation faithfully. When the brief asks for alternatives, make their differences answer the design question; choose the number from the brief and the useful comparisons. Ask only when the conversation and workspace leave the subject unclear.
 
-Find the xuui checkout through the current workspace or this skill's resolved location. A checkout with this skill at `.agents/skills/present` has its root three directories above the skill folder. Read its `CONTEXT.md`, the Authoring and Run sections of `README.md`, and `examples/studies.ts`. The current authoring contracts are `src/xuui/model.ts` and `src/xuui/parameters.ts`; inspect a nearby study registration before adding one.
+Find the study workspace from the current project: an installed workspace has `xuui.studies.ts` and a local xuui dependency. Read that version's README, `docs/authoring.md`, and exported types, plus a nearby registration. Use the installed CLI rather than downloading a newer alpha into an existing workspace. A xuui source checkout instead uses `examples/studies.ts`, `src/xuui/model.ts`, and `src/xuui/parameters.ts`; read `CONTEXT.md` there. Do not infer the consumer workspace by walking upward from an installed skill.
 
-This checkout is a local React studio. Use its existing source integration; a published xuui package or a CLI for importing arbitrary apps is not part of that contract. For work from another codebase, adapt the relevant component and the dependencies it actually needs into a study in the checkout. Preserve the source project's behavior and name any mocked data or unavailable backend.
+The alpha presents registered React components in a standalone workspace. If a new workspace is needed, run `npx xuui@alpha init <directory>`, then use its pinned installation. For work from another codebase, inspect its tokens, neighboring UI, responsive constraints, providers, and data. Adapt the relevant component and necessary dependencies without silently redesigning it. Include a context wrapper when isolation would distort the review, and disclose mocked data or unavailable backend behavior.
+
+## Frame an exploration
+
+When alternatives are requested, state the design question, name the primary variable, and say what stays constant. Plan directions that answer that question. Start them with matched content, meaningful state, viewport width, and scale. Do not generate alternatives for a request to present an existing design faithfully. Let the brief and useful comparisons determine the number.
 
 ## Register the study
 
@@ -32,14 +36,14 @@ Done means the requested design renders from a registered variant and its expose
 
 ## Run and verify
 
-Use the checkout's current package scripts and Vite configuration. Check for an existing xuui preview before starting another server. Reuse it when it serves this checkout; leave unrelated processes alone. Start a local server when needed and keep it running for the reviewer.
+In an installed workspace, use `npx --no-install xuui dev`; in a source checkout, use its package scripts. Check for an existing preview first and reuse it when it serves the intended workspace. Leave unrelated processes alone. Keep the local server running for the reviewer and use the actual printed origin.
 
 Open a URL using the actual server origin and the registered IDs:
 
 - Focused variant: `/?study=<study-id>&variant=<variant-id>`
 - Comparison: the same URL with `&view=all`
 
-Verify the rendered variant identity, rather than treating an HTTP 200 as proof: unknown IDs fall back to an existing study. Inspect the UI in the browser, exercise its important interactions in Play mode, and try each exposed control. Check the relevant narrow width and any states the brief calls for. Run the relevant project checks; report a failure or unavailable check accurately instead of claiming it passed.
+Verify the rendered variant identity, rather than treating an HTTP 200 as proof: unknown IDs fall back to an existing study. Inspect the UI, exercise important interactions in Play mode, and try each exposed control. Apply the same usability floor to each direction: keyboard access, visible whole-control focus, readable text, appropriate reduced motion, and realistic content, states, and widths. Run relevant project checks and report failures or unavailable checks accurately.
 
 Use isolated test storage for submission checks. Leave the reviewer's real draft comments and submitted records intact.
 
@@ -48,5 +52,7 @@ Done means the link opens the intended design, meaningful interactions work, and
 ## Hand off
 
 Return the focused link, plus a comparison link when useful. Explain what to judge in a few sentences and name material limitations such as mocked data. The reviewer uses Play for interactions, C for comments, and Submit review for the handoff.
+
+For alternatives, add a short table of what changed, when each direction fits, and its main cost. State the reviewed width and state. Do not silently pick a winner. When asked to advance a choice, verify the promoted design in its source context and retain its reviewable study; preserve old implementations and add stable IDs for further comparable work.
 
 Stop after presenting unless the user also asks to wait for feedback or continue the review loop. In that case, discover the xuui MCP tools, filter to the presented study, read each complete submitted package, and acknowledge receipt before acting on it. A receipt means the package was read; it does not mean its requests were implemented. Browser drafts are not submitted feedback. If MCP is unavailable, use the submitted files or the reviewer's copied package; change host configuration only when setup was requested.

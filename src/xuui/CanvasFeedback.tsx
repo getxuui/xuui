@@ -427,21 +427,39 @@ export function CommentEditor({
         <FieldLabel htmlFor={`${id}-body`} className="sr-only">
           Comment
         </FieldLabel>
-        <Textarea
-          ref={input}
-          id={`${id}-body`}
-          value={body}
-          rows={4}
-          maxLength={4000}
-          placeholder="Add a comment"
-          className="h-24 min-h-24 max-h-48 resize-y px-0 py-0 pe-7"
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? `${id}-error` : undefined}
-          onChange={(event) => {
-            setBody(event.target.value);
-            setError('');
-          }}
-        />
+        <div className="group/comment-area relative">
+          <Textarea
+            ref={input}
+            id={`${id}-body`}
+            value={body}
+            rows={4}
+            maxLength={4000}
+            placeholder="Add a comment"
+            className="h-24 min-h-24 max-h-48 resize-y px-0 pt-0 pe-7 pb-7"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? `${id}-error` : undefined}
+            onChange={(event) => {
+              setBody(event.target.value);
+              setError('');
+            }}
+          />
+          {body.length > 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              aria-label="Clear comment"
+              className="absolute right-3 bottom-0 text-muted-foreground opacity-0 transition-opacity group-hover/comment-area:opacity-100 focus-visible:opacity-100"
+              onClick={() => {
+                setBody('');
+                setError('');
+                input.current?.focus();
+              }}
+            >
+              Clear
+            </Button>
+          )}
+        </div>
         {error && (
           <p
             id={`${id}-error`}

@@ -4,6 +4,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { McpServer } from '@modelcontextprotocol/server';
 import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { z } from 'zod';
+import { version } from '../version.ts';
 import { formatReview, reviewSchema, reviewReceiptSchema } from './model.ts';
 import type { Review } from './model.ts';
 import {
@@ -68,7 +69,7 @@ if (values.help) {
   const handle = serveStdio(
     () => {
       const server = new McpServer(
-        { name: 'xuui', version: '0.1.0' },
+        { name: 'xuui', version },
         {
           instructions:
             'xuui presents UI studies and variants. Browser drafts are never delivered. List unread reviews, read the full package, then call xuui_acknowledge_review once you have received it. Acknowledgement records Read by agent and clears the unread queue; it does not mean the feedback is implemented. History is retained. For ongoing review, wait for unread packages and acknowledge each received package. Preserve variants when developing descendants; record parentIds, rationale, and informedBy comment IDs. This server does not wake an idle agent or edit designs.',
