@@ -1,9 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { AnnotationPopupCSS } from 'agentation';
-import { MessageSquare, MousePointer2, Play } from 'lucide-react';
+import { MessageSquare, MousePointer2, Play, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { captureComment, findCommentElement } from './feedback';
 import type { Comment } from './model';
@@ -20,7 +21,7 @@ export function CanvasTools({
   return (
     <div
       data-workspace-control
-      className="absolute top-3 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-border bg-card p-1 shadow-studio-floating"
+      className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-border bg-card p-1 shadow-studio-floating"
     >
       <ToggleGroup
         aria-label="Canvas mode"
@@ -234,6 +235,7 @@ export function CanvasFeedback({
             <Button
               data-workspace-control
               data-comment-pin={pin.id}
+              data-comment-marker={index < 0 || undefined}
               className="feedback-pin pointer-events-auto absolute"
               size="icon-xs"
               aria-label={`Comment ${index >= 0 ? index + 1 : 'draft'}: ${comment.body || 'New comment'}`}
@@ -247,7 +249,12 @@ export function CanvasFeedback({
               {index >= 0 ? (
                 index + 1
               ) : (
-                <MessageSquare data-icon="inline-start" />
+                <img
+                  src="/cursors/comment.svg"
+                  alt=""
+                  draggable={false}
+                  className="pointer-events-none size-6"
+                />
               )}
             </Button>
           </div>
@@ -259,59 +266,121 @@ export function CanvasFeedback({
 
 export function CommentEditor({
   comment,
-  lightMode,
   canDelete,
   onSave,
   onCancel,
+  onDismiss,
   onDelete,
 }: {
   comment: Comment;
-  lightMode: boolean;
   canDelete: boolean;
   onSave: (comment: Comment) => boolean;
   onCancel: () => void;
+  onDismiss: (comment: Comment) => void;
   onDelete: () => void;
 }) {
-  const editor = useRef<HTMLDivElement>(null);
-  const [point, setPoint] = useState({
-    x: window.innerWidth / 2,
-    y: window.innerHeight / 2,
-  });
+  const popup = useRef<HTMLFormElement>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
+  const id = useId();
+  const [body, setBody] = useState(comment.body);
   const [error, setError] = useState('');
-  useLayoutEffect(() => {
-    // The upstream popup exposes a placeholder, so supply the field's accessible name here.
-    const input = editor.current?.querySelector('textarea');
-    if (input) {
-      input.setAttribute('aria-label', 'Comment');
-      input.maxLength = 4000;
+  const [point, setPoint] = useState({
+    x: Math.max(12, (window.innerWidth - 320) / 2),
+    y: window.innerHeight / 2,
+    availableHeight: window.innerHeight - 24,
+  });
+  const save = () => {
+    if (!body.trim()) {
+      setError('Write a comment before adding it.');
+      input.current?.focus();
+      return;
     }
-  }, []);
+    if (body.length > 4000) {
+      setError('Keep the comment under 4,000 characters.');
+      return;
+    }
+    if (
+      onSave({
+        ...comment,
+        body: body.trim(),
+        ...(comment.agentation
+          ? { agentation: { ...comment.agentation, comment: body.trim() } }
+          : {}),
+      })
+    )
+      onCancel();
+  };
+  useLayoutEffect(() => input.current?.focus(), []);
+  useEffect(() => {
+    const dismiss = (event: MouseEvent) => {
+      if (
+        !(event.target instanceof Node) ||
+        popup.current?.contains(event.target)
+      )
+        return;
+      if (
+        event.target instanceof Element &&
+        event.target.closest('[data-xuui-design], [data-comment-pin]')
+      ) {
+        // Dismiss this editor before another canvas click starts a comment.
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      onDismiss({ ...comment, body });
+    };
+    document.addEventListener('click', dismiss, true);
+    return () => document.removeEventListener('click', dismiss, true);
+  }, [body, comment, onDismiss]);
   useLayoutEffect(() => {
     let frame: number;
     const update = () => {
       const rect = findCommentElement(comment)?.getBoundingClientRect();
+      const pin = document
+        .querySelector<HTMLElement>(
+          `[data-comment-pin="${CSS.escape(comment.id)}"]`,
+        )
+        ?.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      const left = viewport?.offsetLeft ?? 0;
+      const top = viewport?.offsetTop ?? 0;
+      const width = viewport?.width ?? window.innerWidth;
+      const height = viewport?.height ?? window.innerHeight;
+      const popupWidth =
+        popup.current?.offsetWidth ?? Math.min(320, width - 24);
+      const popupHeight = popup.current?.offsetHeight ?? 240;
+      const pinLeft =
+        pin?.left ??
+        (rect
+          ? rect.x + rect.width * (comment.target.pin?.x ?? 1) - 3
+          : left + (width - popupWidth) / 2);
+      const pinTop =
+        pin?.top ??
+        (rect
+          ? rect.y + rect.height * (comment.target.pin?.y ?? 0) - 3
+          : top + height / 2);
+      const below = pinTop + (pin?.height ?? 24) + 12;
+      const above = pinTop - popupHeight - 12;
+      const preferredTop =
+        below + popupHeight > top + height - 12 && above >= top + 12
+          ? above
+          : below;
       const next = {
         x: Math.max(
-          152,
-          Math.min(
-            window.innerWidth - 152,
-            rect
-              ? rect.x + rect.width * (comment.target.pin?.x ?? 1)
-              : window.innerWidth / 2,
-          ),
+          left + 12,
+          Math.min(left + width - popupWidth - 12, pinLeft),
         ),
         y: Math.max(
-          20,
-          Math.min(
-            window.innerHeight - 250,
-            rect
-              ? rect.y + rect.height * (comment.target.pin?.y ?? 0) + 24
-              : window.innerHeight / 2 - 100,
-          ),
+          top + 12,
+          Math.min(top + height - popupHeight - 12, preferredTop),
         ),
+        availableHeight: Math.max(0, height - 24),
       };
       setPoint((previous) =>
-        previous.x === next.x && previous.y === next.y ? previous : next,
+        previous.x === next.x &&
+        previous.y === next.y &&
+        previous.availableHeight === next.availableHeight
+          ? previous
+          : next,
       );
       frame = requestAnimationFrame(update);
     };
@@ -319,50 +388,91 @@ export function CommentEditor({
     return () => cancelAnimationFrame(frame);
   }, [comment]);
   return createPortal(
-    <div
-      ref={editor}
+    <form
+      ref={popup}
       id="xuui-comment-editor"
       data-workspace-control
       data-xuui-comment-editor
       role="dialog"
       aria-label="Element comment"
+      className="fixed z-50 flex w-80 max-w-[calc(100vw-1.5rem)] flex-col gap-4 overflow-y-auto overscroll-contain rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-studio-floating"
+      style={{ left: point.x, top: point.y, maxHeight: point.availableHeight }}
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        save();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          onCancel();
+        } else if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+          event.preventDefault();
+          save();
+        }
+      }}
     >
-      <AnnotationPopupCSS
-        key={comment.id}
-        element={comment.agentation?.element ?? comment.target.tagName}
-        initialValue={comment.body}
-        placeholder="What should change?"
-        submitLabel={canDelete ? 'Save' : 'Add comment'}
-        lightMode={lightMode}
-        accentColor="var(--guide)"
-        style={{ left: point.x, top: point.y }}
-        onSubmit={(body) => {
-          if (body.length > 4000)
-            return setError('Keep the comment under 4,000 characters.');
-          if (
-            onSave({
-              ...comment,
-              body,
-              ...(comment.agentation
-                ? { agentation: { ...comment.agentation, comment: body } }
-                : {}),
-            })
-          )
-            onCancel();
-        }}
-        onCancel={onCancel}
-        onDelete={canDelete ? onDelete : undefined}
-      />
-      {error && (
-        <p
-          role="alert"
-          className="fixed z-50 rounded-lg bg-card p-2 text-xs text-destructive"
-          style={{ left: point.x - 140, top: point.y - 30 }}
-        >
-          {error}
-        </p>
-      )}
-    </div>,
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-xs"
+        className="absolute top-3 right-3"
+        aria-label="Close comment"
+        onClick={onCancel}
+      >
+        <X data-icon="inline-start" />
+      </Button>
+      <Field data-invalid={Boolean(error)}>
+        <FieldLabel htmlFor={`${id}-body`} className="sr-only">
+          Comment
+        </FieldLabel>
+        <Textarea
+          ref={input}
+          id={`${id}-body`}
+          value={body}
+          rows={4}
+          maxLength={4000}
+          placeholder="Add a comment"
+          className="h-24 min-h-24 max-h-48 resize-y px-0 py-0 pe-7"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
+          onChange={(event) => {
+            setBody(event.target.value);
+            setError('');
+          }}
+        />
+        {error && (
+          <p
+            id={`${id}-error`}
+            role="alert"
+            className="text-xs text-destructive"
+          >
+            {error}
+          </p>
+        )}
+      </Field>
+      <footer className="flex items-center justify-end gap-2">
+        {canDelete && (
+          <Button
+            type="button"
+            variant="destructive"
+            size="icon-xs"
+            className="me-auto"
+            aria-label="Delete annotation"
+            onClick={onDelete}
+          >
+            <Trash2 data-icon="inline-start" />
+          </Button>
+        )}
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" size="sm">
+          {canDelete ? 'Save' : 'Add comment'}
+        </Button>
+      </footer>
+    </form>,
     document.body,
   );
 }

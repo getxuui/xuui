@@ -111,6 +111,7 @@ export function MaskedMarquee({ text }: { text: string }) {
     <span
       ref={viewport}
       data-marquee
+      tabIndex={-1}
       className="masked-marquee block min-w-0 flex-1 overflow-x-auto whitespace-nowrap"
     >
       <span ref={content} className="inline-block w-max">

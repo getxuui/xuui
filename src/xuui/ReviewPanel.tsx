@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  Check,
-  Copy,
-  MessageSquarePlus,
-  Pencil,
-  Send,
-  Trash2,
-} from 'lucide-react';
+import { Check, Copy, Pencil, Send, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,12 +13,10 @@ import { CommentThread } from './CommentThread';
 export function ReviewPanel({
   study,
   state,
-  onAdd,
   onEdit,
 }: {
   study: Project;
   state: ReviewState;
-  onAdd: () => void;
   onEdit: (comment: Comment) => void;
 }) {
   const [filter, setFilter] = useState('all');
@@ -55,20 +46,9 @@ export function ReviewPanel({
       aria-labelledby="comments-heading"
       className="flex min-w-0 flex-col gap-3"
     >
-      <div className="flex items-center justify-between gap-2">
-        <h2 id="comments-heading" className="text-xs font-semibold">
-          Comments
-        </h2>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label="Add comment"
-          disabled={state.busy}
-          onClick={onAdd}
-        >
-          <MessageSquarePlus data-icon="inline-start" />
-        </Button>
-      </div>
+      <h2 id="comments-heading" className="text-xs font-semibold">
+        Comments
+      </h2>
       {state.reviews.length > 0 && (
         <ToggleGroup
           aria-label="Comment filter"

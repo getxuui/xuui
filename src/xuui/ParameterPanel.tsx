@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Check, Copy, PanelRightClose } from 'lucide-react';
+import { Check, ChevronsRight, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -15,8 +15,9 @@ import {
 import { ParameterSlider } from '@/components/ui/parameter-slider';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import type { Iteration, Project } from './model';
-import { StudyNavigation } from './StudyNavigation';
+import type { Iteration } from './model';
+import { LayerInspector } from './LayerInspector';
+import type { LayerProperties } from './layerProperties';
 import type {
   ControlMap,
   ParameterValue,
@@ -184,21 +185,17 @@ function ParameterControls({
 export function ParameterPanel({
   iteration,
   projectId,
+  selectedLayer,
   bindings,
   setValue,
   machineState,
   setMachineState,
   onCollapse,
-  variations,
-  onVariationChange,
-  allVariants,
-  onAllVariantsChange,
-  studies,
-  onStudyChange,
   feedbackPanel,
 }: {
   iteration: Iteration | undefined;
   projectId: string;
+  selectedLayer: LayerProperties | null;
   bindings: StudioBindings;
   setValue: (
     section: 'props' | 'state',
@@ -209,36 +206,44 @@ export function ParameterPanel({
   setMachineState: (value: string) => void;
   send: (event: string) => void;
   onCollapse: () => void;
-  variations: Pick<Iteration, 'id' | 'name'>[];
-  onVariationChange: (id: string, focus?: boolean) => void;
-  allVariants: boolean;
-  onAllVariantsChange: (all: boolean) => void;
-  studies: Project[];
-  onStudyChange: (id: string) => void;
   feedbackPanel?: ReactNode;
 }) {
-  const [copied, setCopied] = useState(false);
-  const [fallback, setFallback] = useState('');
   const controls = iteration?.controls;
   const machine = controls?.machine;
+  const [copied, setCopied] = useState(false);
+  const [fallback, setFallback] = useState('');
+  useEffect(() => {
+    setCopied(false);
+    setFallback('');
+  }, [iteration?.id, selectedLayer?.name]);
   useEffect(() => {
     if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 2000);
-    return () => clearTimeout(timer);
+    const timer = window.setTimeout(() => setCopied(false), 2000);
+    return () => window.clearTimeout(timer);
   }, [copied]);
   const copy = async () => {
-    const text = JSON.stringify(
-      {
-        schemaVersion: 1,
-        studyId: projectId,
-        variantId: iteration?.id,
-        props: bindings.props,
-        state: bindings.state,
-        ...(machineState ? { machine: { value: machineState } } : {}),
-      },
-      null,
-      2,
-    );
+    const value = selectedLayer
+      ? {
+          studyId: projectId,
+          variantId: selectedLayer.variantId,
+          layer: selectedLayer.name,
+          bounds: selectedLayer.bounds,
+          typography: Object.fromEntries(
+            selectedLayer.typography.map(({ label, value }) => [label, value]),
+          ),
+          appearance: Object.fromEntries(
+            selectedLayer.appearance.map(({ label, value }) => [label, value]),
+          ),
+        }
+      : {
+          schemaVersion: 1,
+          studyId: projectId,
+          variantId: iteration?.id,
+          props: bindings.props,
+          state: bindings.state,
+          ...(machineState ? { machine: { value: machineState } } : {}),
+        };
+    const text = JSON.stringify(value, null, 2);
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -247,107 +252,129 @@ export function ParameterPanel({
       setFallback(text);
     }
   };
+  const actions = (
+    <div className="flex shrink-0 items-center gap-1">
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        aria-label={
+          copied
+            ? 'Copied properties'
+            : selectedLayer
+              ? 'Copy layer properties'
+              : 'Copy parameters'
+        }
+        title={selectedLayer ? 'Copy layer properties' : 'Copy parameters'}
+        onClick={() => void copy()}
+      >
+        {copied ? (
+          <Check data-icon="inline-start" />
+        ) : (
+          <Copy data-icon="inline-start" />
+        )}
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        aria-label="Collapse sidebar"
+        title="Collapse sidebar (⌘B / Ctrl+B)"
+        onClick={onCollapse}
+      >
+        <ChevronsRight data-icon="inline-start" />
+      </Button>
+    </div>
+  );
   return (
     <aside
       data-workspace-control
       aria-label="Sidebar"
-      className="studio-chrome sidebar-scroll-mask mx-3 flex h-full min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain bg-card p-3 pb-6"
+      className="studio-chrome sidebar-scroll-mask flex h-full min-h-0 flex-col gap-6 overflow-y-auto overscroll-contain bg-card px-4 pt-2 pb-6"
     >
-      <div className="flex items-start justify-between gap-2">
-        <h1 className="text-sm font-medium">Studies</h1>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            aria-label={copied ? 'Copied parameters' : 'Copy parameters'}
-            title="Copy parameters"
-            onClick={() => void copy()}
+      {selectedLayer ? (
+        <LayerInspector layer={selectedLayer} action={actions} />
+      ) : (
+        <>
+          <header className="flex items-start justify-between gap-2">
+            <h2 className="text-sm font-medium">Properties</h2>
+            {actions}
+          </header>
+          <section
+            aria-labelledby="state-heading"
+            className="flex flex-col gap-3"
           >
-            {copied ? (
-              <Check data-icon="inline-start" />
-            ) : (
-              <Copy data-icon="inline-start" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            aria-label="Collapse sidebar"
-            title="Collapse sidebar (⌘B / Ctrl+B)"
-            onClick={onCollapse}
+            <h2 id="state-heading" className="text-xs font-semibold">
+              State
+            </h2>
+            <FieldGroup>
+              <ParameterControls
+                controls={controls?.state}
+                values={bindings.state}
+                onChange={(key, value) => setValue('state', key, value)}
+              />
+              {machine && machineState && (
+                <Field orientation="horizontal" className="parameter-field">
+                  <FieldLabel htmlFor="machine-state">
+                    {machine.label}
+                  </FieldLabel>
+                  <Select
+                    value={machineState}
+                    onValueChange={(value) => {
+                      if (value) setMachineState(value);
+                    }}
+                    items={Object.entries(machine.states).map(
+                      ([value, state]) => ({
+                        value,
+                        label: state.label,
+                      }),
+                    )}
+                  >
+                    <SelectTrigger
+                      id="machine-state"
+                      className="ml-auto w-auto"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {Object.entries(machine.states).map(
+                          ([value, state]) => (
+                            <SelectItem key={value} value={value}>
+                              {state.label}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+            </FieldGroup>
+          </section>
+          <section
+            aria-labelledby="props-heading"
+            className="flex flex-col gap-3"
           >
-            <PanelRightClose data-icon="inline-start" />
-          </Button>
-        </div>
-      </div>
-      <StudyNavigation
-        studies={studies}
-        studyId={projectId}
-        variants={variations}
-        variantId={iteration?.id}
-        allVariants={allVariants}
-        onStudyChange={onStudyChange}
-        onVariantChange={onVariationChange}
-        onAllVariantsChange={onAllVariantsChange}
-      />
-      <section aria-labelledby="state-heading" className="flex flex-col gap-3">
-        <h2 id="state-heading" className="text-xs font-semibold">
-          State
-        </h2>
-        <FieldGroup>
-          <ParameterControls
-            controls={controls?.state}
-            values={bindings.state}
-            onChange={(key, value) => setValue('state', key, value)}
-          />
-          {machine && machineState && (
-            <Field orientation="horizontal" className="parameter-field">
-              <FieldLabel htmlFor="machine-state">{machine.label}</FieldLabel>
-              <Select
-                value={machineState}
-                onValueChange={(value) => {
-                  if (value) setMachineState(value);
-                }}
-                items={Object.entries(machine.states).map(([value, state]) => ({
-                  value,
-                  label: state.label,
-                }))}
-              >
-                <SelectTrigger id="machine-state" className="ml-auto w-auto">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {Object.entries(machine.states).map(([value, state]) => (
-                      <SelectItem key={value} value={value}>
-                        {state.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-          )}
-        </FieldGroup>
-      </section>
-      <section aria-labelledby="props-heading" className="flex flex-col gap-3">
-        <h2 id="props-heading" className="text-xs font-semibold">
-          Props
-        </h2>
-        <FieldGroup>
-          <ParameterControls
-            controls={controls?.props}
-            values={bindings.props}
-            onChange={(key, value) => setValue('props', key, value)}
-          />
-        </FieldGroup>
-      </section>
-      {feedbackPanel}
+            <h2 id="props-heading" className="text-xs font-semibold">
+              Props
+            </h2>
+            <FieldGroup>
+              <ParameterControls
+                controls={controls?.props}
+                values={bindings.props}
+                onChange={(key, value) => setValue('props', key, value)}
+              />
+            </FieldGroup>
+          </section>
+          {feedbackPanel}
+        </>
+      )}
       {fallback && (
         <Field>
-          <FieldLabel htmlFor="copy-parameters">Select and copy</FieldLabel>
+          <FieldLabel htmlFor="copy-properties">
+            Select and copy properties
+          </FieldLabel>
           <Textarea
-            id="copy-parameters"
+            id="copy-properties"
             readOnly
             value={fallback}
             rows={7}

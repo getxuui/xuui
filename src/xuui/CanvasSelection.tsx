@@ -4,10 +4,13 @@ import {
   measureBetween,
   relativeBounds,
   renderedLayers,
+  siblingLayers,
 } from './workspaceGeometry';
 import type { Bounds, WorkspaceGeometry } from './workspaceGeometry';
 import { MeasurementLines } from './MeasurementLines';
 import { MeasurementOverview } from './MeasurementOverview';
+import { readLayerProperties } from './layerProperties';
+import type { LayerProperties } from './layerProperties';
 
 type SelectionBounds = {
   selected: Bounds;
@@ -35,26 +38,35 @@ export function CanvasSelection({
   designRef,
   surfaceRef,
   geometry,
+  selection,
+  onSelect,
+  onInspect,
 }: {
   designRef: RefObject<HTMLDivElement | null>;
   surfaceRef: RefObject<HTMLDivElement | null>;
   geometry: WorkspaceGeometry;
+  selection: Element[];
+  onSelect: (elements: Element[]) => void;
+  onInspect?: (layer: LayerProperties | null) => void;
 }) {
-  const [selection, setSelection] = useState<Element[]>([]);
   const selected = selection[0] ?? null;
   const [target, setTarget] = useState<Element | null>(null);
   const [measuring, setMeasuring] = useState(false);
   const [bounds, setBounds] = useState<SelectionBounds | null>(null);
-  const selectedRef = useRef<Element[]>([]);
+  const selectedRef = useRef<Element[]>(selection);
+  selectedRef.current = selection;
   const hoveredRef = useRef<Element | null>(null);
   const optionHeld = useRef(false);
+
+  useEffect(() => () => onInspect?.(null), [onInspect]);
+  useEffect(() => setTarget(null), [selection]);
 
   useEffect(() => {
     const workspace = surfaceRef.current?.parentElement;
     if (!workspace) return;
     const choose = (elements: Element[]) => {
       selectedRef.current = elements;
-      setSelection(elements);
+      onSelect(elements);
       setTarget(null);
     };
     const elementAt = (event: Event) => {
@@ -142,12 +154,13 @@ export function CanvasSelection({
           )
         )
       ) {
-        const layers = renderedLayers(designRef.current);
+        const anchor = event.shiftKey
+          ? selectedRef.current[0]
+          : selectedRef.current.at(-1);
+        const layers = siblingLayers(designRef.current, anchor ?? null);
         if (layers.length) {
           event.preventDefault();
-          const current = selectedRef.current[0]
-            ? layers.indexOf(selectedRef.current[0])
-            : -1;
+          const current = anchor ? layers.indexOf(anchor) : -1;
           const index =
             current < 0
               ? event.shiftKey
@@ -232,18 +245,26 @@ export function CanvasSelection({
       window.removeEventListener('keyup', keyup);
       window.removeEventListener('blur', release);
     };
-  }, [designRef, surfaceRef]);
+  }, [designRef, surfaceRef, onSelect]);
 
   useEffect(() => {
     if (!selected) {
       setBounds(null);
+      onInspect?.(null);
       return;
     }
     let frame = 0;
+    let lastInspection = '';
+    let lastInspectionAt = -Infinity;
     const update = () => {
-      if (selection.some((element) => !element.isConnected)) {
+      if (
+        selection.some(
+          (element) =>
+            !element.isConnected || !designRef.current?.contains(element),
+        )
+      ) {
         selectedRef.current = [];
-        setSelection([]);
+        onSelect([]);
         return;
       }
       if (surfaceRef.current) {
@@ -269,12 +290,39 @@ export function CanvasSelection({
             ? previous
             : next,
         );
+        if (
+          onInspect &&
+          designRef.current &&
+          performance.now() - lastInspectionAt >= 100
+        ) {
+          const details = readLayerProperties(
+            selection,
+            next.selected,
+            designRef.current,
+            surfaceRef.current,
+          );
+          const serialized = JSON.stringify(details);
+          if (serialized !== lastInspection) {
+            lastInspection = serialized;
+            onInspect(details);
+          }
+          lastInspectionAt = performance.now();
+        }
       }
       frame = requestAnimationFrame(update);
     };
     update();
     return () => cancelAnimationFrame(frame);
-  }, [selection, selected, target, measuring, surfaceRef]);
+  }, [
+    selection,
+    selected,
+    target,
+    measuring,
+    designRef,
+    surfaceRef,
+    onInspect,
+    onSelect,
+  ]);
 
   if (!selected)
     return measuring ? (

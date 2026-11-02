@@ -162,7 +162,11 @@ test('the bottom-center zoom widget and Command+0 restore 100% without clearing 
   await pinch();
   const widget = (await reset.boundingBox())!;
   expect(widget.x + widget.width / 2).toBeCloseTo(area.x + area.width / 2);
-  expect(widget.y).toBeGreaterThan(area.y + area.height - 60);
+  const tools = (await page
+    .getByRole('group', { name: 'Canvas mode', exact: true })
+    .boundingBox())!;
+  expect(tools.y).toBeGreaterThan(area.y + area.height - 60);
+  expect(widget.y + widget.height).toBeLessThanOrEqual(tools.y - 8);
   await reset.click();
   await expect(reset).toHaveText('100%');
   await expect
@@ -173,7 +177,7 @@ test('the bottom-center zoom widget and Command+0 restore 100% without clearing 
   ).toContainText('Selected h2');
   await pinch();
   await page
-    .getByRole('combobox', { name: 'Reservation', exact: true })
+    .getByRole('button', { name: 'Copy layer properties', exact: true })
     .focus();
   await page.keyboard.press('Meta+0');
   await expect(reset).toHaveText('100%');
@@ -275,4 +279,58 @@ test.describe('touchscreen canvas', () => {
     ).not.toHaveAttribute('data-pan-mode', 'true');
     await session.detach();
   });
+});
+
+test('Tab cycles only the current group’s siblings, even when siblings contain children', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  const tree = page.getByRole('tree', { name: 'Component layers' });
+  const selected = tree.getByRole('treeitem', { selected: true });
+  const canvas = page.getByRole('main', { name: 'Variant canvas' });
+  await page.locator('[data-xuui-design] h2').click();
+  await page.keyboard.press('Tab');
+  await expect(selected).toHaveAttribute(
+    'aria-label',
+    'A slow walk. A fresh perspective.A little room for the everyday.',
+  );
+  await page.keyboard.press('Tab');
+  await expect(selected).toHaveAttribute('aria-label', 'Event details');
+  await page.keyboard.press('Tab');
+  await expect(selected).toHaveAttribute('aria-label', 'Card actions');
+  await page.keyboard.press('Tab');
+  await expect(selected).toHaveAttribute('aria-label', 'Card eyebrow');
+  await page.keyboard.press('Shift+Tab');
+  await expect(selected).toHaveAttribute('aria-label', 'Card actions');
+  await expect(canvas).toBeFocused();
+  await page.keyboard.press('Shift+Enter');
+  await expect(selected).toHaveAttribute('aria-label', 'Card content');
+  await page.keyboard.press('Tab');
+  await expect(selected).toHaveAttribute('aria-label', 'Leaf study');
+  await page.keyboard.press('Tab');
+  await expect(selected).toHaveAttribute('aria-label', 'Card content');
+  await page.keyboard.press('Enter');
+  await expect(selected).toHaveCount(5);
+  await page.keyboard.press('Tab');
+  await expect(selected).toHaveCount(1);
+  await expect(selected).toHaveAttribute('aria-label', 'Card eyebrow');
+});
+
+test('comment mode uses the bubble cursor and Space temporarily restores panning', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  const heading = page.locator('[data-xuui-design] h2');
+  await expect(heading).toHaveCSS('cursor', /cursors\/default\.svg/);
+  await page.getByRole('button', { name: 'Comment mode', exact: true }).click();
+  await expect(heading).toHaveCSS('cursor', /cursors\/comment\.svg/);
+  await page.getByRole('main', { name: 'Variant canvas', exact: true }).focus();
+  await page.keyboard.down('Space');
+  await expect(heading).toHaveCSS('cursor', 'grab');
+  await page.keyboard.up('Space');
+  await expect(heading).toHaveCSS('cursor', /cursors\/comment\.svg/);
+  await page
+    .getByRole('button', { name: 'Select layers', exact: true })
+    .click();
+  await expect(heading).toHaveCSS('cursor', /cursors\/default\.svg/);
 });

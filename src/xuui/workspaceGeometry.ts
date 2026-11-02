@@ -29,6 +29,21 @@ export function renderedLayers(design: Element | null): Element[] {
   });
 }
 
+/** Siblings follow the rendered hierarchy, skipping wrappers without a box. */
+export function siblingLayers(design: Element | null, element: Element | null) {
+  if (!design) return [];
+  const layers = renderedLayers(design);
+  const included = new Set(layers);
+  const parentOf = (layer: Element) => {
+    let parent = layer.parentElement;
+    while (parent && parent !== design && !included.has(parent))
+      parent = parent.parentElement;
+    return parent;
+  };
+  const parent = element && included.has(element) ? parentOf(element) : design;
+  return layers.filter((layer) => parentOf(layer) === parent);
+}
+
 export function useWorkspaceGeometry(
   surface: RefObject<HTMLDivElement | null>,
   design: RefObject<HTMLDivElement | null>,

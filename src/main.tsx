@@ -7,14 +7,17 @@ function readVariation() {
   const params = new URLSearchParams(window.location.search);
   const project =
     studies.find((study) => study.id === params.get('study')) ?? studies[0];
-  return (
+  const requested =
     params.get('variant') ??
     params.get('variation') ??
     params.get('preview') ??
-    params.get('iteration') ??
-    project.iterations[0]?.id ??
-    ''
-  );
+    params.get('iteration');
+  return requested &&
+    studies.some((study) =>
+      study.iterations.some((variant) => variant.id === requested),
+    )
+    ? requested
+    : (project.iterations[0]?.id ?? '');
 }
 
 function App() {
@@ -33,6 +36,7 @@ function App() {
   useEffect(() => {
     const current = new URLSearchParams(window.location.search);
     const canonicalId = readVariation();
+    setVariationId(canonicalId);
     const canonicalStudy =
       studies.find((study) =>
         study.iterations.some((variant) => variant.id === canonicalId),

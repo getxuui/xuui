@@ -13,10 +13,11 @@ export function VariantSurface({
 }) {
   const Design = iteration.component;
   return (
-    <div className="component-surround bg-canvas-hatch relative isolate flex-none rounded-[20px] p-[80px]">
+    <div className="component-surround relative isolate flex-none rounded-[20px] p-[80px]">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden rounded-[20px]"
+        data-canvas-decoration
+        className="bg-canvas-hatch pointer-events-none absolute inset-0 overflow-hidden rounded-[20px]"
       >
         <span
           data-hatch-extension="top"
@@ -40,6 +41,7 @@ export function VariantSurface({
       </div>
       <svg
         aria-hidden="true"
+        data-canvas-decoration
         className="pointer-events-none absolute inset-0 size-full"
       >
         <rect

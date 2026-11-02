@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "id": "52c31c2a-34cc-44b7-bfef-4f352546d513",
+  "projectId": "reading-room",
+  "iterations": [
+    {
+      "id": "reading-cover-v1",
+      "name": "Cover",
+      "description": "A small bookshop window, led by the cover.",
+      "parentIds": [],
+      "rationale": "Give the illustrated hardback room to breathe. Keep the author, price and purchase action close together beneath it.",
+      "informedBy": []
+    },
+    {
+      "id": "reading-cover-newsreader-v1",
+      "name": "Literary · Newsreader",
+      "description": "A literary serif with a lighter, more open rhythm.",
+      "parentIds": [
+        "reading-cover-v1"
+      ],
+      "rationale": "Try Newsreader on the heading for a quieter editorial voice. Its finer details make the title feel closer to a page of print; the card layout, size and weight remain the same.",
+      "informedBy": [
+        "68c3b218-daac-4d61-9494-887b0b3eb2b2"
+      ]
+    },
+    {
+      "id": "reading-cover-geist-v1",
+      "name": "Modern · Geist",
+      "description": "A clean sans serif with a more direct tone.",
+      "parentIds": [
+        "reading-cover-v1"
+      ],
+      "rationale": "Try Geist on the heading to make the title feel more immediate and contemporary. It loses the literary serif texture while retaining the same card layout, size and weight.",
+      "informedBy": [
+        "68c3b218-daac-4d61-9494-887b0b3eb2b2"
+      ]
+    },
+    {
+      "id": "reading-cover-fraunces-v1",
+      "name": "Soft · Fraunces",
+      "description": "A rounded display serif with more character.",
+      "parentIds": [
+        "reading-cover-v1"
+      ],
+      "rationale": "Try Fraunces on the heading for a warmer, more expressive title. Its rounded shapes give the book more personality while the card layout, size and weight stay the same.",
+      "informedBy": [
+        "68c3b218-daac-4d61-9494-887b0b3eb2b2"
+      ]
+    },
+    {
+      "id": "reading-editorial-v1",
+      "name": "Editorial",
+      "description": "A reading recommendation with a little book in the margin.",
+      "parentIds": [
+        "reading-cover-v1"
+      ],
+      "rationale": "Develop Cover into a more compact editorial card. Bring the title and description forward and reduce the cover to a small illustration in the margin.",
+      "informedBy": []
+    },
+    {
+      "id": "reading-night-v1",
+      "name": "Night edition",
+      "description": "A quiet recommendation for the late hours.",
+      "parentIds": [
+        "reading-cover-v1"
+      ],
+      "rationale": "Take Cover in a darker direction. A smaller illustration and a pale book jacket keep the same hierarchy while making the card feel at home in an evening reading list.",
+      "informedBy": []
+    }
+  ],
+  "comments": [
+    {
+      "id": "0a99f559-da46-4953-9c69-f58194ecc0cc",
+      "iterationId": "reading-night-v1",
+      "body": "boop",
+      "target": {
+        "selector": "[data-variant-id=\"reading-night-v1\"] [data-xuui-design] > article:nth-of-type(1) > div:nth-of-type(1)",
+        "tagName": "div",
+        "text": "FIELD STUDIES / 01The quiet atlasMARA ELLIOTTA FIELD GUIDE TO TAKING THE LONG WAY HOME",
+        "accessibleName": "FIELD STUDIES / 01The quiet atlasMARA ELLIOTTA FIELD GUIDE TO TAKING THE LONG WAY HOME",
+        "bounds": {
+          "x": 586.0078125,
+          "y": 275.5078125,
+          "width": 304,
+          "height": 232
+        },
+        "viewport": {
+          "width": 1512,
+          "height": 827
+        },
+        "pin": {
+          "x": 0.07892166940789473,
+          "y": 0.6185008081896551
+        }
+      },
+      "createdAt": "2026-11-02T12:36:25.317Z",
+      "agentation": {
+        "id": "0a99f559-da46-4953-9c69-f58194ecc0cc",
+        "x": 40.34391534391534,
+        "y": 419,
+        "comment": "boop",
+        "element": "reading art",
+        "elementPath": "[data-variant-id=\"reading-night-v1\"] [data-xuui-design] > article:nth-of-type(1) > div:nth-of-type(1)",
+        "timestamp": 1793622985317,
+        "url": "http://127.0.0.1:4400/?study=reading-room&variant=reading-night-v1&view=all",
+        "boundingBox": {
+          "x": 586.0078125,
+          "y": 275.5078125,
+          "width": 304,
+          "height": 232
+        },
+        "fullPath": "[data-variant-id=\"reading-night-v1\"] [data-xuui-design] > article:nth-of-type(1) > div:nth-of-type(1)",
+        "cssClasses": "reading-art",
+        "nearbyText": "[before: \"Reading room\"] FIELD STUDIES / 01The quiet atlasMARA ELLIOTTA FIELD GUIDE TO TAKING THE LONG WAY HOME",
+        "computedStyles": "{\"display\":\"block\",\"position\":\"relative\",\"width\":\"304px\",\"height\":\"232px\",\"padding\":\"0px\",\"gap\":\"normal\",\"font-family\":\"\\\"Geist Variable\\\", sans-serif\",\"font-size\":\"16px\",\"font-weight\":\"400\",\"line-height\":\"24px\",\"color\":\"rgb(243, 239, 223)\",\"background-color\":\"rgb(32, 43, 39)\",\"border-radius\":\"0px\"}",
+        "accessibility": "{\"name\":\"FIELD STUDIES / 01The quiet atlasMARA ELLIOTTA FIELD GUIDE TO TAKING THE LONG WAY HOME\",\"role\":null}",
+        "attributes": {
+          "data-xuui-variant": "reading-night-v1"
+        }
+      }
+    }
+  ],
+  "submittedAt": "2026-11-02T12:36:39.209Z"
+}

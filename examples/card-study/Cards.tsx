@@ -14,9 +14,13 @@ function LeafStudy({ compact = false }: { compact?: boolean }) {
       aria-hidden="true"
     >
       <span className="sun-disc" />
-      <span className="stem" />
+      <span className="stem" data-xuui-layer-name="Stem" />
       {Array.from({ length: 6 }, (_, index) => (
-        <span className={`leaf leaf-${index + 1}`} key={index} />
+        <span
+          className={`leaf leaf-${index + 1}`}
+          data-xuui-layer-name={`Leaf ${index + 1}`}
+          key={index}
+        />
       ))}
       <span className="ground-line" />
       <span className="art-caption">A study in slowing down</span>

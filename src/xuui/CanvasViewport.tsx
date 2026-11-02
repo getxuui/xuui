@@ -385,7 +385,7 @@ export function CanvasViewport({
           data-workspace-control
           variant="outline"
           size="sm"
-          className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2"
+          className="absolute bottom-16 left-1/2 z-10 -translate-x-1/2"
           aria-label="Reset zoom to 100%"
           aria-keyshortcuts="Meta+0 Control+0"
           title={`Zoom: ${zoomPercent}%. Reset to 100% (⌘0 / Ctrl+0)`}

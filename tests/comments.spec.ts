@@ -8,12 +8,93 @@ async function commentOnHeading(page: Page, body: string) {
   await page.locator('[data-xuui-design] h2').click();
   const editor = page.getByRole('dialog', { name: 'Element comment' });
   await expect(editor).toBeVisible();
-  await editor.getByPlaceholder('What should change?').fill(body);
+  await editor.getByPlaceholder('Add a comment').fill(body);
   await editor
     .getByRole('button', { name: 'Add comment', exact: true })
     .click();
   await expect(editor).toHaveCount(0);
 }
+
+test('comment editor validates empty comments and saves with the keyboard', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  await page.keyboard.press('c');
+  await page.locator('[data-xuui-design] h2').click();
+  const editor = page.getByRole('dialog', { name: 'Element comment' });
+  const input = editor.getByRole('textbox', { name: 'Comment', exact: true });
+  await expect(input).toBeFocused();
+  await input.press('Control+Enter');
+  await expect(editor.getByRole('alert')).toHaveText(
+    'Write a comment before adding it.',
+  );
+  await expect(input).toBeFocused();
+  await input.fill('Make the title easier to scan.');
+  await expect(editor.getByRole('alert')).toHaveCount(0);
+  await input.press('Control+Enter');
+  await expect(editor).toHaveCount(0);
+  await expect(
+    page.getByRole('list', { name: 'Draft comments' }),
+  ).toContainText('Make the title easier to scan.');
+});
+
+test('outside clicks dismiss a new comment and retain its text for the next opening in that variant', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  await page.keyboard.press('c');
+  const heading = page.locator('[data-xuui-design] h2');
+  const editor = page.getByRole('dialog', { name: 'Element comment' });
+  const input = editor.getByRole('textbox', { name: 'Comment', exact: true });
+  const drafts = page.getByRole('list', { name: 'Draft comments' });
+  const open = () => heading.click({ position: { x: 5, y: 5 } });
+  await open();
+  await input.fill('Keep this unfinished thought.');
+  await heading.click({ position: { x: 50, y: 5 } });
+  await expect(editor).toHaveCount(0);
+  await expect(drafts.getByRole('listitem')).toHaveCount(0);
+  await open();
+  await expect(input).toHaveValue('Keep this unfinished thought.');
+  await page.getByRole('link', { name: 'After hours', exact: true }).click();
+  await expect(editor).toHaveCount(0);
+  await expect(page).toHaveURL(/variant=after-hours-v1/);
+  await open();
+  await expect(input).toHaveValue('');
+  await editor.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('link', { name: 'Paper', exact: true }).click();
+  await open();
+  await expect(input).toHaveValue('Keep this unfinished thought.');
+  await editor
+    .getByRole('button', { name: 'Add comment', exact: true })
+    .click();
+  await expect(drafts).toContainText('Keep this unfinished thought.');
+  await heading.click({ position: { x: 50, y: 5 } });
+  await expect(input).toHaveValue('');
+});
+
+test('dismissing an edit keeps its text without changing the saved comment, and Cancel discards the edit', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  await commentOnHeading(page, 'Original comment.');
+  const pin = page.locator('[data-comment-pin]');
+  const editor = page.getByRole('dialog', { name: 'Element comment' });
+  const input = editor.getByRole('textbox', { name: 'Comment', exact: true });
+  await pin.click();
+  await input.fill('Unfinished edit.');
+  await page.getByRole('main', { name: 'Variant canvas', exact: true }).click({
+    position: { x: 30, y: 30 },
+  });
+  await expect(editor).toHaveCount(0);
+  await expect(
+    page.getByRole('list', { name: 'Draft comments' }),
+  ).toContainText('Original comment.');
+  await pin.click();
+  await expect(input).toHaveValue('Unfinished edit.');
+  await editor.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await pin.click();
+  await expect(input).toHaveValue('Original comment.');
+});
 
 test('Agentation comments collect across variants, edit, persist, and submit as the same copyable file record', async ({
   page,
@@ -30,7 +111,7 @@ test('Agentation comments collect across variants, edit, persist, and submit as 
     .click();
   const editor = page.getByRole('dialog', { name: 'Element comment' });
   await editor
-    .getByPlaceholder('What should change?')
+    .getByPlaceholder('Add a comment')
     .fill('Give this heading 8px more room.');
   await editor.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(drafts).toContainText('Give this heading 8px more room.');
@@ -43,7 +124,7 @@ test('Agentation comments collect across variants, edit, persist, and submit as 
     .getByRole('button', { name: 'Edit comment 1', exact: true })
     .click();
   await expect(page).toHaveURL(/variant=paper-v1/);
-  await expect(editor.getByPlaceholder('What should change?')).toHaveValue(
+  await expect(editor.getByPlaceholder('Add a comment')).toHaveValue(
     'Give this heading 8px more room.',
   );
   await editor.getByRole('button', { name: 'Cancel', exact: true }).click();
@@ -113,7 +194,7 @@ test('drafts stay with their study, cancel and delete work, and All variants bin
   await page.locator('[data-xuui-design] h2').click();
   const editor = page.getByRole('dialog', { name: 'Element comment' });
   await editor
-    .getByPlaceholder('What should change?')
+    .getByPlaceholder('Add a comment')
     .fill('Discard this unsaved comment.');
   await page.keyboard.press('Escape');
   await expect(editor).toHaveCount(0);
@@ -136,14 +217,12 @@ test('drafts stay with their study, cancel and delete work, and All variants bin
     .click();
   await expect(drafts.getByRole('listitem')).toHaveCount(0);
   await commentOnHeading(page, 'Keep this card title.');
-  const picker = page.getByRole('combobox', { name: 'Variant', exact: true });
-  await picker.click();
-  await page.getByRole('option', { name: 'All variants', exact: true }).click();
+  await page.getByRole('link', { name: 'All variants', exact: true }).click();
   await page
     .locator('[data-variant-id="after-hours-v1"] h2')
     .click({ position: { x: 5, y: 5 } });
   await editor
-    .getByPlaceholder('What should change?')
+    .getByPlaceholder('Add a comment')
     .fill('This comment belongs to After hours.');
   await editor
     .getByRole('button', { name: 'Add comment', exact: true })
@@ -189,7 +268,7 @@ test('comment pins follow pan and zoom, annotation mode blocks interactions, and
     .click();
   const editor = page.getByRole('dialog', { name: 'Element comment' });
   await editor
-    .getByPlaceholder('What should change?')
+    .getByPlaceholder('Add a comment')
     .fill('Keep the reserved state clear.');
   await editor
     .getByRole('button', { name: 'Add comment', exact: true })

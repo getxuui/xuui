@@ -1,12 +1,11 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import type { MouseEvent } from 'react';
+import { Diamond, GalleryHorizontalEnd } from 'lucide-react';
 import { Field, FieldLabel } from '@/components/ui/field';
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -33,10 +32,29 @@ export function StudyNavigation({
   onAllVariantsChange: (all: boolean) => void;
 }) {
   const study = studies.find((item) => item.id === studyId);
-  const index = variants.findIndex((item) => item.id === variantId);
+  const navigate = (
+    event: MouseEvent<HTMLAnchorElement>,
+    action: () => void,
+  ) => {
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
+    event.preventDefault();
+    action();
+  };
+  const variantUrl = (id: string, all = false) => {
+    const params = new URLSearchParams({ study: studyId, variant: id });
+    if (all) params.set('view', 'all');
+    return `/?${params}`;
+  };
   return (
-    <div className="flex min-w-0 flex-col gap-2">
-      <Field className="min-w-0">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+      <Field className="min-w-0 shrink-0">
         <FieldLabel htmlFor="study-picker" className="sr-only">
           Study
         </FieldLabel>
@@ -63,69 +81,97 @@ export function StudyNavigation({
           </SelectContent>
         </Select>
       </Field>
-      <div className="flex min-w-0 items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label="Previous variant"
-          disabled={index <= 0}
-          onClick={() => onVariantChange(variants[index - 1].id)}
-        >
-          <ChevronLeft data-icon="inline-start" className="rtl:rotate-180" />
-        </Button>
-        <Field className="min-w-0 flex-1">
-          <FieldLabel htmlFor="variant-picker" className="sr-only">
-            Variant
-          </FieldLabel>
-          <Select
-            value={allVariants ? '__all__' : (variantId ?? null)}
-            onValueChange={(value) => {
-              if (value === '__all__') onAllVariantsChange(true);
-              else if (value) onVariantChange(value, true);
-            }}
-            items={[
-              { value: '__all__', label: 'All variants' },
-              ...variants.map((item) => ({ value: item.id, label: item.name })),
-            ]}
-          >
-            <SelectTrigger id="variant-picker" className="w-full">
-              <SelectValue className="min-w-0 justify-start text-start">
-                {() => (
-                  <MaskedMarquee
-                    text={
-                      allVariants
-                        ? 'All variants'
-                        : (variants[index]?.name ?? 'Choose a variant')
-                    }
-                  />
-                )}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="__all__">All variants</SelectItem>
-              </SelectGroup>
-              <SelectSeparator />
-              <SelectGroup>
-                {variants.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    <MaskedMarquee text={item.name} />
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </Field>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label="Next variant"
-          disabled={index < 0 || index >= variants.length - 1}
-          onClick={() => onVariantChange(variants[index + 1].id)}
-        >
-          <ChevronRight data-icon="inline-end" className="rtl:rotate-180" />
-        </Button>
-      </div>
+      <nav
+        aria-label="Variants"
+        data-variant-navigation
+        className="sidebar-scroll-mask min-h-0 flex-1 overflow-y-auto overscroll-contain pb-3"
+        onKeyDown={(event) => {
+          if (
+            !['Tab', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Escape'].includes(
+              event.key,
+            ) ||
+            event.altKey ||
+            event.metaKey ||
+            event.ctrlKey
+          )
+            return;
+          const links = [...event.currentTarget.querySelectorAll('a')];
+          const target =
+            event.target instanceof Element ? event.target.closest('a') : null;
+          const index = target ? links.indexOf(target) : -1;
+          if (index < 0) return;
+          event.preventDefault();
+          event.stopPropagation();
+          if (event.key === 'Escape') {
+            event.currentTarget.parentElement
+              ?.querySelector<HTMLElement>('#study-picker')
+              ?.focus();
+            return;
+          }
+          const next =
+            event.key === 'Tab'
+              ? (index + (event.shiftKey ? -1 : 1) + links.length) %
+                links.length
+              : event.key === 'Home'
+                ? 0
+                : event.key === 'End'
+                  ? links.length - 1
+                  : Math.max(
+                      0,
+                      Math.min(
+                        links.length - 1,
+                        index + (event.key === 'ArrowDown' ? 1 : -1),
+                      ),
+                    );
+          links[next].focus();
+          links[next].click();
+        }}
+      >
+        <ul className="flex min-w-0 flex-col gap-0.5">
+          <li>
+            <a
+              href={variantUrl(variantId ?? variants[0]?.id ?? '', true)}
+              aria-label="All variants"
+              aria-current={allVariants ? 'page' : undefined}
+              className="variant-list-link flex min-h-7 min-w-0 items-center gap-2 rounded-md px-2 text-xs"
+              onClick={(event) =>
+                navigate(event, () => onAllVariantsChange(true))
+              }
+            >
+              <GalleryHorizontalEnd
+                aria-hidden="true"
+                size={14}
+                strokeWidth={1.6}
+                className="shrink-0 text-muted-foreground"
+              />
+              <span className="min-w-0 flex-1">All</span>
+            </a>
+          </li>
+          {variants.map((variant) => (
+            <li key={variant.id} className="min-w-0">
+              <a
+                href={variantUrl(variant.id)}
+                aria-current={
+                  !allVariants && variant.id === variantId ? 'page' : undefined
+                }
+                data-marquee-host
+                className="variant-list-link flex min-h-7 min-w-0 items-center gap-2 rounded-md px-2 text-xs"
+                onClick={(event) =>
+                  navigate(event, () => onVariantChange(variant.id, true))
+                }
+              >
+                <Diamond
+                  aria-hidden="true"
+                  size={14}
+                  strokeWidth={1.6}
+                  className="shrink-0 text-muted-foreground"
+                />
+                <MaskedMarquee text={variant.name} />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </div>
   );
 }

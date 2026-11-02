@@ -6,11 +6,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-[data-canvas-mode='comment'] [data-xuui-design],
-[data-canvas-mode='comment'] [data-xuui-design] * {
-  cursor: crosshair;
-}
-
 .feedback-highlight {
   position: absolute;
   border: 1px solid var(--guide);
@@ -31,42 +26,40 @@
 .feedback-pin:hover {
   background: var(--guide);
 }
-
-/* Agentation owns the editor interaction; its surfaces follow the studio palette. */
-[data-xuui-comment-editor] {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  pointer-events: none;
+.feedback-pin[data-comment-marker] {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-#xuui-comment-editor [data-annotation-popup] {
+[data-xuui-comment-editor] {
+  position: fixed;
+  z-index: 50;
   pointer-events: auto;
-  background: var(--popover);
-  color: var(--popover-foreground);
-  border-color: var(--border);
-  box-shadow: var(--studio-floating-shadow);
-  font-family: var(--font-sans);
 }
 
 #xuui-comment-editor textarea {
-  background: var(--muted);
+  background: transparent;
   color: var(--foreground);
-  border-color: var(--border);
+  border: 0;
+  box-shadow: none;
   font-family: var(--font-sans);
+  line-height: 1.5;
 }
 
-#xuui-comment-editor [data-editor-heading] {
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
+#xuui-comment-editor textarea::placeholder {
+  line-height: 1.5;
 }
 
-#xuui-comment-editor [data-editor-actions] button {
-  color: var(--muted-foreground);
+#xuui-comment-editor textarea:placeholder-shown {
+  /* Empty textareas use a different caret baseline from populated ones. */
+  line-height: 1;
 }
 
-#xuui-comment-editor [data-editor-actions] button:last-child:not([aria-label]) {
-  color: var(--guide-foreground);
+#xuui-comment-editor textarea:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 @theme inline {
@@ -122,6 +115,7 @@
 }
 
 :root {
+  --cursor-default: url('/cursors/default.svg') 6 4, default;
   --studio-control-height: 28px;
   --slider-fill: var(--color-slate-200);
   --studio-floating-shadow:
@@ -216,6 +210,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    cursor: var(--cursor-default);
+  }
+  button {
+    cursor: var(--cursor-default);
   }
   html {
     @apply font-sans;
@@ -231,7 +229,28 @@
 }
 [data-xuui-design],
 [data-xuui-design] * {
-  cursor: default !important;
+  cursor: var(--cursor-default) !important;
+}
+[data-canvas-mode='comment']:not([data-pan-mode='true']):not(
+    [data-panning='true']
+  )
+  main,
+[data-canvas-mode='comment']:not([data-pan-mode='true']):not(
+    [data-panning='true']
+  )
+  [data-xuui-design],
+[data-canvas-mode='comment']:not([data-pan-mode='true']):not(
+    [data-panning='true']
+  )
+  [data-xuui-design]
+  * {
+  cursor:
+    url('/cursors/comment.svg') 3 3,
+    crosshair !important;
+}
+[data-canvas-mode='comment'] main [data-workspace-control],
+[data-canvas-mode='comment'] main [data-workspace-control] * {
+  cursor: var(--cursor-default) !important;
 }
 [data-pan-mode='true'],
 [data-pan-mode='true'] * {
@@ -347,6 +366,7 @@
 }
 .masked-marquee {
   max-width: 100%;
+  outline: none;
   text-align: start;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
@@ -367,6 +387,9 @@
 .studio-chrome {
   color: var(--foreground);
 }
+.studio-chrome .cursor-default {
+  cursor: var(--cursor-default);
+}
 .studio-chrome [data-slot='field-label'],
 .studio-chrome [data-slot='select-trigger'] {
   font-size: 12px;
@@ -374,6 +397,69 @@
 }
 .studio-chrome [data-slot='field-group'] {
   gap: 6px;
+}
+.layer-inspector {
+  container: layer-inspector / inline-size;
+}
+.layer-property-copy:focus-visible {
+  outline: 2px solid var(--guide);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+.layer-property-copy[data-copied] {
+  border-color: var(--guide);
+}
+.variant-list-link {
+  cursor: var(--cursor-default);
+}
+.variant-list-link[aria-current='page'] {
+  background: var(--muted);
+  font-weight: 500;
+}
+.variant-list-link:focus-visible {
+  outline: none;
+  background: var(--muted);
+  font-weight: 500;
+}
+@media (hover: hover) {
+  .variant-list-link:hover {
+    background: var(--muted);
+  }
+}
+.layer-tree-row:hover {
+  background: var(--muted);
+}
+.layer-tree-row [data-slot='button'],
+.layer-panel-toggle {
+  background: transparent;
+}
+.layer-tree-row.is-selected {
+  background: color-mix(in oklch, var(--selection) 10%, var(--card));
+  font-weight: 500;
+}
+.layer-tree-row.is-selected .layer-tree-icon {
+  color: var(--selection);
+}
+.layer-tree-item:focus-visible > .layer-tree-row {
+  background: color-mix(in oklch, var(--selection) 10%, var(--card));
+  font-weight: 500;
+}
+[data-slot='sheet-content'].layers-sheet {
+  width: min(280px, 85vw);
+  padding: 0;
+  border: 0;
+}
+@container layer-inspector (max-width: 186px) {
+  .layer-inspector-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .layer-color-value {
+    flex-wrap: wrap;
+  }
+  .layer-color-opacity {
+    flex-basis: 100%;
+    text-align: end;
+  }
 }
 .parameter-field {
   min-height: var(--studio-control-height);
@@ -398,6 +484,12 @@
   text-align: right;
   box-shadow: none;
 }
+.parameter-field [data-slot='input'],
+.parameter-field [data-slot='textarea'] {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
 .sidebar-scroll-mask {
   mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent);
 }
@@ -408,6 +500,7 @@
 .studio-chrome .parameter-field [data-slot='select-trigger'] {
   height: 24px;
   padding-block: 2px;
+  padding-inline-end: 0;
 }
 .element-bound {
   border: 1px solid color-mix(in oklab, var(--guide) 20%, transparent);

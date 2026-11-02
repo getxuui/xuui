@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   CSSProperties,
   KeyboardEvent,
@@ -10,6 +10,7 @@ import { CanvasSelection } from './CanvasSelection';
 import { GuideEditor } from './GuideEditor';
 import { relativeBounds, useWorkspaceGeometry } from './workspaceGeometry';
 import type { Bounds } from './workspaceGeometry';
+import type { LayerProperties } from './layerProperties';
 
 const interval = 64;
 type Axis = 'x' | 'y';
@@ -84,12 +85,18 @@ export function WorkspaceRulers({
   iterationId,
   visible,
   selectionEnabled = true,
+  selection,
+  onSelect,
+  onInspect,
 }: {
   designRef: RefObject<HTMLDivElement | null>;
   projectId: string;
   iterationId: string;
   visible: boolean;
   selectionEnabled?: boolean;
+  selection: Element[];
+  onSelect: (elements: Element[]) => void;
+  onInspect?: (layer: LayerProperties | null) => void;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const geometry = useWorkspaceGeometry(container, designRef);
@@ -294,17 +301,28 @@ export function WorkspaceRulers({
     }
   }
 
-  function cancelDrag() {
+  const cancelDrag = useCallback(() => {
     const current = drag.current;
     if (!current) return;
     drag.current = null;
     setDragging(null);
     setSnappedBox(null);
-    if (current.created) remove(current.id);
-    else setPosition(current.id, current.original);
+    setGuides((previous) =>
+      current.created
+        ? previous.filter((guide) => guide.id !== current.id)
+        : previous.map((guide) =>
+            guide.id === current.id
+              ? { ...guide, position: current.original }
+              : guide,
+          ),
+    );
+    if (current.created) {
+      setEditing(null);
+      setActive(null);
+    }
     if (current.control.hasPointerCapture(current.pointerId))
       current.control.releasePointerCapture(current.pointerId);
-  }
+  }, []);
 
   useEffect(() => {
     const cancel = (event: globalThis.KeyboardEvent) => {
@@ -315,7 +333,7 @@ export function WorkspaceRulers({
     };
     window.addEventListener('keydown', cancel);
     return () => window.removeEventListener('keydown', cancel);
-  });
+  }, [cancelDrag]);
 
   function createWithKeyboard(event: KeyboardEvent, axis: Axis) {
     if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -391,6 +409,9 @@ export function WorkspaceRulers({
             designRef={designRef}
             surfaceRef={container}
             geometry={geometry}
+            selection={selection}
+            onSelect={onSelect}
+            onInspect={onInspect}
           />
         )}
         {dragging &&

@@ -105,6 +105,8 @@ test('guide editing validates, cancels, and supports keyboard placement and dele
   await guide.press('Delete');
   await expect(guide).toHaveCount(0);
 
+  // Canvas selection and guide cancellation share the Escape key.
+  await page.locator('[data-xuui-design] h2').click();
   const area = (await ruler.boundingBox())!;
   await page.mouse.move(area.x + 5, area.y + 100);
   await page.mouse.down();
@@ -309,7 +311,7 @@ test('the external right sidebar controls the design, copies parameters, and col
   await expect(sidebar).toBeVisible();
 });
 
-test('Tab traverses preview layers and the variant picker updates the linked preview', async ({
+test('Tab stays among sibling layers and the variant list updates the linked preview', async ({
   page,
 }) => {
   await page.goto('/?variant=paper-v1');
@@ -322,22 +324,23 @@ test('Tab traverses preview layers and the variant picker updates the linked pre
   await page.keyboard.press('Tab');
   await expect(selection.locator('[data-selected-tag]')).toHaveAttribute(
     'data-selected-tag',
-    'div',
-  );
-  await page.keyboard.press('Shift+Tab');
-  await expect(selection.locator('[data-selected-tag]')).toHaveAttribute(
-    'data-selected-tag',
     'article',
   );
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab');
+  await expect(selection).toContainText('Selected div A study in slowing down');
+  await page.keyboard.press('Tab');
+  await expect(selection).toContainText('Selected div FIELDNOTES');
+  await page.keyboard.press('Shift+Tab');
+  await expect(selection).toContainText('Selected div A study in slowing down');
   expect(await page.evaluate(() => document.activeElement?.tagName)).toBe(
     'MAIN',
   );
   await expect(page.locator('[data-xuui-design] h2')).toHaveCSS(
     'cursor',
-    'default',
+    /cursors\/default\.svg/,
   );
-  await page.getByRole('combobox', { name: 'Variant', exact: true }).click();
-  await page.getByRole('option', { name: 'After hours', exact: true }).click();
+  await page.getByRole('link', { name: 'After hours', exact: true }).click();
   await expect(page).toHaveURL(/variant=after-hours-v1/);
   await expect(
     page
@@ -354,7 +357,7 @@ test('Tab traverses preview layers and the variant picker updates the linked pre
   ).toBeVisible();
 });
 
-test('each variant restores its own guides when using one-click pager navigation', async ({
+test('each variant restores its own guides when using the variant list', async ({
   page,
 }) => {
   await page.goto('/?variant=paper-v1');
@@ -366,7 +369,10 @@ test('each variant restores its own guides when using one-click pager navigation
   await position.press('Enter');
   const guide = page.getByRole('slider', { name: 'X guide', exact: true });
   await expect(guide).toHaveAttribute('aria-valuenow', '72');
-  await page.getByRole('button', { name: 'Next variant' }).click();
+  await page
+    .getByRole('navigation', { name: 'Variants' })
+    .getByRole('link', { name: 'After hours', exact: true })
+    .click();
   await expect(page).toHaveURL(/variant=after-hours-v1/);
   await expect(guide).toHaveCount(0);
   await left.focus();
@@ -374,10 +380,16 @@ test('each variant restores its own guides when using one-click pager navigation
   await position.fill('-24');
   await position.press('Enter');
   await expect(guide).toHaveAttribute('aria-valuenow', '-24');
-  await page.getByRole('button', { name: 'Previous variant' }).click();
+  await page
+    .getByRole('navigation', { name: 'Variants' })
+    .getByRole('link', { name: 'Paper', exact: true })
+    .click();
   await expect(page).toHaveURL(/variant=paper-v1/);
   await expect(guide).toHaveAttribute('aria-valuenow', '72');
-  await page.getByRole('button', { name: 'Next variant' }).click();
+  await page
+    .getByRole('navigation', { name: 'Variants' })
+    .getByRole('link', { name: 'After hours', exact: true })
+    .click();
   await expect(guide).toHaveAttribute('aria-valuenow', '-24');
   await page.reload();
   await expect(guide).toHaveAttribute('aria-valuenow', '-24');
@@ -387,9 +399,7 @@ test('all variants are side by side and the canvas pans without losing selection
   page,
 }) => {
   await page.goto('/?variant=paper-v1');
-  await page.getByRole('combobox', { name: 'Variant', exact: true }).click();
-  await expect(page.getByRole('option').first()).toHaveText('All variants');
-  await page.getByRole('option', { name: 'All variants', exact: true }).click();
+  await page.getByRole('link', { name: 'All variants', exact: true }).click();
   await expect(page).toHaveURL(/view=all/);
   await expect(page.locator('[data-variant-id]')).toHaveCount(5);
   const cards = await page
@@ -426,8 +436,7 @@ test('all variants are side by side and the canvas pans without losing selection
     path: '.xuui-test/all-variants.png',
     fullPage: true,
   });
-  await page.getByRole('combobox', { name: 'Variant', exact: true }).click();
-  await page.getByRole('option', { name: 'Index', exact: true }).click();
+  await page.getByRole('link', { name: 'Index', exact: true }).click();
   await expect(page).not.toHaveURL(/view=all/);
   await expect(page.locator('[data-xuui-design]')).toHaveCount(1);
 });
@@ -499,10 +508,16 @@ test('R toggles rulers while retaining guides, selection, and the setting across
   await expect(
     page.getByRole('status', { name: 'Selected element' }),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Next variant' }).click();
+  await page
+    .getByRole('navigation', { name: 'Variants' })
+    .getByRole('link', { name: 'After hours', exact: true })
+    .click();
   await expect(ruler).toHaveCount(0);
   await page.keyboard.press('r');
   await expect(ruler).toBeVisible();
-  await page.getByRole('button', { name: 'Previous variant' }).click();
+  await page
+    .getByRole('navigation', { name: 'Variants' })
+    .getByRole('link', { name: 'Paper', exact: true })
+    .click();
   await expect(guide).toHaveAttribute('aria-valuenow', '24');
 });
