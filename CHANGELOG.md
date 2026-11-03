@@ -11,6 +11,7 @@
 - Variants that arrive after your last visit flash once in the variant list and on the canvas.
 - Reopening the Layers panel no longer flickers the divider.
 - The studio carries xuui's Matcha green, sparingly: the mark, comment pins and new-variant highlights.
+- Comment pins are solid green teardrops pointing at the commented spot, and comment bubbles are dark, outline-free blobs.
 - Variants can record their history with optional `from`, `answers` and `labels`. The All view then lays the study out as columns of generations, joined by wires. Submitted comments stay pinned where they were posted on their artboards, keep their size at any zoom and show their text on hover.
 
 ## 0.1.0-alpha.2

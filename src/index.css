@@ -16,13 +16,18 @@
   /* Pins follow the canvas exactly; animating their position reads as lag. */
   transition-property: background-color, color, border-color;
   transform: translate(-3px, -3px);
-  border-radius: 4px 10px 10px 10px;
-  border: 1px solid var(--brand-foreground);
+  /* A solid teardrop whose sharp corner points at the commented spot. The
+     transparent border keeps an edge in forced-colors mode. */
+  border-radius: 3px 999px 999px 999px;
+  border: 1px solid transparent;
   background: var(--brand);
   color: var(--brand-foreground);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  box-shadow: var(--studio-floating-shadow);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 16%),
+    0 6px 14px -4px rgb(0 0 0 / 28%);
 }
 
 .feedback-pin:hover {
@@ -729,15 +734,15 @@
    text stays available to screen readers. */
 .lineage-comment .lineage-text {
   width: max-content;
-  max-width: 240px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: var(--popover);
-  box-shadow:
-    0 0 0 1px var(--border),
-    var(--studio-floating-shadow);
-  color: var(--popover-foreground);
-  font-size: 12px;
+  max-width: 260px;
+  margin-top: 2px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 4px 14px 14px 14px;
+  background: var(--foreground);
+  box-shadow: 0 8px 20px -6px rgb(0 0 0 / 35%);
+  color: var(--background);
+  font-size: 13px;
   line-height: 1.4;
 }
 .lineage-comment:not(:hover) .lineage-text {
@@ -753,10 +758,9 @@
   display: inline-grid;
   flex-shrink: 0;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   transform: none;
-  box-shadow: none;
 }
 .variant-label-tag {
   padding: 1px 7px;
