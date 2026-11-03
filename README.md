@@ -25,7 +25,7 @@ Open the printed local URL. `init` creates a small starter and installs a pinned
 
 Submitted feedback is stored as readable files in `.xuui/reviews/`. Copy a review into chat or let an agent read it through the optional MCP connection. No account, deployment, or database is needed to review locally.
 
-The companion [`/present` skill](.agents/skills/present/SKILL.md) guides registration, meaningful comparisons, and the feedback handoff.
+The companion [`/present` skill](https://github.com/getxuui/skills) guides registration, meaningful comparisons, and the feedback handoff.
 
 ## Learn more
 

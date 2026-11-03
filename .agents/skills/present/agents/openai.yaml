@@ -1,4 +1,0 @@
-interface:
-  display_name: "Present in xuui"
-  short_description: "Present UI studies and collect feedback in xuui"
-  default_prompt: "Use $present to present this UI in xuui for review."

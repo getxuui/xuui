@@ -75,7 +75,6 @@
   "files": [
     "dist/",
     "templates/",
-    ".agents/skills/present/",
     "README.md",
     "LICENSE",
     "CHANGELOG.md",
