@@ -5,7 +5,7 @@ import { validateControls } from './parameters.ts';
 
 const shortText = z.string().trim().min(1).max(300);
 
-export const iterationRecordSchema = z
+export const variantRecordSchema = z
   .object({
     id: z
       .string()
@@ -13,61 +13,44 @@ export const iterationRecordSchema = z
       .max(100),
     name: shortText,
     description: shortText,
-    parentIds: z.array(shortText).max(20),
     rationale: z.string().trim().min(1).max(4000),
-    informedBy: z.array(shortText).max(100),
   })
   .strict();
 
-export type IterationRecord = z.infer<typeof iterationRecordSchema>;
-export type Iteration = IterationRecord & {
+export type VariantRecord = z.infer<typeof variantRecordSchema>;
+export type Variant = VariantRecord & {
   component: ComponentType<StudioBindings>;
   color: string;
   controls?: Controls;
 };
 
-export type Project = {
+export type Study = {
   id: string;
   name: string;
   description: string;
-  iterations: Iteration[];
+  variants: Variant[];
 };
 
 /** The authoring boundary: ordinary React, with stable IDs and a little context. */
-export function defineProject(project: Project): Project {
+export function defineStudy(study: Study): Study {
   const ids = new Set<string>();
-  for (const iteration of project.iterations) {
-    iterationRecordSchema.parse(toIterationRecord(iteration));
-    validateControls(iteration.controls);
-    if (ids.has(iteration.id))
-      throw new Error(`Duplicate iteration ID: ${iteration.id}`);
-    ids.add(iteration.id);
+  for (const variant of study.variants) {
+    variantRecordSchema.parse(toVariantRecord(variant));
+    validateControls(variant.controls);
+    if (ids.has(variant.id))
+      throw new Error(`Duplicate variant ID: ${variant.id}`);
+    ids.add(variant.id);
   }
-  const visited = new Set<string>();
-  const visit = (id: string, ancestors = new Set<string>()) => {
-    if (ancestors.has(id))
-      throw new Error(`Circular iteration lineage at ${id}`);
-    if (visited.has(id)) return;
-    const iteration = project.iterations.find((item) => item.id === id);
-    if (!iteration) throw new Error(`Unknown parent iteration: ${id}`);
-    for (const parentId of iteration.parentIds) {
-      visit(parentId, new Set([...ancestors, id]));
-    }
-    visited.add(id);
-  };
-  for (const id of ids) visit(id);
-  return project;
+  return study;
 }
 
-export function toIterationRecord({
+export function toVariantRecord({
   id,
   name,
   description,
-  parentIds,
   rationale,
-  informedBy,
-}: Iteration): IterationRecord {
-  return { id, name, description, parentIds, rationale, informedBy };
+}: Variant): VariantRecord {
+  return { id, name, description, rationale };
 }
 
 const rectangleSchema = z
@@ -122,7 +105,7 @@ const annotationSchema = z
 export const commentSchema = z
   .object({
     id: z.uuid(),
-    iterationId: shortText,
+    variantId: shortText,
     body: z.string().trim().min(1).max(4000),
     target: targetSchema,
     createdAt: z.iso.datetime(),
@@ -134,19 +117,19 @@ export type Comment = z.infer<typeof commentSchema>;
 
 export const submissionSchema = z
   .object({
-    schemaVersion: z.literal(1),
+    schemaVersion: z.literal(2),
     id: z.uuid(),
-    projectId: shortText,
-    iterations: z.array(iterationRecordSchema).min(1).max(200),
+    studyId: shortText,
+    variants: z.array(variantRecordSchema).min(1).max(200),
     comments: z.array(commentSchema).min(1).max(100),
   })
   .strict()
   .superRefine((review, context) => {
-    const ids = new Set(review.iterations.map((iteration) => iteration.id));
-    if (ids.size !== review.iterations.length) {
+    const ids = new Set(review.variants.map((variant) => variant.id));
+    if (ids.size !== review.variants.length) {
       context.addIssue({
         code: 'custom',
-        message: 'Iteration IDs must be unique.',
+        message: 'Variant IDs must be unique.',
       });
     }
     if (
@@ -159,10 +142,10 @@ export const submissionSchema = z
       });
     }
     for (const comment of review.comments) {
-      if (!ids.has(comment.iterationId)) {
+      if (!ids.has(comment.variantId)) {
         context.addIssue({
           code: 'custom',
-          message: 'A comment refers to an unregistered iteration.',
+          message: 'A comment refers to an unregistered variant.',
         });
       }
     }
@@ -188,17 +171,17 @@ export type ReviewReceipt = z.infer<typeof reviewReceiptSchema>;
 
 export function formatReview(review: Review): string {
   const lines = [
-    `# ${review.projectId} — submitted review`,
+    `# ${review.studyId} — submitted review`,
     `Review: ${review.id}`,
     `Submitted: ${review.submittedAt}`,
     '',
   ];
   review.comments.forEach((comment, index) => {
-    const iteration = review.iterations.find(
-      (item) => item.id === comment.iterationId,
+    const variant = review.variants.find(
+      (item) => item.id === comment.variantId,
     );
     lines.push(
-      `## ${index + 1}. ${iteration?.name ?? comment.iterationId} (${comment.iterationId})`,
+      `## ${index + 1}. ${variant?.name ?? comment.variantId} (${comment.variantId})`,
       comment.body,
       '',
       `Target: ${comment.target.selector}`,

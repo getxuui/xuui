@@ -1,11 +1,11 @@
 import { ChevronsLeft } from 'lucide-react';
 import { XuuiLogo } from '@/components/XuuiLogo';
 import { Button } from '@/components/ui/button';
-import type { Iteration, Project } from './model';
+import type { Study, Variant } from './model';
 import { StudyNavigation } from './StudyNavigation';
 
 export function StudyControls({
-  projectId,
+  studyId,
   variantId,
   variants,
   onVariantChange,
@@ -15,13 +15,13 @@ export function StudyControls({
   onStudyChange,
   onCollapse,
 }: {
-  projectId: string;
+  studyId: string;
   variantId: string | undefined;
-  variants: Pick<Iteration, 'id' | 'name'>[];
+  variants: Pick<Variant, 'id' | 'name'>[];
   onVariantChange: (id: string, focus?: boolean) => void;
   allVariants: boolean;
   onAllVariantsChange: (all: boolean) => void;
-  studies: Project[];
+  studies: Study[];
   onStudyChange: (id: string) => void;
   onCollapse: () => void;
 }) {
@@ -42,7 +42,7 @@ export function StudyControls({
       </header>
       <StudyNavigation
         studies={studies}
-        studyId={projectId}
+        studyId={studyId}
         variants={variants}
         variantId={variantId}
         allVariants={allVariants}

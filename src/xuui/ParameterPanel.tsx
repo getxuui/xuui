@@ -15,7 +15,7 @@ import {
 import { ParameterSlider } from '@/components/ui/parameter-slider';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import type { Iteration } from './model';
+import type { Variant } from './model';
 import { LayerInspector } from './LayerInspector';
 import type { LayerProperties } from './layerProperties';
 import type {
@@ -183,8 +183,8 @@ function ParameterControls({
 }
 
 export function ParameterPanel({
-  iteration,
-  projectId,
+  variant,
+  studyId,
   selectedLayer,
   bindings,
   setValue,
@@ -193,8 +193,8 @@ export function ParameterPanel({
   onCollapse,
   feedbackPanel,
 }: {
-  iteration: Iteration | undefined;
-  projectId: string;
+  variant: Variant | undefined;
+  studyId: string;
   selectedLayer: LayerProperties | null;
   bindings: StudioBindings;
   setValue: (
@@ -208,14 +208,14 @@ export function ParameterPanel({
   onCollapse: () => void;
   feedbackPanel?: ReactNode;
 }) {
-  const controls = iteration?.controls;
+  const controls = variant?.controls;
   const machine = controls?.machine;
   const [copied, setCopied] = useState(false);
   const [fallback, setFallback] = useState('');
   useEffect(() => {
     setCopied(false);
     setFallback('');
-  }, [iteration?.id, selectedLayer?.name]);
+  }, [variant?.id, selectedLayer?.name]);
   useEffect(() => {
     if (!copied) return;
     const timer = window.setTimeout(() => setCopied(false), 2000);
@@ -224,7 +224,7 @@ export function ParameterPanel({
   const copy = async () => {
     const value = selectedLayer
       ? {
-          studyId: projectId,
+          studyId,
           variantId: selectedLayer.variantId,
           layer: selectedLayer.name,
           bounds: selectedLayer.bounds,
@@ -237,8 +237,8 @@ export function ParameterPanel({
         }
       : {
           schemaVersion: 1,
-          studyId: projectId,
-          variantId: iteration?.id,
+          studyId,
+          variantId: variant?.id,
           props: bindings.props,
           state: bindings.state,
           ...(machineState ? { machine: { value: machineState } } : {}),

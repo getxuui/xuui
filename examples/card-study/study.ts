@@ -1,12 +1,6 @@
-import { defineProject } from '../../../src/xuui/model';
-import type { Controls } from '../../../src/xuui/parameters';
-import {
-  PaperCard,
-  AfterHoursCard,
-  IndexCard,
-  SoftFocusCard,
-  EssentialCard,
-} from './Cards';
+import { defineStudy } from '../../src/xuui/model';
+import type { Controls } from '../../src/xuui/parameters';
+import { PaperCard, AfterHoursCard } from './Cards';
 
 export function cardControls(borderRadius: number, color: string): Controls {
   return {
@@ -50,19 +44,17 @@ export function cardControls(borderRadius: number, color: string): Controls {
   };
 }
 
-export const project = defineProject({
+export const cardStudy = defineStudy({
   id: 'card-exploration',
   name: 'Card exploration',
-  description: 'Five ways to make a little room for the everyday.',
-  iterations: [
+  description: 'Two ways to make a little room for the everyday.',
+  variants: [
     {
       id: 'paper-v1',
       name: 'Paper',
       description: 'Warm, tactile, and a little slower.',
       rationale:
         'Lead with a quiet botanical study. A generous image and a simple hierarchy make the session feel considered and approachable.',
-      parentIds: [],
-      informedBy: [],
       color: '#e8ecdf',
       component: PaperCard,
       controls: cardControls(8, '#2e493b'),
@@ -73,47 +65,9 @@ export const project = defineProject({
       description: 'A bold invitation to switch off.',
       rationale:
         'Try a darker, typographic direction. High contrast and an oversized headline give a quiet activity an unexpected presence.',
-      parentIds: [],
-      informedBy: [],
       color: '#e3e6e3',
       component: AfterHoursCard,
       controls: cardControls(4, '#d4e8a7'),
-    },
-    {
-      id: 'index-v1',
-      name: 'Index',
-      description: 'The details, brought into focus.',
-      rationale:
-        'Borrow the structure of an index card. Rules, a numbered edition, and compact details give recurring sessions a recognizable format.',
-      parentIds: [],
-      informedBy: [],
-      color: '#e5e9ed',
-      component: IndexCard,
-      controls: cardControls(2, '#435a7c'),
-    },
-    {
-      id: 'soft-focus-v1',
-      name: 'Soft focus',
-      description: 'A gentle, more expressive direction.',
-      rationale:
-        'Let the illustration spill into a softer composition. Keep the action clear while making more space for warmth and personality.',
-      parentIds: [],
-      informedBy: [],
-      color: '#efe5e2',
-      component: SoftFocusCard,
-      controls: cardControls(20, '#6a4e40'),
-    },
-    {
-      id: 'essential-v1',
-      name: 'Essential',
-      description: 'Only what earns its place.',
-      rationale:
-        'Remove the illustration and bring the useful information forward. A compact alternative for a list of sessions or a smaller surface.',
-      parentIds: [],
-      informedBy: [],
-      color: '#e8e9df',
-      component: EssentialCard,
-      controls: cardControls(8, '#2e493b'),
     },
   ],
 });

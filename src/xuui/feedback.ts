@@ -88,7 +88,7 @@ export function captureComment(
   };
   return {
     id,
-    iterationId: variantId,
+    variantId: variantId,
     body: '',
     createdAt: new Date(annotation.timestamp).toISOString(),
     target: {

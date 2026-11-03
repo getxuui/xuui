@@ -1,4 +1,4 @@
-import { defineProject } from '../../../src/xuui/model';
+import { defineStudy } from '../../../src/xuui/model';
 import type { Controls } from '../../../src/xuui/parameters';
 import { CoverCard, EditorialCard, NightCard } from './BookCard';
 
@@ -61,19 +61,17 @@ function bookControls(
   };
 }
 
-export const readingStudy = defineProject({
+export const readingStudy = defineStudy({
   id: 'reading-room',
   name: 'Reading room',
   description: 'Book cards and heading type studies for a slower reading list.',
-  iterations: [
+  variants: [
     {
       id: 'reading-cover-v1',
       name: 'Cover',
       description: 'A small bookshop window, led by the cover.',
       rationale:
         'Give the illustrated hardback room to breathe. Keep the author, price and purchase action close together beneath it.',
-      parentIds: [],
-      informedBy: [],
       color: '#e9ecdf',
       component: CoverCard,
       controls: bookControls('#2e5149'),
@@ -108,8 +106,6 @@ export const readingStudy = defineProject({
       name,
       description,
       rationale,
-      parentIds: ['reading-cover-v1'],
-      informedBy: ['68c3b218-daac-4d61-9494-887b0b3eb2b2'],
       color: '#e9ecdf',
       component: CoverCard,
       controls: bookControls('#2e5149', false, family),
@@ -120,8 +116,6 @@ export const readingStudy = defineProject({
       description: 'A reading recommendation with a little book in the margin.',
       rationale:
         'Develop Cover into a more compact editorial card. Bring the title and description forward and reduce the cover to a small illustration in the margin.',
-      parentIds: ['reading-cover-v1'],
-      informedBy: [],
       color: '#f7f0e4',
       component: EditorialCard,
       controls: bookControls('#805340'),
@@ -132,8 +126,6 @@ export const readingStudy = defineProject({
       description: 'A quiet recommendation for the late hours.',
       rationale:
         'Take Cover in a darker direction. A smaller illustration and a pale book jacket keep the same hierarchy while making the card feel at home in an evening reading list.',
-      parentIds: ['reading-cover-v1'],
-      informedBy: [],
       color: '#29332f',
       component: NightCard,
       controls: bookControls('#d5d5ac', true),

@@ -1,5 +1,5 @@
-import { project } from './card-study/project';
-import { ticketStudy } from './ticket-study/project';
-import { readingStudy } from './reading-study/project';
+import { cardStudy } from './card-study/study';
+import { ticketStudy } from './ticket-study/study';
+import { readingStudy } from './reading-study/study';
 
-export const studies = [project, ticketStudy, readingStudy];
+export const studies = [cardStudy, ticketStudy, readingStudy];

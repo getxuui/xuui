@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 test('frame titles copy focused links, and the shortcut follows the active variant', async ({
   page,
   context,
+  baseURL,
 }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.goto('/?variant=paper-v1&view=all');
@@ -26,7 +27,7 @@ test('frame titles copy focused links, and the shortcut follows the active varia
   await page.keyboard.press('Meta+l');
   await expect
     .poll(() => page.evaluate(() => navigator.clipboard.readText()))
-    .toBe('http://127.0.0.1:4401/?study=card-exploration&variant=paper-v1');
+    .toBe(new URL('/?study=card-exploration&variant=paper-v1', baseURL).href);
   await page.goto(link);
   await expect(page.locator('[data-variant-id]')).toHaveCount(1);
   await expect(page.locator('[data-xuui-design] h2')).toContainText(
@@ -36,6 +37,7 @@ test('frame titles copy focused links, and the shortcut follows the active varia
 
 test('blocked clipboard access exposes a selectable variant link', async ({
   page,
+  baseURL,
 }) => {
   await page.addInitScript(() =>
     Object.defineProperty(navigator, 'clipboard', {
@@ -53,7 +55,7 @@ test('blocked clipboard access exposes a selectable variant link', async ({
   });
   await expect(fallback).toBeFocused();
   await expect(fallback).toHaveValue(
-    'http://127.0.0.1:4401/?study=card-exploration&variant=paper-v1',
+    new URL('/?study=card-exploration&variant=paper-v1', baseURL).href,
   );
   expect(
     await fallback.evaluate(

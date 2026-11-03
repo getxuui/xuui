@@ -3,23 +3,21 @@
 In an installed workspace, register studies in `xuui.studies.ts`. Components and their styles belong in `studies/`, or another workspace directory you choose. The studio remains in the xuui dependency. In the source demo, the registry is `examples/studies.ts`.
 
 ```tsx
-import { defineProject } from '@getxuui/xuui';
+import { defineStudy } from '@getxuui/xuui';
 import { MyCard } from './studies/MyCard';
 
 export const studies = [
-  defineProject({
+  defineStudy({
     id: 'card-study',
     name: 'Card study',
     description: 'How prominent should the main action be?',
-    iterations: [
+    variants: [
       {
         id: 'card-v1',
         name: 'Quiet action',
         description: 'Keep the content ahead of the action.',
         rationale:
           'A quieter button leaves more attention for the card content.',
-        parentIds: [],
-        informedBy: [],
         color: '#e8ecdf',
         component: MyCard,
       },
@@ -28,7 +26,7 @@ export const studies = [
 ];
 ```
 
-The API currently uses `defineProject` for a study and `iterations` for its variants. Give every variant a stable ID unique across the workspace. Add a new ID and implementation when advancing a direction. Use `parentIds` for lineage and `informedBy` for relevant feedback IDs. Keep earlier implementations when they should remain reviewable.
+A study contains variants. Register it with `defineStudy({ ..., variants: [...] })` and give every variant a stable ID unique across the workspace. Each variant includes a rationale explaining the design choice. Add a new ID and implementation when a new alternative should remain reviewable alongside the existing variants.
 
 Supply the providers, styles, data, and dependencies the design needs. Use scoped CSS so a study does not restyle studio controls or another variant. Give the design meaningful dimensions; a percentage width without a sized parent can collapse on the canvas. Add `data-xuui-layer-name` when an element needs a clearer name in Layers.
 

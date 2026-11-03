@@ -24,7 +24,7 @@ const { values } = parseArgs({
 
 if (values.help) {
   console.error(
-    'xuui MCP: node src/xuui/mcp.ts --project-dir /path/to/project [--review-dir .xuui/reviews]',
+    'xuui MCP: node src/xuui/mcp.ts --project-dir /path/to/workspace [--review-dir .xuui/reviews]',
   );
 } else {
   const directory = resolve(
@@ -72,7 +72,7 @@ if (values.help) {
         { name: 'xuui', version },
         {
           instructions:
-            'xuui presents UI studies and variants. Browser drafts are never delivered. List unread reviews, read the full package, then call xuui_acknowledge_review once you have received it. Acknowledgement records Read by agent and clears the unread queue; it does not mean the feedback is implemented. History is retained. For ongoing review, wait for unread packages and acknowledge each received package. Preserve variants when developing descendants; record parentIds, rationale, and informedBy comment IDs. This server does not wake an idle agent or edit designs.',
+            'xuui presents studies containing variants. Browser drafts are never delivered. List unread reviews, read the full package, then call xuui_acknowledge_review once you have received it. Acknowledgement records Read by agent and clears the unread queue; it does not mean the feedback is implemented. History is retained. For ongoing review, wait for unread packages and acknowledge each received package. Give each variant a stable ID and a rationale explaining its design choice. This server does not wake an idle agent or edit designs.',
         },
       );
       const matching = async ({
@@ -84,10 +84,10 @@ if (values.help) {
       }) =>
         (await readReviews(directory)).filter(
           (review) =>
-            (!studyId || review.projectId === studyId) &&
+            (!studyId || review.studyId === studyId) &&
             (!variantId ||
               review.comments.some(
-                (comment) => comment.iterationId === variantId,
+                (comment) => comment.variantId === variantId,
               )),
         );
 
@@ -123,12 +123,10 @@ if (values.help) {
           const result = {
             reviews: reviews.slice(offset, offset + limit).map((review) => ({
               id: review.id,
-              studyId: review.projectId,
+              studyId: review.studyId,
               submittedAt: review.submittedAt,
               variantIds: [
-                ...new Set(
-                  review.comments.map((comment) => comment.iterationId),
-                ),
+                ...new Set(review.comments.map((comment) => comment.variantId)),
               ],
               commentCount: review.comments.length,
               readAt: receipts.get(review.id) ?? null,
@@ -177,7 +175,7 @@ if (values.help) {
         {
           title: 'Read a submitted xuui review',
           description:
-            'Read a complete submitted package by reviewId, including variant identities, rationale, target context, and Agentation annotations. This is the same record saved on disk and copied from the studio.',
+            'Read a complete submitted package by reviewId, including variant identities, rationale, target context, and Agentation annotations. This is the same feedback shown and copied from the studio.',
           inputSchema: z.object({ reviewId: z.uuid() }),
           outputSchema: z.object({ review: reviewSchema }),
           annotations,

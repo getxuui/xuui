@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { Iteration, Project } from './model';
+import type { Study, Variant } from './model';
 import { MaskedMarquee } from './MaskedMarquee';
 
 export function StudyNavigation({
@@ -22,9 +22,9 @@ export function StudyNavigation({
   onVariantChange,
   onAllVariantsChange,
 }: {
-  studies: Pick<Project, 'id' | 'name'>[];
+  studies: Pick<Study, 'id' | 'name'>[];
   studyId: string;
-  variants: Pick<Iteration, 'id' | 'name'>[];
+  variants: Pick<Variant, 'id' | 'name'>[];
   variantId: string | undefined;
   allVariants: boolean;
   onStudyChange: (id: string) => void;

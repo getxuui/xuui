@@ -14,6 +14,7 @@ import {
   reviewReceiptSchema,
 } from './model.ts';
 import type { Review, Submission, ReviewReceipt } from './model.ts';
+import { storedReviewSchema } from './legacyFeedback.ts';
 
 export async function readReviewReceipts(
   directory: string,
@@ -72,7 +73,7 @@ export async function readReview(
   // Validate before constructing a path, including when used outside the MCP boundary.
   reviewSchema.shape.id.parse(id);
   try {
-    return reviewSchema.parse(
+    return storedReviewSchema.parse(
       JSON.parse(await readFile(join(directory, `${id}.json`), 'utf8')),
     );
   } catch (error) {

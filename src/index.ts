@@ -1,8 +1,8 @@
-export { defineProject } from './xuui/model.ts';
+export { defineStudy } from './xuui/model.ts';
 export type {
-  Project,
-  Iteration,
-  IterationRecord,
+  Study,
+  Variant,
+  VariantRecord,
   Comment,
   Review,
 } from './xuui/model.ts';

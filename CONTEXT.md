@@ -5,12 +5,12 @@ xuui is a workspace for reviewing UI design studies and exploring their variants
 ## Language
 
 **Study**:
-A group of related design variants exploring the same question or brief.
-_Avoid_: Exploration, variant set, variant group
+A collection of variants exploring the same design question or brief.
+_Avoid_: Project, exploration, variant set, variant group
 
 **Variant**:
 One design alternative within a study, with its own parameters, state, and guides.
-_Avoid_: Variation, option
+_Avoid_: Iteration, revision, variation, option
 
 **Canvas**:
 The area for viewing, panning, zooming, selecting, and measuring variants.

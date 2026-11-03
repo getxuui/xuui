@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import Preview from './Preview';
-import type { Project } from './model';
-function readVariation(studies: Project[]) {
+import type { Study } from './model';
+function readVariant(studies: Study[]) {
   const params = new URLSearchParams(window.location.search);
-  const project =
+  const study =
     studies.find((study) => study.id === params.get('study')) ?? studies[0];
   const requested =
     params.get('variant') ??
@@ -12,32 +12,32 @@ function readVariation(studies: Project[]) {
     params.get('iteration');
   return requested &&
     studies.some((study) =>
-      study.iterations.some((variant) => variant.id === requested),
+      study.variants.some((variant) => variant.id === requested),
     )
     ? requested
-    : (project.iterations[0]?.id ?? '');
+    : (study.variants[0]?.id ?? '');
 }
 
-export function Studio({ studies }: { studies: Project[] }) {
-  const [variationId, setVariationId] = useState(() => readVariation(studies));
-  const project =
+export function Studio({ studies }: { studies: Study[] }) {
+  const [variantId, setVariantId] = useState(() => readVariant(studies));
+  const study =
     studies.find((study) =>
-      study.iterations.some((variant) => variant.id === variationId),
+      study.variants.some((variant) => variant.id === variantId),
     ) ?? studies[0];
   const remembered = useRef<Record<string, string>>({});
   useEffect(() => {
-    remembered.current[project.id] = variationId;
-  }, [project.id, variationId]);
+    remembered.current[study.id] = variantId;
+  }, [study.id, variantId]);
   const [allVariants, setAllVariants] = useState(
     () => new URLSearchParams(window.location.search).get('view') === 'all',
   );
   useEffect(() => {
     const current = new URLSearchParams(window.location.search);
-    const canonicalId = readVariation(studies);
-    setVariationId(canonicalId);
+    const canonicalId = readVariant(studies);
+    setVariantId(canonicalId);
     const canonicalStudy =
       studies.find((study) =>
-        study.iterations.some((variant) => variant.id === canonicalId),
+        study.variants.some((variant) => variant.id === canonicalId),
       ) ?? studies[0];
     const canonical = new URLSearchParams({
       study: canonicalStudy.id,
@@ -47,7 +47,7 @@ export function Studio({ studies }: { studies: Project[] }) {
     if (current.toString() !== canonical.toString())
       window.history.replaceState({}, '', `/?${canonical}`);
     const pop = () => {
-      setVariationId(readVariation(studies));
+      setVariantId(readVariant(studies));
       setAllVariants(
         new URLSearchParams(window.location.search).get('view') === 'all',
       );
@@ -55,41 +55,44 @@ export function Studio({ studies }: { studies: Project[] }) {
     window.addEventListener('popstate', pop);
     return () => window.removeEventListener('popstate', pop);
   }, []);
-  const switchVariation = (id: string, focus = false) => {
+  const switchVariant = (id: string, focus = false) => {
     const targetStudy = studies.find((study) =>
-      study.iterations.some((iteration) => iteration.id === id),
+      study.variants.some((variant) => variant.id === id),
     );
     if (!targetStudy) return;
     const params = new URLSearchParams({ study: targetStudy.id, variant: id });
     if (allVariants && !focus) params.set('view', 'all');
     window.history.pushState({}, '', `/?${params}`);
-    setVariationId(id);
+    setVariantId(id);
     if (focus) setAllVariants(false);
   };
   const changeView = (all: boolean) => {
     const params = new URLSearchParams({
-      study: project.id,
-      variant: variationId,
+      study: study.id,
+      variant: variantId,
     });
     if (all) params.set('view', 'all');
     window.history.pushState({}, '', `/?${params}`);
     setAllVariants(all);
   };
   const switchStudy = (id: string) => {
-    const study = studies.find((item) => item.id === id);
-    if (!study || study.id === project.id) return;
-    const variantId = remembered.current[id] ?? study.iterations[0]?.id;
+    const targetStudy = studies.find((item) => item.id === id);
+    if (!targetStudy || targetStudy.id === study.id) return;
+    const variantId = remembered.current[id] ?? targetStudy.variants[0]?.id;
     if (!variantId) return;
-    const params = new URLSearchParams({ study: study.id, variant: variantId });
+    const params = new URLSearchParams({
+      study: targetStudy.id,
+      variant: variantId,
+    });
     if (allVariants) params.set('view', 'all');
     window.history.pushState({}, '', `/?${params}`);
-    setVariationId(variantId);
+    setVariantId(variantId);
   };
   return (
     <Preview
-      project={project}
-      iterationId={variationId}
-      onVariationChange={switchVariation}
+      study={study}
+      variantId={variantId}
+      onVariantChange={switchVariant}
       allVariants={allVariants}
       onAllVariantsChange={changeView}
       studies={studies}

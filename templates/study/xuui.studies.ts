@@ -1,20 +1,18 @@
-import { defineProject } from '@getxuui/xuui';
+import { defineStudy } from '@getxuui/xuui';
 import { StarterCard } from './studies/StarterCard';
 
 export const studies = [
-  defineProject({
+  defineStudy({
     id: 'first-study',
     name: 'First study',
     description:
       'Present a design, then use the studio to inspect and review it.',
-    iterations: [
+    variants: [
       {
         id: 'starter-v1',
         name: 'Starter',
         description: 'An interactive starting point for your first study.',
         rationale: 'Replace this card with the design you want to review.',
-        parentIds: [],
-        informedBy: [],
         color: '#e8ecdf',
         component: StarterCard,
         controls: {

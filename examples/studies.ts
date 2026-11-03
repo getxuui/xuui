@@ -1,3 +1,3 @@
-import { project } from './card-study/project';
+import { cardStudy } from './card-study/study';
 
-export const studies = [project];
+export const studies = [cardStudy];

@@ -81,8 +81,8 @@ function rulerLabels(length: number, origin: number, scale: number) {
 
 export function WorkspaceRulers({
   designRef,
-  projectId,
-  iterationId,
+  studyId,
+  variantId,
   visible,
   selectionEnabled = true,
   selection,
@@ -90,8 +90,8 @@ export function WorkspaceRulers({
   onInspect,
 }: {
   designRef: RefObject<HTMLDivElement | null>;
-  projectId: string;
-  iterationId: string;
+  studyId: string;
+  variantId: string;
   visible: boolean;
   selectionEnabled?: boolean;
   selection: Element[];
@@ -100,9 +100,9 @@ export function WorkspaceRulers({
 }) {
   const container = useRef<HTMLDivElement>(null);
   const geometry = useWorkspaceGeometry(container, designRef);
-  const storageKey = `xuui:${projectId}:${iterationId}:guides:v1`;
+  const storageKey = `xuui:${studyId}:${variantId}:guides:v1`;
   const [guides, setGuides] = useState<Guide[]>(() =>
-    readGuides(storageKey, `xuui:${projectId}:guides:v1`),
+    readGuides(storageKey, `xuui:${studyId}:guides:v1`),
   );
   const [active, setActive] = useState<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);

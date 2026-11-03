@@ -37,4 +37,4 @@ Drag from a ruler to create a guide. Guides snap to nearby edges and centers. Cl
 
 Click an element in Comment mode, type, then add the comment. Hover over the comment area to reveal Clear. Clicking outside dismisses the editor and retains unfinished text for reopening; Cancel discards it. ⌘Enter/Ctrl+Enter saves.
 
-Comments collect in a draft until **Submit review**. Numbered pins follow their target through panning and zooming. Browser drafts remain separate per study; submitted records and read receipts live in the project. See [Reviews and MCP](mcp.md).
+Comments collect in a draft until **Submit review**. Numbered pins follow their target through panning and zooming. Browser drafts remain separate per study; submitted records and read receipts live in the workspace. See [Reviews and MCP](mcp.md).

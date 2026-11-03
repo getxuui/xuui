@@ -13,7 +13,7 @@ import {
   SheetDescription,
   SheetTitle,
 } from '@/components/ui/sheet';
-import type { Comment, Project } from './model';
+import type { Comment, Study } from './model';
 import { useStudioTheme } from './useStudioTheme';
 import { WorkspaceRulers } from './WorkspaceRulers';
 import { useParameters } from './useParameters';
@@ -31,23 +31,23 @@ import { StudyControls } from './StudyControls';
 import { VariantLabel } from './VariantLabel';
 
 export default function Preview({
-  project,
-  iterationId,
-  onVariationChange,
+  study,
+  variantId,
+  onVariantChange,
   allVariants,
   onAllVariantsChange,
   studies,
   onStudyChange,
 }: {
-  project: Project;
-  iterationId: string;
-  onVariationChange: (id: string, focus?: boolean) => void;
+  study: Study;
+  variantId: string;
+  onVariantChange: (id: string, focus?: boolean) => void;
   allVariants: boolean;
   onAllVariantsChange: (all: boolean) => void;
-  studies: Project[];
+  studies: Study[];
   onStudyChange: (id: string) => void;
 }) {
-  const iteration = project.iterations.find((item) => item.id === iterationId);
+  const variant = study.variants.find((item) => item.id === variantId);
   const design = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLElement>(null);
   const focusCanvas = useCallback(
@@ -64,8 +64,8 @@ export default function Preview({
   );
   const [pendingComment, setPendingComment] = useState<Comment | null>(null);
   const commentEditorDrafts = useRef(new Map<string, string>());
-  const review = useReviews(studies, project);
-  const parameters = useParameters(iteration?.controls, iterationId);
+  const review = useReviews(studies, study);
+  const parameters = useParameters(variant?.controls, variantId);
   const [compactLayout, setCompactLayout] = useState(
     () => window.matchMedia('(max-width: 767px)').matches,
   );
@@ -154,13 +154,13 @@ export default function Preview({
       event.preventDefault();
       canvas.current
         ?.querySelector<HTMLButtonElement>(
-          `[data-copy-variant-link="${CSS.escape(iterationId)}"]`,
+          `[data-copy-variant-link="${CSS.escape(variantId)}"]`,
         )
         ?.click();
     };
     window.addEventListener('keydown', copyLink, true);
     return () => window.removeEventListener('keydown', copyLink, true);
-  }, [iterationId]);
+  }, [variantId]);
 
   const changeMode = (next: CanvasMode) => {
     setPendingComment(null);
@@ -169,7 +169,7 @@ export default function Preview({
   const commentDraftKey = (comment: Comment) =>
     review.comments.some((item) => item.id === comment.id)
       ? comment.id
-      : `${project.id}:${comment.iterationId}:new`;
+      : `${study.id}:${comment.variantId}:new`;
   const editComment = (comment: Comment) => {
     setMode('comment');
     setPendingComment({
@@ -183,7 +183,7 @@ export default function Preview({
     setPendingComment(null);
     canvas.current?.querySelector('main')?.focus({ preventScroll: true });
   };
-  useEffect(() => setPendingComment(null), [project.id, iterationId]);
+  useEffect(() => setPendingComment(null), [study.id, variantId]);
   useEffect(() => {
     const shortcut = (event: KeyboardEvent) => {
       if (
@@ -228,22 +228,19 @@ export default function Preview({
             )))
       )
         return;
-      const index = project.iterations.findIndex(
-        (item) => item.id === iterationId,
-      );
-      const next =
-        project.iterations[index + (event.key === 'ArrowDown' ? 1 : -1)];
+      const index = study.variants.findIndex((item) => item.id === variantId);
+      const next = study.variants[index + (event.key === 'ArrowDown' ? 1 : -1)];
       if (index < 0 || !next) return;
       event.preventDefault();
-      onVariationChange(next.id);
+      onVariantChange(next.id);
     };
     window.addEventListener('keydown', navigate);
     return () => window.removeEventListener('keydown', navigate);
-  }, [project.iterations, iterationId, onVariationChange]);
+  }, [study.variants, variantId, onVariantChange]);
 
   useEffect(() => {
-    document.title = `${iteration?.name ?? 'Unknown variant'} · xuui`;
-  }, [iteration]);
+    document.title = `${variant?.name ?? 'Unknown variant'} · xuui`;
+  }, [variant]);
   useEffect(() => {
     try {
       localStorage.setItem('xuui-sidebar', sidebarOpen ? 'open' : 'collapsed');
@@ -309,10 +306,10 @@ export default function Preview({
           : [];
       return valid.length === previous.length ? previous : valid;
     });
-  }, [mode, iterationId, project.id]);
+  }, [mode, variantId, study.id]);
   const visible = useMemo(
-    () => (allVariants ? project.iterations : iteration ? [iteration] : []),
-    [allVariants, project.iterations, iteration],
+    () => (allVariants ? study.variants : variant ? [variant] : []),
+    [allVariants, study.variants, variant],
   );
   const variantIds = useMemo(
     () => visible.map((variant) => variant.id),
@@ -327,15 +324,15 @@ export default function Preview({
       onSelect={(node) => {
         setMode('select');
         setPendingComment(null);
-        if (node.variantId !== iterationId) onVariationChange(node.variantId);
+        if (node.variantId !== variantId) onVariantChange(node.variantId);
         setSelection(node.elements);
       }}
       studyControls={
         <StudyControls
-          projectId={project.id}
-          variantId={iteration?.id}
-          variants={project.iterations}
-          onVariantChange={onVariationChange}
+          studyId={study.id}
+          variantId={variant?.id}
+          variants={study.variants}
+          onVariantChange={onVariantChange}
           studies={studies}
           onStudyChange={onStudyChange}
           allVariants={allVariants}
@@ -393,7 +390,7 @@ export default function Preview({
             className="relative h-full min-w-0 rounded-xl border border-canvas-border bg-canvas"
           >
             <CanvasViewport
-              activeId={iterationId}
+              activeId={variantId}
               mode={allVariants ? 'all' : 'focused'}
             >
               {visible.map((variant) => (
@@ -406,38 +403,38 @@ export default function Preview({
                     if (
                       allVariants &&
                       mode !== 'comment' &&
-                      variant.id !== iterationId &&
+                      variant.id !== variantId &&
                       event.target instanceof Element &&
                       event.target.closest('[data-xuui-design]') &&
                       !event.altKey &&
                       !event.currentTarget.closest('[data-pan-mode="true"]')
                     )
-                      onVariationChange(variant.id);
+                      onVariantChange(variant.id);
                   }}
                 >
                   <VariantLabel
-                    studyId={project.id}
+                    studyId={study.id}
                     variant={variant}
-                    active={variant.id === iterationId}
+                    active={variant.id === variantId}
                     comparison={allVariants}
-                    onSelect={() => onVariationChange(variant.id)}
+                    onSelect={() => onVariantChange(variant.id)}
                   />
                   <VariantSurface
-                    iteration={variant}
+                    variant={variant}
                     bindings={parameters.bindingsFor(
                       variant.id,
                       variant.controls,
                     )}
-                    designRef={variant.id === iterationId ? design : undefined}
+                    designRef={variant.id === variantId ? design : undefined}
                   />
                 </div>
               ))}
             </CanvasViewport>
             <WorkspaceRulers
-              key={iterationId}
+              key={variantId}
               designRef={design}
-              projectId={project.id}
-              iterationId={iterationId}
+              studyId={study.id}
+              variantId={variantId}
               visible={rulersVisible}
               selectionEnabled={mode === 'select'}
               selection={selection}
@@ -496,10 +493,10 @@ export default function Preview({
               groupResizeBehavior="preserve-pixel-size"
             >
               <ParameterPanel
-                iteration={iteration}
-                projectId={project.id}
+                variant={variant}
+                studyId={study.id}
                 selectedLayer={
-                  mode === 'select' && selectedLayer?.variantId === iterationId
+                  mode === 'select' && selectedLayer?.variantId === variantId
                     ? selectedLayer
                     : null
                 }
@@ -507,12 +504,12 @@ export default function Preview({
                 onCollapse={() => setSidebarOpen(false)}
                 feedbackPanel={
                   <ReviewPanel
-                    key={project.id}
-                    study={project}
+                    key={study.id}
+                    study={study}
                     state={review}
                     onEdit={(comment) => {
-                      if (comment.iterationId !== iterationId)
-                        onVariationChange(comment.iterationId, true);
+                      if (comment.variantId !== variantId)
+                        onVariantChange(comment.variantId, true);
                       // Wait for the variant switch before opening its editor.
                       requestAnimationFrame(() => editComment(comment));
                     }}

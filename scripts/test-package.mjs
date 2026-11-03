@@ -213,6 +213,13 @@ try {
     ),
   );
   assert.equal(stored.comments[0].body, 'Feedback from the packed alpha.');
+  assert.equal(stored.schemaVersion, 2);
+  assert.equal(stored.studyId, 'first-study');
+  assert.equal(stored.comments[0].variantId, 'starter-v1');
+  assert.deepEqual(
+    stored.variants.map((variant) => variant.id),
+    ['starter-v1'],
+  );
   await writeFile(
     join(workspace, 'xuui.studies.ts'),
     original.replace('Make room to explore.', 'Updated in the workspace.'),

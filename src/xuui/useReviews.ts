@@ -4,11 +4,12 @@ import {
   commentSchema,
   reviewSchema,
   reviewReceiptSchema,
-  toIterationRecord,
+  toVariantRecord,
 } from './model';
+import { legacyCommentSchema } from './legacyFeedback';
 import type {
   Comment,
-  Project,
+  Study,
   Review,
   ReviewReceipt,
   Submission,
@@ -20,20 +21,26 @@ const draftSchema = z.object({
 });
 type Draft = z.infer<typeof draftSchema>;
 const newDraft = (): Draft => ({ id: crypto.randomUUID(), comments: [] });
-const storageKey = (id: string) => `xuui:${id}:feedback-draft:v1`;
+const storageKey = (id: string) => `xuui:${id}:feedback-draft:v2`;
+const storedDraftSchema = z.union([
+  draftSchema,
+  draftSchema.extend({ comments: z.array(legacyCommentSchema).max(100) }),
+]);
 
-function readDraft(study: Project): Draft {
+function readDraft(study: Study): Draft {
   try {
-    const result = draftSchema.safeParse(
-      JSON.parse(localStorage.getItem(storageKey(study.id)) ?? 'null'),
+    const result = storedDraftSchema.safeParse(
+      JSON.parse(
+        localStorage.getItem(storageKey(study.id)) ??
+          localStorage.getItem(`xuui:${study.id}:feedback-draft:v1`) ??
+          'null',
+      ),
     );
     if (result.success)
       return {
         ...result.data,
         comments: result.data.comments.filter((comment) =>
-          study.iterations.some(
-            (variant) => variant.id === comment.iterationId,
-          ),
+          study.variants.some((variant) => variant.id === comment.variantId),
         ),
       };
   } catch {
@@ -42,7 +49,7 @@ function readDraft(study: Project): Draft {
   return newDraft();
 }
 
-export function useReviews(studies: Project[], study: Project) {
+export function useReviews(studies: Study[], study: Study) {
   const [drafts, setDrafts] = useState<Record<string, Draft>>(() =>
     Object.fromEntries(studies.map((item) => [item.id, readDraft(item)])),
   );
@@ -171,10 +178,10 @@ export function useReviews(studies: Project[], study: Project) {
     setBusy((previous) => [...previous, study.id]);
     setErrors((previous) => ({ ...previous, [study.id]: '' }));
     const submission: Submission = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       id: draft.id,
-      projectId: study.id,
-      iterations: study.iterations.map(toIterationRecord),
+      studyId: study.id,
+      variants: study.variants.map(toVariantRecord),
       comments: draft.comments,
     };
     try {
@@ -207,7 +214,7 @@ export function useReviews(studies: Project[], study: Project) {
   };
   return {
     comments: draft.comments,
-    reviews: reviews.filter((review) => review.projectId === study.id),
+    reviews: reviews.filter((review) => review.studyId === study.id),
     receipts,
     error: errors[study.id] ?? '',
     historyError,

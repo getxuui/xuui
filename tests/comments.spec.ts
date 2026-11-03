@@ -15,6 +15,61 @@ async function commentOnHeading(page: Page, body: string) {
   await expect(editor).toHaveCount(0);
 }
 
+test('saved alpha drafts become variant comments and stay empty after submission', async ({
+  page,
+}) => {
+  const legacy = {
+    id: crypto.randomUUID(),
+    comments: [
+      {
+        id: crypto.randomUUID(),
+        iterationId: 'paper-v1',
+        body: 'Keep this feedback from the first alpha.',
+        createdAt: new Date().toISOString(),
+        target: {
+          selector: '[data-variant-id="paper-v1"] [data-xuui-design] h2',
+          tagName: 'h2',
+          accessibleName: 'Title',
+          text: 'Title',
+          bounds: { x: 0, y: 0, width: 100, height: 40 },
+          viewport: { width: 1440, height: 1000 },
+        },
+      },
+    ],
+  };
+  await page.addInitScript((draft) => {
+    const key = 'xuui:card-exploration:feedback-draft:v1';
+    if (localStorage.getItem(key) === null)
+      localStorage.setItem(key, JSON.stringify(draft));
+  }, legacy);
+  await page.goto('/?variant=paper-v1');
+  const drafts = page.getByRole('list', { name: 'Draft comments' });
+  await expect(drafts.getByRole('listitem')).toHaveCount(1);
+  await expect(drafts).toContainText(legacy.comments[0].body);
+  const posted = page.waitForResponse(
+    (response) =>
+      response.url().endsWith('/__xuui/reviews') &&
+      response.request().method() === 'POST',
+  );
+  await page
+    .getByRole('button', { name: 'Submit review', exact: true })
+    .click();
+  const response = await posted;
+  expect(response.status()).toBe(201);
+  const saved = await response.json();
+  expect(saved).toMatchObject({
+    schemaVersion: 2,
+    studyId: 'card-exploration',
+    comments: [{ variantId: 'paper-v1', body: legacy.comments[0].body }],
+  });
+  expect(saved.variants).toEqual(
+    expect.arrayContaining([expect.objectContaining({ id: 'paper-v1' })]),
+  );
+  await expect(drafts.getByRole('listitem')).toHaveCount(0);
+  await page.reload();
+  await expect(drafts.getByRole('listitem')).toHaveCount(0);
+});
+
 test('comment editor validates empty comments and saves with the keyboard', async ({
   page,
 }) => {
@@ -146,9 +201,7 @@ test('Agentation comments collect across variants, edit, persist, and submit as 
   expect(response.status()).toBe(201);
   const saved = await response.json();
   expect(
-    saved.comments.map(
-      (comment: { iterationId: string }) => comment.iterationId,
-    ),
+    saved.comments.map((comment: { variantId: string }) => comment.variantId),
   ).toEqual(['paper-v1', 'after-hours-v1']);
   expect(saved.comments[0].agentation.comment).toBe(
     'Give this heading 8px more room.',
@@ -247,8 +300,8 @@ test('drafts stay with their study, cancel and delete work, and All variants bin
   const response = await posted;
   expect(response.status()).toBe(201);
   const review = await response.json();
-  expect(review.projectId).toBe('sunday-tickets');
-  expect(review.comments[0].iterationId).toBe('ticket-botanical-v1');
+  expect(review.studyId).toBe('sunday-tickets');
+  expect(review.comments[0].variantId).toBe('ticket-botanical-v1');
 });
 
 test('comment pins follow pan and zoom, annotation mode blocks interactions, and a failed submission keeps drafts', async ({

@@ -5,7 +5,7 @@ import { Field, FieldLabel } from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { formatReview } from './model';
-import type { Comment, Project, Review } from './model';
+import type { Comment, Study, Review } from './model';
 import type { ReviewState } from './useReviews';
 import { ReviewReceipt } from './ReviewReceipt';
 import { CommentThread } from './CommentThread';
@@ -15,7 +15,7 @@ export function ReviewPanel({
   state,
   onEdit,
 }: {
-  study: Project;
+  study: Study;
   state: ReviewState;
   onEdit: (comment: Comment) => void;
 }) {
@@ -23,7 +23,7 @@ export function ReviewPanel({
   const [copied, setCopied] = useState<string | null>(null);
   const [fallback, setFallback] = useState('');
   const variantName = (id: string) =>
-    study.iterations.find((item) => item.id === id)?.name ?? id;
+    study.variants.find((item) => item.id === id)?.name ?? id;
   const reviews = state.reviews.filter(
     (review) => filter !== 'unread' || !state.receipts[review.id],
   );
@@ -73,7 +73,7 @@ export function ReviewPanel({
             <CommentThread
               key={comment.id}
               commentId={comment.id}
-              variant={variantName(comment.iterationId)}
+              variant={variantName(comment.variantId)}
               target={targetName(comment)}
               body={comment.body}
               actions={
@@ -140,9 +140,9 @@ export function ReviewPanel({
                   commentId={comment.id}
                   reviewId={review.id}
                   variant={
-                    review.iterations.find(
-                      (iteration) => iteration.id === comment.iterationId,
-                    )?.name ?? variantName(comment.iterationId)
+                    review.variants.find(
+                      (variant) => variant.id === comment.variantId,
+                    )?.name ?? variantName(comment.variantId)
                   }
                   target={targetName(comment)}
                   body={comment.body}

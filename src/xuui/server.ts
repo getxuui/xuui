@@ -29,7 +29,7 @@ async function readBody(request: IncomingMessage): Promise<unknown> {
 
 /** Local-only Vite integration; history is ordinary, Git-friendly JSON. */
 export function xuuiReviewServer(options: {
-  projectId?: string;
+  studyId?: string;
   directory?: string;
 }): Plugin {
   let directory: string;
@@ -61,10 +61,10 @@ export function xuuiReviewServer(options: {
               return;
             }
             let receipts = await readReviewReceipts(directory);
-            if (options.projectId) {
+            if (options.studyId) {
               const ids = new Set(
                 (await readReviews(directory))
-                  .filter((review) => review.projectId === options.projectId)
+                  .filter((review) => review.studyId === options.studyId)
                   .map((review) => review.id),
               );
               receipts = receipts.filter((receipt) =>
@@ -80,7 +80,7 @@ export function xuuiReviewServer(options: {
               200,
               (await readReviews(directory)).filter(
                 (review) =>
-                  !options.projectId || review.projectId === options.projectId,
+                  !options.studyId || review.studyId === options.studyId,
               ),
             );
             return;
@@ -109,11 +109,11 @@ export function xuuiReviewServer(options: {
           const parsed = submissionSchema.safeParse(input);
           if (
             !parsed.success ||
-            (options.projectId && parsed.data.projectId !== options.projectId)
+            (options.studyId && parsed.data.studyId !== options.studyId)
           ) {
             reply(response, 400, {
               error:
-                'Review is invalid. Include registered iterations and at least one complete comment.',
+                'Review is invalid. Include registered variants and at least one complete comment.',
             });
             return;
           }

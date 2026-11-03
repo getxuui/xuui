@@ -15,7 +15,7 @@ type Snapshot = {
 
 export function useParameters(
   controls: Controls | undefined,
-  iterationId: string,
+  variantId: string,
 ) {
   const [snapshots, setSnapshots] = useState<Record<string, Snapshot>>({});
   const sendFor = (
@@ -63,7 +63,7 @@ export function useParameters(
         : {}),
     };
   };
-  const bindings = bindingsFor(iterationId, controls);
+  const bindings = bindingsFor(variantId, controls);
   const setValue = (
     section: 'props' | 'state',
     key: string,
@@ -71,9 +71,9 @@ export function useParameters(
   ) => {
     setSnapshots((previous) => ({
       ...previous,
-      [iterationId]: {
-        ...previous[iterationId],
-        [section]: { ...previous[iterationId]?.[section], [key]: value },
+      [variantId]: {
+        ...previous[variantId],
+        [section]: { ...previous[variantId]?.[section], [key]: value },
       },
     }));
   };
@@ -81,7 +81,7 @@ export function useParameters(
     if (controls?.machine?.states[value])
       setSnapshots((previous) => ({
         ...previous,
-        [iterationId]: { ...previous[iterationId], machine: value },
+        [variantId]: { ...previous[variantId], machine: value },
       }));
   };
   return {
@@ -90,6 +90,6 @@ export function useParameters(
     setValue,
     machineState: bindings.machine?.value,
     setMachineState,
-    send: (event: string) => sendFor(iterationId, controls, event),
+    send: (event: string) => sendFor(variantId, controls, event),
   };
 }

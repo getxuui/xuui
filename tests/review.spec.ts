@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { mkdir, readdir } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createServer } from 'vite';
 import { xuuiReviewServer } from '../src/xuui/server';
@@ -13,7 +13,7 @@ test('submitted files survive a server restart, duplicate retries, and invalid r
       root: process.cwd(),
       logLevel: 'silent',
       cacheDir: resolve('.xuui-test/vite-api-cache'),
-      plugins: [xuuiReviewServer({ projectId: 'test-project', directory })],
+      plugins: [xuuiReviewServer({ studyId: 'test-study', directory })],
       server: { host: '127.0.0.1', port: 0 },
     });
     await server.listen();
@@ -24,23 +24,21 @@ test('submitted files survive a server restart, duplicate retries, and invalid r
   };
   let running = await start();
   const submission = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: crypto.randomUUID(),
-    projectId: 'test-project',
-    iterations: [
+    studyId: 'test-study',
+    variants: [
       {
         id: 'card-v1',
         name: 'Card',
         description: 'A simple card.',
         rationale: 'Test the consumer-facing review contract.',
-        parentIds: [],
-        informedBy: [],
       },
     ],
     comments: [
       {
         id: crypto.randomUUID(),
-        iterationId: 'card-v1',
+        variantId: 'card-v1',
         body: 'Make room for the label.',
         createdAt: new Date().toISOString(),
         target: {
@@ -72,7 +70,7 @@ test('submitted files survive a server restart, duplicate retries, and invalid r
       (
         await post({
           ...submission,
-          comments: [{ ...submission.comments[0], iterationId: 'missing' }],
+          comments: [{ ...submission.comments[0], variantId: 'missing' }],
         })
       ).status,
     ).toBe(400);
@@ -80,6 +78,10 @@ test('submitted files survive a server restart, duplicate retries, and invalid r
     const response = await post(submission);
     expect(response.status).toBe(201);
     const saved = await response.json();
+    expect(saved).toMatchObject({
+      ...submission,
+      submittedAt: expect.any(String),
+    });
     expect(await (await post(submission)).json()).toEqual(saved);
     expect(
       (await readdir(directory)).filter((file) => file.endsWith('.json')),
@@ -87,6 +89,31 @@ test('submitted files survive a server restart, duplicate retries, and invalid r
     await running.server.close();
     running = await start();
     expect(await (await fetch(running.url)).json()).toEqual([saved]);
+
+    const legacy = {
+      schemaVersion: 1,
+      id: crypto.randomUUID(),
+      projectId: submission.studyId,
+      iterations: submission.variants.map((variant) => ({
+        ...variant,
+        parentIds: ['previous-direction'],
+        informedBy: ['earlier-feedback'],
+      })),
+      comments: submission.comments.map(({ variantId, ...comment }) => ({
+        ...comment,
+        iterationId: variantId,
+      })),
+      submittedAt: new Date().toISOString(),
+    };
+    const legacyFile = resolve(directory, `${legacy.id}.json`);
+    const original = `${JSON.stringify(legacy)}\n`;
+    await writeFile(legacyFile, original);
+    expect(await (await fetch(running.url)).json()).toContainEqual({
+      ...submission,
+      id: legacy.id,
+      submittedAt: legacy.submittedAt,
+    });
+    expect(await readFile(legacyFile, 'utf8')).toBe(original);
   } finally {
     await running.server.close();
   }

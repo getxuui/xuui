@@ -1,17 +1,17 @@
 import type { Ref } from 'react';
-import type { Iteration } from './model';
+import type { Variant } from './model';
 import type { StudioBindings } from './parameters';
 
 export function VariantSurface({
-  iteration,
+  variant,
   bindings,
   designRef,
 }: {
-  iteration: Iteration;
+  variant: Variant;
   bindings: StudioBindings;
   designRef?: Ref<HTMLDivElement>;
 }) {
-  const Design = iteration.component;
+  const Design = variant.component;
   return (
     <div className="component-surround relative isolate flex-none rounded-[20px] p-[80px]">
       <div
