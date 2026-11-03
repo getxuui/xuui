@@ -12,6 +12,15 @@ node /absolute/path/to/workspace/node_modules/@getxuui/xuui/dist/cli.js mcp --pr
 
 Use `node` as the stdio command and the remaining values as its arguments in your MCP client. The command writes only protocol messages to stdout. Add `--review-dir` to read another review directory. No configuration is changed by installation, `init`, or `dev`.
 
+For example, from the project you work in:
+
+```sh
+claude mcp add xuui -- node /absolute/path/to/workspace/node_modules/@getxuui/xuui/dist/cli.js mcp --project-dir /absolute/path/to/workspace
+codex mcp add xuui -- node /absolute/path/to/workspace/node_modules/@getxuui/xuui/dist/cli.js mcp --project-dir /absolute/path/to/workspace
+```
+
+Restart the agent session if the tools don't appear. Once connected, an agent that has handed off a review link should wait for the review with `xuui_wait_for_review`, so feedback reaches it without being asked for.
+
 ## Source checkout
 
 Run the explicit setup from this repository:

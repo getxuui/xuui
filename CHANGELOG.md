@@ -4,6 +4,8 @@
 
 - Each variant remembers its own canvas position and zoom.
 - Long layer names stay on one line in the inspector, with the full name on hover.
+- The MCP server now tells agents to keep waiting for reviews after handing off a link, so feedback arrives without being asked for.
+- `docs/mcp.md` shows how to connect the server in Claude Code and Codex.
 
 ## 0.1.0-alpha.1
 

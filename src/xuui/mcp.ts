@@ -72,7 +72,7 @@ if (values.help) {
         { name: 'xuui', version },
         {
           instructions:
-            'xuui presents studies containing variants. Browser drafts are never delivered. List unread reviews, read the full package, then call xuui_acknowledge_review once you have received it. Acknowledgement records Read by agent and clears the unread queue; it does not mean the feedback is implemented. History is retained. For ongoing review, wait for unread packages and acknowledge each received package. Give each variant a stable ID and a rationale explaining its design choice. This server does not wake an idle agent or edit designs.',
+            'xuui presents studies containing variants. Browser drafts are never delivered. List unread reviews, read the full package, then call xuui_acknowledge_review once you have received it. Acknowledgement records Read by agent and clears the unread queue; it does not mean the feedback is implemented. History is retained. After handing off a review link, keep calling xuui_wait_for_review for that study, passing the returned knownReviewIds, until a review arrives or the person asks you to stop; this server cannot wake an idle agent, so waiting is how feedback reaches you without being asked for. Acknowledge each received package, make changes as new variants with new IDs, hand off the new link, and wait again. Give each variant a stable ID and a rationale explaining its design choice. This server does not edit designs.',
         },
       );
       const matching = async ({
