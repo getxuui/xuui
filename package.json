@@ -59,6 +59,14 @@
     "rolldown": "^1.2.16"
   },
   "license": "MIT",
+  "homepage": "https://xuui.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/getxuui/xuui.git"
+  },
+  "bugs": {
+    "url": "https://github.com/getxuui/xuui/issues"
+  },
   "bin": {
     "xuui": "./dist/cli.js"
   },
