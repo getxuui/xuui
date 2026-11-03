@@ -1,4 +1,4 @@
-import { defineProject } from 'xuui';
+import { defineProject } from '@getxuui/xuui';
 import { StarterCard } from './studies/StarterCard';
 
 export const studies = [

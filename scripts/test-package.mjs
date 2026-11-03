@@ -57,7 +57,7 @@ try {
     await readFile(join(workspace, 'package.json'), 'utf8'),
   );
   assert.equal(
-    generated.devDependencies.xuui,
+    generated.devDependencies['@getxuui/xuui'],
     packed.version,
     'The starter must pin the alpha.',
   );
@@ -87,7 +87,7 @@ try {
     ],
     { cwd: workspace, env, maxBuffer: 1024 * 1024 },
   );
-  const cli = join(workspace, 'node_modules/xuui/dist/cli.js');
+  const cli = join(workspace, 'node_modules/@getxuui/xuui/dist/cli.js');
   assert.equal(
     (
       await run(process.execPath, [cli, '--version'], { cwd: workspace, env })

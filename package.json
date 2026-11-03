@@ -1,5 +1,5 @@
 {
-  "name": "xuui",
+  "name": "@getxuui/xuui",
   "version": "0.1.0-alpha.1",
   "description": "Present React UI, compare variants, and collect feedback in a local studio. Experimental alpha.",
   "scripts": {

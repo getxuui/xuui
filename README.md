@@ -9,7 +9,7 @@ Agents bring ordinary React components and the reasoning behind each direction. 
 ## Start
 
 ```sh
-npx xuui@alpha init my-study
+npx --package @getxuui/xuui@alpha xuui init my-study
 cd my-study
 npx xuui dev
 ```

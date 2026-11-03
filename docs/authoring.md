@@ -3,7 +3,7 @@
 In an installed workspace, register studies in `xuui.studies.ts`. Components and their styles belong in `studies/`, or another workspace directory you choose. The studio remains in the xuui dependency. In the source demo, the registry is `examples/studies.ts`.
 
 ```tsx
-import { defineProject } from 'xuui';
+import { defineProject } from '@getxuui/xuui';
 import { MyCard } from './studies/MyCard';
 
 export const studies = [
@@ -56,6 +56,6 @@ A registered component receives `{ props, state, machine }` as `StudioBindings`.
 
 ## Updates
 
-Generated workspaces pin an exact alpha version. Update deliberately with `npm install --save-dev --save-exact xuui@alpha`, then check the changelog and verify the study. Updating the dependency does not rewrite authored components or registrations.
+Generated workspaces pin an exact alpha version. Update deliberately with `npm install --save-dev --save-exact @getxuui/xuui@alpha`, then check the changelog and verify the study. Updating the dependency does not rewrite authored components or registrations.
 
 The CLI provides Vite's React and Tailwind processing. For Tailwind utilities in a study, install `tailwindcss` in the workspace and import it in your study stylesheet; ordinary scoped CSS works without additional setup. Root-relative public assets can go in the workspace's `public/` directory.

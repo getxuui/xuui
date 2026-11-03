@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { StudioBindings } from 'xuui';
+import type { StudioBindings } from '@getxuui/xuui';
 import './starter.css';
 
 export function StarterCard({ props }: StudioBindings) {

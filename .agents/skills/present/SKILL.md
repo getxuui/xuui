@@ -13,7 +13,7 @@ Use the requested UI, reference, or recent work as the brief. Present an existin
 
 Find the study workspace from the current project: an installed workspace has `xuui.studies.ts` and a local xuui dependency. Read that version's README, `docs/authoring.md`, and exported types, plus a nearby registration. Use the installed CLI rather than downloading a newer alpha into an existing workspace. A xuui source checkout instead uses `examples/studies.ts`, `src/xuui/model.ts`, and `src/xuui/parameters.ts`; read `CONTEXT.md` there. Do not infer the consumer workspace by walking upward from an installed skill.
 
-The alpha presents registered React components in a standalone workspace. If a new workspace is needed, run `npx xuui@alpha init <directory>`, then use its pinned installation. For work from another codebase, inspect its tokens, neighboring UI, responsive constraints, providers, and data. Adapt the relevant component and necessary dependencies without silently redesigning it. Include a context wrapper when isolation would distort the review, and disclose mocked data or unavailable backend behavior.
+The alpha presents registered React components in a standalone workspace. If a new workspace is needed, run `npx --package @getxuui/xuui@alpha xuui init <directory>`, then use its pinned installation. For work from another codebase, inspect its tokens, neighboring UI, responsive constraints, providers, and data. Adapt the relevant component and necessary dependencies without silently redesigning it. Include a context wrapper when isolation would distort the review, and disclose mocked data or unavailable backend behavior.
 
 ## Frame an exploration
 

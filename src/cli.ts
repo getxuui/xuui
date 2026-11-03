@@ -67,7 +67,7 @@ async function init(args: string[]) {
     basename(target)
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, '-') || 'xuui-study';
-  manifest.devDependencies.xuui = version;
+  manifest.devDependencies['@getxuui/xuui'] = version;
   await writeFile(
     join(target, 'package.json'),
     `${JSON.stringify(manifest, null, 2)}\n`,

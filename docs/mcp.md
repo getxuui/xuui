@@ -7,7 +7,7 @@ Submitted comments are stored in `.xuui/reviews/` in the study workspace. Browse
 Run the installed JavaScript entry point directly, using absolute paths:
 
 ```sh
-node /absolute/path/to/workspace/node_modules/xuui/dist/cli.js mcp --project-dir /absolute/path/to/workspace
+node /absolute/path/to/workspace/node_modules/@getxuui/xuui/dist/cli.js mcp --project-dir /absolute/path/to/workspace
 ```
 
 Use `node` as the stdio command and the remaining values as its arguments in your MCP client. The command writes only protocol messages to stdout. Add `--review-dir` to read another review directory. No configuration is changed by installation, `init`, or `dev`.
