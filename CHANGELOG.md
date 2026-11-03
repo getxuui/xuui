@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-alpha.2
 
 - Each variant remembers its own canvas position and zoom.
 - Long layer names stay on one line in the inspector, with the full name on hover.
