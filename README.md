@@ -4,7 +4,7 @@ Review the UIs your agents build.
 
 Your agent puts its React components on a local canvas. You compare the variants, point at what to change, and send your comments back to the agent.
 
-**Experimental alpha. Breaking changes expected. Requires Node 24 or newer.**
+**Experimental alpha. Breaking changes expected. Requires Node 22.12 or newer.**
 
 ## Start
 

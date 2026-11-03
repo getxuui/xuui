@@ -244,9 +244,10 @@ if (import.meta.hot) import.meta.hot.accept(${JSON.stringify(registryUrl)}, () =
 }
 
 async function main() {
-  if (Number(process.versions.node.split('.')[0]) < 24)
+  const [major, minor] = process.versions.node.split('.').map(Number);
+  if (major < 22 || (major === 22 && minor < 12))
     throw new Error(
-      `xuui requires Node 24 or newer. This process is using Node ${process.versions.node}.`,
+      `xuui requires Node 22.12 or newer. This process is using Node ${process.versions.node}.`,
     );
   const [command, ...args] = process.argv.slice(2);
   if (command === '--version' || command === '-v') {

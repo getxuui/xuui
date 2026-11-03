@@ -3,6 +3,29 @@ import type { Locator } from '@playwright/test';
 
 const row = (item: Locator) => item.locator(':scope > .layer-tree-row');
 
+// Reopening Layers lays the panels out against the old group height for a
+// frame, so the divider flickers before it settles. Measure it only once it
+// has held still for several frames; a drag from a stale point misses it.
+async function settledBox(locator: Locator) {
+  await locator.evaluate(
+    (element) =>
+      new Promise<void>((resolve) => {
+        let last = '';
+        let steady = 0;
+        const check = () => {
+          const { y, height } = element.getBoundingClientRect();
+          const current = `${y},${height}`;
+          steady = current === last ? steady + 1 : 0;
+          last = current;
+          if (steady >= 5) resolve();
+          else requestAnimationFrame(check);
+        };
+        requestAnimationFrame(check);
+      }),
+  );
+  return (await locator.boundingBox())!;
+}
+
 test('the Layers section fully collapses and reopens by control, drag, and shortcut', async ({
   page,
 }) => {
@@ -40,7 +63,7 @@ test('the Layers section fully collapses and reopens by control, drag, and short
     name: 'Resize pages and layers',
     exact: true,
   });
-  const divider = (await handle.boundingBox())!;
+  const divider = await settledBox(handle);
   const bounds = (await layers.boundingBox())!;
   await page.mouse.move(
     divider.x + divider.width / 2,
