@@ -150,6 +150,8 @@
      so it never competes with the designs under review. */
   --brand: #00844a;
   --brand-foreground: #ffffff;
+  /* Green text on a light brand tint, darker for small text contrast. */
+  --brand-text: #006d3d;
   --measurement: oklch(0.55 0.2 25);
   --background: #ffffff;
   --foreground: var(--color-slate-950);
@@ -196,6 +198,7 @@
   --guide-foreground: var(--color-slate-950);
   --brand: #52cd86;
   --brand-foreground: #102006;
+  --brand-text: #61da92;
   --measurement: oklch(0.75 0.16 25);
   --background: var(--color-slate-950);
   --foreground: var(--color-slate-50);
@@ -449,8 +452,13 @@
   cursor: var(--cursor-default);
 }
 .variant-list-link[aria-current='page'] {
-  background: var(--muted);
+  /* The current variant is tinted with the brand green, text and icon. */
+  background: color-mix(in oklch, var(--brand) 12%, transparent);
+  color: var(--brand-text);
   font-weight: 500;
+}
+.variant-list-link[aria-current='page'] svg {
+  color: inherit;
 }
 .variant-list-link:focus-visible {
   outline: none;
