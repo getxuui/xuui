@@ -64,3 +64,34 @@ test('blocked clipboard access exposes a selectable variant link', async ({
     ),
   ).toBe((await fallback.inputValue()).length);
 });
+
+test('clicking a frame title selects the variant’s top layer', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  const layers = page.getByRole('complementary', {
+    name: 'Layers',
+    exact: true,
+  });
+  const selected = layers.locator('[role="treeitem"][aria-selected="true"]');
+  await page
+    .locator('[data-frame-title]')
+    .getByRole('button', { name: 'Paper', exact: true })
+    .click();
+  await expect(selected).toHaveCount(1);
+  await expect(selected).toHaveAccessibleName(/^Paper/);
+  await expect(
+    page.getByRole('region', { name: 'Selected layer' }),
+  ).toBeVisible();
+
+  await page.goto('/?variant=paper-v1&view=all');
+  await page
+    .locator('[data-frame-title]')
+    .getByRole('button', { name: 'After hours', exact: true })
+    .click();
+  await expect(page).toHaveURL(/variant=after-hours-v1/);
+  await expect(selected).toHaveCount(1);
+  await expect(
+    page.getByRole('region', { name: 'Selected layer' }),
+  ).toBeVisible();
+});

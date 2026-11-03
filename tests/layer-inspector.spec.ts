@@ -156,13 +156,19 @@ test('inspector values copy by pointer and keyboard, with a selectable clipboard
       bounds: { width: 260 },
       typography: { Font: 'Newsreader' },
     });
-  await panel
-    .getByRole('button', { name: 'Copy Width: 260px', exact: true })
-    .click();
+  const width = panel.getByRole('button', {
+    name: 'Copy Width: 260px',
+    exact: true,
+  });
+  const before = (await width.boundingBox())!;
+  await width.click();
   await expect
     .poll(() => page.evaluate(() => navigator.clipboard.readText()))
     .toBe('260px');
   await expect(panel.getByRole('status')).toHaveText('Copied Width: 260px');
+  // The tick replaces the value in place instead of pushing it aside.
+  await expect(width.locator('[data-layer-value]')).not.toBeVisible();
+  expect(await width.boundingBox()).toEqual(before);
   const font = panel.getByRole('button', {
     name: 'Copy Font: Newsreader',
     exact: true,

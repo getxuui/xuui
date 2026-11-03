@@ -14,6 +14,9 @@ The canvas toolbar switches between selecting layers, interacting with a design,
 | R                   | Toggle rulers, retaining guides                                          |
 | Home                | Center the active variant                                                |
 | ⌘0 / Ctrl+0         | Reset canvas zoom to 100%                                                |
+| Shift+0             | Zoom to 100%                                                             |
+| Shift+1             | Zoom to fit every variant on the canvas                                  |
+| Shift+2             | Zoom to the selected layers                                              |
 | ↑ / ↓               | Previous/next variant outside editable controls                          |
 | Tab / Shift+Tab     | Cycle sibling layers on canvas, or variants in the variant list          |
 | Enter / Shift+Enter | Select a group's children / its parent                                   |
@@ -35,6 +38,6 @@ Drag from a ruler to create a guide. Guides snap to nearby edges and centers. Cl
 
 ## Comments
 
-Click an element in Comment mode, type, then add the comment. Hover over the comment area to reveal Clear. Clicking outside dismisses the editor and retains unfinished text for reopening; Cancel discards it. ⌘Enter/Ctrl+Enter saves.
+Click an element in Comment mode, type, then add the comment. Clicking outside dismisses the editor and retains unfinished text for reopening; Cancel discards it. ⌘Enter/Ctrl+Enter saves.
 
 Comments collect in a draft until **Submit review**. Numbered pins follow their target through panning and zooming. Browser drafts remain separate per study; submitted records and read receipts live in the workspace. See [Reviews and MCP](mcp.md).

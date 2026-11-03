@@ -193,8 +193,43 @@ export function CanvasFeedback({
       }
       frame = requestAnimationFrame(update);
     };
+    // Panning and zooming move the scene with a transform straight away, so
+    // follow camera changes in the same frame instead of on the next render.
+    const follow = () => {
+      const area = canvasRef.current?.getBoundingClientRect();
+      if (!area) return;
+      for (const comment of entriesRef.current) {
+        const element = findCommentElement(comment);
+        if (!element?.getClientRects().length) continue;
+        const rect = element.getBoundingClientRect();
+        const x = rect.x - area.x;
+        const y = rect.y - area.y;
+        const id = CSS.escape(comment.id);
+        const point = comment.target.pin ?? { x: 1, y: 0 };
+        const pin = document.querySelector<HTMLElement>(
+          `[data-comment-pin="${id}"]`,
+        );
+        if (pin) {
+          pin.style.left = `${x + rect.width * point.x}px`;
+          pin.style.top = `${y + rect.height * point.y}px`;
+        }
+        const highlight = document.querySelector<HTMLElement>(
+          `[data-comment-highlight="${id}"]`,
+        );
+        if (highlight) {
+          highlight.style.left = `${x}px`;
+          highlight.style.top = `${y}px`;
+          highlight.style.width = `${rect.width}px`;
+          highlight.style.height = `${rect.height}px`;
+        }
+      }
+    };
+    window.addEventListener('xuui:camera-change', follow);
     update();
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('xuui:camera-change', follow);
+    };
   }, [canvasRef, mode]);
 
   if (mode !== 'comment') return null;
@@ -223,6 +258,7 @@ export function CanvasFeedback({
           <div key={pin.id}>
             {pending?.id === pin.id && (
               <div
+                data-comment-highlight={pin.id}
                 className="feedback-highlight"
                 style={{
                   left: pin.x,
@@ -310,7 +346,13 @@ export function CommentEditor({
     )
       onCancel();
   };
-  useLayoutEffect(() => input.current?.focus(), []);
+  useLayoutEffect(() => {
+    // Reopening a comment continues it, so the caret goes after the text.
+    const field = input.current;
+    if (!field) return;
+    field.focus();
+    field.setSelectionRange(field.value.length, field.value.length);
+  }, []);
   useEffect(() => {
     const dismiss = (event: MouseEvent) => {
       if (
@@ -427,39 +469,21 @@ export function CommentEditor({
         <FieldLabel htmlFor={`${id}-body`} className="sr-only">
           Comment
         </FieldLabel>
-        <div className="group/comment-area relative">
-          <Textarea
-            ref={input}
-            id={`${id}-body`}
-            value={body}
-            rows={4}
-            maxLength={4000}
-            placeholder="Add a comment"
-            className="h-24 min-h-24 max-h-48 resize-y px-0 pt-0 pe-7 pb-7"
-            aria-invalid={Boolean(error)}
-            aria-describedby={error ? `${id}-error` : undefined}
-            onChange={(event) => {
-              setBody(event.target.value);
-              setError('');
-            }}
-          />
-          {body.length > 0 && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="xs"
-              aria-label="Clear comment"
-              className="absolute right-3 bottom-0 text-muted-foreground opacity-0 transition-opacity group-hover/comment-area:opacity-100 focus-visible:opacity-100"
-              onClick={() => {
-                setBody('');
-                setError('');
-                input.current?.focus();
-              }}
-            >
-              Clear
-            </Button>
-          )}
-        </div>
+        <Textarea
+          ref={input}
+          id={`${id}-body`}
+          value={body}
+          rows={4}
+          maxLength={4000}
+          placeholder="Add a comment"
+          className="h-24 min-h-24 max-h-48 resize-y rounded-none px-0 pt-0 pe-7 pb-0"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
+          onChange={(event) => {
+            setBody(event.target.value);
+            setError('');
+          }}
+        />
         {error && (
           <p
             id={`${id}-error`}

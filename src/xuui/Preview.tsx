@@ -23,10 +23,13 @@ import { VariantSurface } from './VariantSurface';
 import { CanvasFeedback, CanvasTools, CommentEditor } from './CanvasFeedback';
 import type { CanvasMode } from './CanvasFeedback';
 import { ReviewPanel } from './ReviewPanel';
+import { findCommentElement } from './feedback';
 import { useReviews } from './useReviews';
 import type { LayerProperties } from './layerProperties';
 import { LayerPanel } from './LayerPanel';
 import { useLayerTree } from './useLayerTree';
+import { useNewVariants } from './useNewVariants';
+import type { LayerNode } from './useLayerTree';
 import { StudyControls } from './StudyControls';
 import { VariantLabel } from './VariantLabel';
 
@@ -316,17 +319,22 @@ export default function Preview({
     [visible],
   );
   const tree = useLayerTree(canvas, variantIds);
+  const newVariantIds = useNewVariants(
+    study.id,
+    study.variants.map((item) => item.id),
+  );
+  const selectLayer = (node: LayerNode) => {
+    setMode('select');
+    setPendingComment(null);
+    if (node.variantId !== variantId) onVariantChange(node.variantId);
+    setSelection(node.elements);
+  };
   const layerPanel = (
     <LayerPanel
       tree={tree}
       selection={selection}
       focusRequest={layerFocusRequest}
-      onSelect={(node) => {
-        setMode('select');
-        setPendingComment(null);
-        if (node.variantId !== variantId) onVariantChange(node.variantId);
-        setSelection(node.elements);
-      }}
+      onSelect={selectLayer}
       studyControls={
         <StudyControls
           studyId={study.id}
@@ -337,6 +345,7 @@ export default function Preview({
           onStudyChange={onStudyChange}
           allVariants={allVariants}
           onAllVariantsChange={onAllVariantsChange}
+          newVariantIds={newVariantIds}
           onCollapse={() => {
             if (compactLayout) setLayersSheetOpen(false);
             else {
@@ -392,6 +401,7 @@ export default function Preview({
             <CanvasViewport
               studyId={study.id}
               activeId={variantId}
+              selection={selection}
               mode={allVariants ? 'all' : 'focused'}
             >
               {visible.map((variant) => (
@@ -399,6 +409,7 @@ export default function Preview({
                   key={variant.id}
                   data-variant-id={variant.id}
                   data-variant-name={variant.name}
+                  data-new-variant={newVariantIds.has(variant.id) || undefined}
                   className="relative shrink-0"
                   onPointerDownCapture={(event) => {
                     if (
@@ -418,7 +429,15 @@ export default function Preview({
                     variant={variant}
                     active={variant.id === variantId}
                     comparison={allVariants}
-                    onSelect={() => onVariantChange(variant.id)}
+                    onSelect={() => {
+                      // Like a frame name in a design tool, the title selects
+                      // the variant's top layer.
+                      const root = tree.find(
+                        (node) => node.variantId === variant.id,
+                      );
+                      if (root) selectLayer(root);
+                      else onVariantChange(variant.id);
+                    }}
                   />
                   <VariantSurface
                     variant={variant}
@@ -513,6 +532,18 @@ export default function Preview({
                         onVariantChange(comment.variantId, true);
                       // Wait for the variant switch before opening its editor.
                       requestAnimationFrame(() => editComment(comment));
+                    }}
+                    onOpen={(comment) => {
+                      if (comment.variantId !== variantId)
+                        onVariantChange(comment.variantId, true);
+                      // Submitted comments can't be edited, so select the
+                      // element they point at instead.
+                      requestAnimationFrame(() => {
+                        const element = findCommentElement(comment);
+                        setPendingComment(null);
+                        setMode('select');
+                        if (element) setSelection([element]);
+                      });
                     }}
                   />
                 }

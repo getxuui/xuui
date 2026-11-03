@@ -14,10 +14,13 @@ export function ReviewPanel({
   study,
   state,
   onEdit,
+  onOpen,
 }: {
   study: Study;
   state: ReviewState;
   onEdit: (comment: Comment) => void;
+  /** Show a submitted comment's element on the canvas. */
+  onOpen: (comment: Comment) => void;
 }) {
   const [filter, setFilter] = useState('all');
   const [copied, setCopied] = useState<string | null>(null);
@@ -31,6 +34,8 @@ export function ReviewPanel({
     comment.agentation?.element ||
     comment.target.accessibleName ||
     comment.target.tagName;
+  const context = (variant: string, comment: Comment) =>
+    `${variant} / ${targetName(comment)}`;
   const copy = async (review: Review, copyKey: string) => {
     const text = formatReview(review);
     try {
@@ -73,9 +78,10 @@ export function ReviewPanel({
             <CommentThread
               key={comment.id}
               commentId={comment.id}
-              variant={variantName(comment.variantId)}
-              target={targetName(comment)}
+              number={index + 1}
+              context={context(variantName(comment.variantId), comment)}
               body={comment.body}
+              onOpen={() => onEdit(comment)}
               actions={
                 <>
                   <Button
@@ -134,18 +140,20 @@ export function ReviewPanel({
         <>
           <ol aria-label="Submitted comments" className="flex flex-col gap-2">
             {reviews.flatMap((review) =>
-              review.comments.map((comment) => (
+              review.comments.map((comment, index) => (
                 <CommentThread
                   key={`${review.id}:${comment.id}`}
                   commentId={comment.id}
                   reviewId={review.id}
-                  variant={
+                  number={index + 1}
+                  context={context(
                     review.variants.find(
                       (variant) => variant.id === comment.variantId,
-                    )?.name ?? variantName(comment.variantId)
-                  }
-                  target={targetName(comment)}
+                    )?.name ?? variantName(comment.variantId),
+                    comment,
+                  )}
                   body={comment.body}
+                  onOpen={() => onOpen(comment)}
                   footer={
                     <>
                       <span role="status">

@@ -46,7 +46,8 @@ test('the Layers section fully collapses and reopens by control, drag, and short
   await collapse.focus();
   await collapse.press('Enter');
   await expect(tree).toHaveCount(0);
-  await expect(page.locator('#layer-tree')).toHaveCSS('height', '0px');
+  // Collapsed, the panel keeps exactly the height of its reopen bar.
+  await expect(page.locator('#layer-tree')).toHaveCSS('height', '40px');
   const expand = layers.getByRole('button', {
     name: 'Expand layer panel',
     exact: true,
@@ -56,6 +57,26 @@ test('the Layers section fully collapses and reopens by control, drag, and short
     pages.getByRole('combobox', { name: 'Study', exact: true }),
   ).toBeVisible();
   expect((await pages.boundingBox())!.height).toBeGreaterThan(before);
+  // Reopening must not flicker: the divider takes one new position and keeps
+  // it, frame after frame.
+  const positions = await expand.evaluate(async (button) => {
+    const divider = document.querySelector(
+      '[aria-label="Resize pages and layers"]',
+    )!;
+    (button as HTMLButtonElement).click();
+    const seen: number[] = [];
+    for (let frame = 0; frame < 12; frame++) {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      seen.push(Math.round(divider.getBoundingClientRect().y));
+    }
+    return seen;
+  });
+  expect(new Set(positions).size).toBe(1);
+  await layers
+    .getByRole('button', { name: 'Collapse layer panel', exact: true })
+    .click();
+  await expect(expand).toBeVisible();
+  await expand.focus();
   await expand.press('Enter');
   await expect(root).toBeFocused();
   await expect(root).toHaveAttribute('aria-selected', 'true');

@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- Clicking a frame's title selects the variant's top layer, in the focused view and in All.
+- Copying an inspector value replaces it with a tick in place, so the row no longer shifts. Copy fields have no focus ring, pressed shift or copied border.
+- The comment field no longer clips text at its corners, and its Clear button is gone.
+- Comment cards lead with their pin number. Clicking a card opens its comment: drafts reopen with the caret after the text, and submitted comments select the element they point at.
+- Comment pins move with the canvas in the same frame instead of trailing it.
+- Shift+1 zooms to fit every variant, Shift+2 zooms to the selection and Shift+0 zooms to 100%.
+- Variants that arrive after your last visit flash once in the variant list and on the canvas.
+- Reopening the Layers panel no longer flickers the divider.
+- The studio carries xuui's Matcha green, sparingly: the mark, comment pins and new-variant highlights.
+
 ## 0.1.0-alpha.2
 
 - Each variant remembers its own canvas position and zoom.

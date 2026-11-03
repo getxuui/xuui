@@ -54,19 +54,15 @@ export function VariantLabel({
       className="group/frame-title absolute top-[52px] left-[80px] z-20 flex h-5 items-center gap-1.5 text-[11px] font-medium text-muted-foreground"
     >
       <Frame aria-hidden="true" size={12} strokeWidth={1.5} />
-      {comparison ? (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="frame-title-name h-5 rounded-none px-0 text-[11px] font-medium text-muted-foreground aria-pressed:text-foreground"
-          aria-pressed={active}
-          onClick={onSelect}
-        >
-          {variant.name}
-        </Button>
-      ) : (
-        <span>{variant.name}</span>
-      )}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="frame-title-name h-5 rounded-none px-0 text-[11px] font-medium text-muted-foreground aria-pressed:text-foreground"
+        aria-pressed={comparison ? active : undefined}
+        onClick={onSelect}
+      >
+        {variant.name}
+      </Button>
       <Button
         variant="ghost"
         size="icon-xs"

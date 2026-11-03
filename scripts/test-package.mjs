@@ -186,12 +186,6 @@ try {
   await heading.click();
   const editor = page.getByRole('dialog', { name: 'Element comment' });
   const input = editor.getByRole('textbox', { name: 'Comment', exact: true });
-  await input.fill('Discard this text.');
-  await input.hover();
-  await editor
-    .getByRole('button', { name: 'Clear comment', exact: true })
-    .click();
-  await expect(input).toHaveValue('');
   await expect(input).toBeFocused();
   await input.fill('Feedback from the packed alpha.');
   await input.press('Control+Enter');

@@ -334,3 +334,50 @@ test('comment mode uses the bubble cursor and Space temporarily restores panning
     .click();
   await expect(heading).toHaveCSS('cursor', /cursors\/default\.svg/);
 });
+
+test('Shift+1 fits every variant, Shift+2 zooms to the selection and Shift+0 returns to 100%', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1&view=all');
+  const canvas = page.getByRole('main', { name: 'Variant canvas' });
+  const scene = page.locator('[data-canvas-scene]');
+  const inside = async (selector: string) => {
+    const area = (await canvas.boundingBox())!;
+    const boxes = await page
+      .locator(selector)
+      .evaluateAll((elements) =>
+        elements.map((element) => element.getBoundingClientRect().toJSON()),
+      );
+    return boxes.every(
+      (box) =>
+        box.left >= area.x - 1 &&
+        box.top >= area.y - 1 &&
+        box.right <= area.x + area.width + 1 &&
+        box.bottom <= area.y + area.height + 1,
+    );
+  };
+  await page.keyboard.press('Shift+1');
+  await expect.poll(() => inside('[data-variant-id]')).toBe(true);
+
+  const heading = page
+    .locator('[data-variant-id="paper-v1"] [data-xuui-design] h2')
+    .first();
+  await heading.click();
+  await page.keyboard.press('Shift+2');
+  const area = (await canvas.boundingBox())!;
+  await expect
+    .poll(async () => {
+      const box = (await heading.boundingBox())!;
+      const fills = Math.max(
+        box.width / (area.width - 96),
+        box.height / (area.height - 96),
+      );
+      const centred =
+        Math.abs(box.x + box.width / 2 - (area.x + area.width / 2)) < 2;
+      return fills > 0.98 && centred;
+    })
+    .toBe(true);
+
+  await page.keyboard.press('Shift+0');
+  await expect(scene).toHaveAttribute('data-canvas-scale', '1');
+});

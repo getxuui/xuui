@@ -370,3 +370,59 @@ test('comment pins follow pan and zoom, annotation mode blocks interactions, and
     page.getByRole('list', { name: 'Draft comments' }).getByRole('listitem'),
   ).toHaveCount(0);
 });
+
+test('comment cards lead with their number, open their comment, and pins keep up with the canvas', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  await commentOnHeading(page, 'Tighten the heading.');
+  const drafts = page.getByRole('list', { name: 'Draft comments' });
+  const number = drafts.getByRole('button', { name: /^Open comment 1: / });
+  await expect(number).toHaveText('1');
+  await expect(number).toHaveAccessibleName(/Paper \//);
+
+  // Clicking the card reopens the comment with the caret after its text.
+  await number.click();
+  const editor = page.getByRole('dialog', { name: 'Element comment' });
+  const field = editor.getByRole('textbox', { name: 'Comment', exact: true });
+  await expect(field).toBeFocused();
+  expect(
+    await field.evaluate(
+      (element: HTMLTextAreaElement) =>
+        element.selectionStart === element.value.length &&
+        element.selectionEnd === element.value.length,
+    ),
+  ).toBe(true);
+  await editor.getByRole('button', { name: 'Cancel', exact: true }).click();
+
+  // A pin moves in the same frame as the canvas, not on a later render.
+  const moved = await page.evaluate(() => {
+    const pin = document.querySelector('[data-comment-pin]')!;
+    const heading = document.querySelector('[data-xuui-design] h2')!;
+    const before = [pin, heading].map((item) => item.getBoundingClientRect().x);
+    document.querySelector('main[aria-label="Variant canvas"]')!.dispatchEvent(
+      new WheelEvent('wheel', {
+        deltaX: 120,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    const after = [pin, heading].map((item) => item.getBoundingClientRect().x);
+    return { pin: after[0] - before[0], heading: after[1] - before[1] };
+  });
+  expect(moved.heading).toBe(-120);
+  expect(moved.pin).toBe(moved.heading);
+
+  // A submitted comment opens by selecting the element it points at.
+  await page
+    .getByRole('button', { name: 'Submit review', exact: true })
+    .click();
+  const submitted = page.getByRole('list', { name: 'Submitted comments' });
+  await submitted
+    .getByRole('button', { name: /^Open comment 1: / })
+    .first()
+    .click();
+  await expect(
+    page.getByRole('region', { name: 'Selected layer' }),
+  ).toBeVisible();
+});

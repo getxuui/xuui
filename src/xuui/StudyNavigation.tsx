@@ -21,6 +21,7 @@ export function StudyNavigation({
   onStudyChange,
   onVariantChange,
   onAllVariantsChange,
+  newVariantIds,
 }: {
   studies: Pick<Study, 'id' | 'name'>[];
   studyId: string;
@@ -30,6 +31,7 @@ export function StudyNavigation({
   onStudyChange: (id: string) => void;
   onVariantChange: (id: string, focus?: boolean) => void;
   onAllVariantsChange: (all: boolean) => void;
+  newVariantIds: ReadonlySet<string>;
 }) {
   const study = studies.find((item) => item.id === studyId);
   const navigate = (
@@ -155,6 +157,7 @@ export function StudyNavigation({
                   !allVariants && variant.id === variantId ? 'page' : undefined
                 }
                 data-marquee-host
+                data-new-variant={newVariantIds.has(variant.id) || undefined}
                 className="variant-list-link flex min-h-7 min-w-0 items-center gap-2 rounded-md px-2 text-xs"
                 onClick={(event) =>
                   navigate(event, () => onVariantChange(variant.id, true))

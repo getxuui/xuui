@@ -13,6 +13,9 @@ import { MaskedMarquee } from './MaskedMarquee';
 import { layerIcons } from './layerIdentity';
 import type { LayerNode } from './useLayerTree';
 
+/** Height of the collapsed Layers bar; h-10 in the markup. */
+const collapsedBarHeight = 40;
+
 export function LayerPanel({
   tree,
   selection,
@@ -305,10 +308,32 @@ export function LayerPanel({
           id="layer-tree"
           minSize={96}
           collapsible
-          collapsedSize={0}
+          // Collapsed, the panel keeps room for its reopen bar, so the group's
+          // height never changes and expanding doesn't flicker the divider.
+          collapsedSize={collapsedBarHeight}
           panelRef={panel}
-          onResize={(size) => setCollapsed(size.inPixels === 0)}
+          onResize={(size) => setCollapsed(size.inPixels <= collapsedBarHeight)}
         >
+          {collapsed && (
+            <div className="flex h-10 items-center px-4">
+              <Button
+                ref={reopen}
+                variant="ghost"
+                size="xs"
+                className="w-full justify-between"
+                aria-label="Expand layer panel"
+                aria-expanded={false}
+                aria-controls="component-layers"
+                onClick={() => {
+                  pendingFocus.current = 'expand';
+                  panel.current?.expand();
+                }}
+              >
+                Layers
+                <ChevronUp data-icon="inline-end" />
+              </Button>
+            </div>
+          )}
           <section
             hidden={collapsed}
             className={cn(
@@ -356,24 +381,6 @@ export function LayerPanel({
           </section>
         </ResizablePanel>
       </ResizablePanelGroup>
-      {collapsed && (
-        <Button
-          ref={reopen}
-          variant="ghost"
-          size="xs"
-          className="mx-4 my-2 shrink-0 justify-between"
-          aria-label="Expand layer panel"
-          aria-expanded={false}
-          aria-controls="component-layers"
-          onClick={() => {
-            pendingFocus.current = 'expand';
-            panel.current?.expand();
-          }}
-        >
-          Layers
-          <ChevronUp data-icon="inline-end" />
-        </Button>
-      )}
     </aside>
   );
 }

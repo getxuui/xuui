@@ -56,13 +56,18 @@ export function CanvasViewport({
   studyId,
   activeId,
   mode,
+  selection,
 }: {
   children: ReactNode;
   studyId: string;
   activeId: string;
   mode: 'focused' | 'all';
+  /** The selected layers, for zooming to the selection. */
+  selection: Element[];
 }) {
   const viewport = useRef<HTMLElement>(null);
+  const selected = useRef(selection);
+  selected.current = selection;
   const scene = useRef<HTMLDivElement>(null);
   const pan = useRef({ x: 0, y: 0 });
   const scale = useRef(1);
@@ -133,6 +138,48 @@ export function CanvasViewport({
         y: bounds.y + bounds.height / 2,
       });
     };
+    // Fit the given elements inside the canvas, like a design tool's zoom to
+    // fit and zoom to selection.
+    const zoomToFit = (elements: Element[]) => {
+      const bounds = () => {
+        const rects = elements
+          .map((element) => element.getBoundingClientRect())
+          .filter((rect) => rect.width && rect.height);
+        if (!rects.length) return null;
+        const left = Math.min(...rects.map((rect) => rect.left));
+        const top = Math.min(...rects.map((rect) => rect.top));
+        const right = Math.max(...rects.map((rect) => rect.right));
+        const bottom = Math.max(...rects.map((rect) => rect.bottom));
+        return { left, top, width: right - left, height: bottom - top };
+      };
+      const before = bounds();
+      if (!before) return;
+      const room = area.getBoundingClientRect();
+      const margin = 48;
+      const factor = Math.min(
+        (room.width - margin * 2) / before.width,
+        (room.height - margin * 2) / before.height,
+      );
+      zoomAt(scale.current * factor, {
+        x: before.left + before.width / 2,
+        y: before.top + before.height / 2,
+      });
+      const after = bounds();
+      if (!after) return;
+      pan.current = {
+        x:
+          pan.current.x +
+          room.x +
+          room.width / 2 -
+          (after.left + after.width / 2),
+        y:
+          pan.current.y +
+          room.y +
+          room.height / 2 -
+          (after.top + after.height / 2),
+      };
+      apply();
+    };
     const touchPinch = (): PinchGesture => {
       const [a, b] = [...touches.values()];
       return {
@@ -180,6 +227,21 @@ export function CanvasViewport({
         return;
       }
       if (inputTarget(event.target)) return;
+      if (
+        event.shiftKey &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        ['Digit0', 'Digit1', 'Digit2'].includes(event.code)
+      ) {
+        event.preventDefault();
+        if (event.repeat) return;
+        if (event.code === 'Digit0') resetZoom();
+        else if (event.code === 'Digit1')
+          zoomToFit([...world.querySelectorAll('[data-variant-id]')]);
+        else zoomToFit(selected.current);
+        return;
+      }
       if (event.code === 'Space') {
         event.preventDefault();
         space.current = true;

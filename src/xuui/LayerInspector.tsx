@@ -43,7 +43,7 @@ function Readout({
         <Button
           variant="secondary"
           size="sm"
-          className="layer-property-copy h-auto min-h-8 w-full justify-between gap-2 py-1"
+          className="layer-property-copy relative h-auto min-h-8 w-full justify-between gap-2 py-1"
           aria-label={`Copy ${label}: ${value}`}
           title={`Copy ${label.toLowerCase()}`}
           data-copied={isCopied || undefined}
@@ -55,10 +55,12 @@ function Readout({
           >
             {abbreviation ?? label}
           </span>
+          {/* The tick replaces the value in place, so the row keeps its size. */}
           <span
             className={cn(
               'flex min-w-0 items-center justify-end gap-2',
               color && 'layer-color-value',
+              isCopied && 'invisible',
             )}
           >
             {color && (
@@ -103,7 +105,13 @@ function Readout({
               </span>
             )}
           </span>
-          {isCopied && <Check data-icon="inline-end" aria-hidden="true" />}
+          {isCopied && (
+            <Check
+              data-icon="inline-end"
+              aria-hidden="true"
+              className="absolute end-2.5 top-1/2 -translate-y-1/2"
+            />
+          )}
         </Button>
       </dd>
     </div>

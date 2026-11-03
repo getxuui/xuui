@@ -14,6 +14,7 @@ export function StudyControls({
   studies,
   onStudyChange,
   onCollapse,
+  newVariantIds,
 }: {
   studyId: string;
   variantId: string | undefined;
@@ -24,12 +25,13 @@ export function StudyControls({
   studies: Study[];
   onStudyChange: (id: string) => void;
   onCollapse: () => void;
+  newVariantIds: ReadonlySet<string>;
 }) {
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-2">
       <header className="flex shrink-0 items-center justify-between gap-2">
         <h1 aria-label="xuui" className="flex min-h-6 items-center">
-          <XuuiLogo className="size-4 shrink-0" />
+          <XuuiLogo className="size-4 shrink-0 text-brand" />
         </h1>
         <Button
           variant="ghost"
@@ -49,6 +51,7 @@ export function StudyControls({
         onStudyChange={onStudyChange}
         onVariantChange={onVariantChange}
         onAllVariantsChange={onAllVariantsChange}
+        newVariantIds={newVariantIds}
       />
     </div>
   );

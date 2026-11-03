@@ -203,3 +203,41 @@ test('the study switcher and variant list work in the narrow left drawer', async
     fullPage: true,
   });
 });
+
+test('variants that arrive after a visit flash once in the list and on the canvas', async ({
+  page,
+}) => {
+  const fresh = page.locator('[data-new-variant]');
+  await page.goto('/?variant=paper-v1&view=all');
+  await expect(page.locator('[data-variant-id="paper-v1"]')).toBeVisible();
+  // The first visit marks every variant as seen.
+  await expect(fresh).toHaveCount(0);
+
+  // Pretend the browser last saw the study before Essential was added.
+  await page.evaluate(() =>
+    localStorage.setItem(
+      'xuui:card-exploration:seen-variants:v1',
+      JSON.stringify([
+        'paper-v1',
+        'after-hours-v1',
+        'index-v1',
+        'soft-focus-v1',
+      ]),
+    ),
+  );
+  await page.reload();
+  await expect(
+    page
+      .getByRole('navigation', { name: 'Variants' })
+      .locator('[data-new-variant]'),
+  ).toHaveAccessibleName(/Essential/);
+  await expect(
+    page.locator('[data-variant-id="essential-v1"][data-new-variant]'),
+  ).toBeVisible();
+  await expect(fresh).toHaveCount(0, { timeout: 4000 });
+
+  // Once seen, it doesn't flash again.
+  await page.reload();
+  await expect(page.locator('[data-variant-id="paper-v1"]')).toBeVisible();
+  await expect(fresh).toHaveCount(0);
+});
