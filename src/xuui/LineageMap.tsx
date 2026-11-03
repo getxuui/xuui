@@ -1,57 +1,31 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import type { LineageComment, LineageEdge } from './lineage';
+import { findCommentElement } from './feedback';
+import type { LineageEdge, PostedComment } from './lineage';
 
 type Box = { x: number; y: number; width: number; height: number };
-
-function Pin({ number }: { number: number }) {
-  return (
-    <span aria-hidden="true" className="feedback-pin lineage-pin">
-      {number}
-    </span>
-  );
-}
-
-function Quote({
-  comment,
-  repeated,
-}: {
-  comment: LineageComment;
-  repeated: boolean;
-}) {
-  return (
-    <p
-      className={repeated ? 'lineage-label lineage-label-pin' : 'lineage-label'}
-    >
-      <Pin number={comment.number} />
-      {repeated ? (
-        <span className="sr-only">Comment {comment.number}, as above</span>
-      ) : (
-        <span className="lineage-text">“{comment.body}”</span>
-      )}
-    </p>
-  );
-}
-
-/** On-screen width a comment needs before its text is shown in full. */
-const readableWidth = 240;
+type Point = { x: number; y: number };
 
 /**
- * Lines between variants and the review comments that led from one to the
- * next. It sits inside the canvas scene, so it pans and zooms with the frames;
- * positions are measured in the scene's own, unscaled coordinates. Labels keep
- * their on-screen size at any zoom, like comment pins, and shrink to their pin
- * when there isn't room for the text; hovering shows it.
+ * Wires from each variant to the ones developed from it, and submitted
+ * comments pinned where they were posted on their artboards, so a comment
+ * keeps pointing at what it was about. It sits inside the canvas scene, so it
+ * pans and zooms with the frames; positions are measured in the scene's own,
+ * unscaled coordinates. Pins keep their on-screen size at any zoom and show
+ * their text on hover.
  */
 export function LineageMap({
   edges,
-  verdicts,
+  comments,
 }: {
   edges: LineageEdge[];
-  verdicts: Map<string, LineageComment[]>;
+  comments: PostedComment[];
 }) {
   const root = useRef<HTMLDivElement>(null);
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
+  const [pins, setPins] = useState<Record<string, Point>>({});
   const [scale, setScale] = useState(1);
+  const commentsRef = useRef(comments);
+  commentsRef.current = comments;
   useLayoutEffect(() => {
     let frame = 0;
     let previous = '';
@@ -60,28 +34,42 @@ export function LineageMap({
       const container = root.current?.parentElement;
       if (container) {
         const scene = container.closest<HTMLElement>('[data-canvas-scene]');
-        const scale = Number(scene?.dataset.canvasScale) || 1;
+        const zoom = Number(scene?.dataset.canvasScale) || 1;
         const origin = container.getBoundingClientRect();
-        const next: Record<string, Box> = {};
+        const local = (rect: DOMRect): Box => ({
+          x: round((rect.x - origin.x) / zoom),
+          y: round((rect.y - origin.y) / zoom),
+          width: round(rect.width / zoom),
+          height: round(rect.height / zoom),
+        });
+        const nextBoxes: Record<string, Box> = {};
         container
           .querySelectorAll<HTMLElement>('[data-variant-id]')
           .forEach((variant) => {
             const design =
               variant.querySelector('[data-xuui-design]') ?? variant;
-            const rect = design.getBoundingClientRect();
-            next[variant.dataset.variantId!] = {
-              x: round((rect.x - origin.x) / scale),
-              y: round((rect.y - origin.y) / scale),
-              width: round(rect.width / scale),
-              height: round(rect.height / scale),
-            };
+            nextBoxes[variant.dataset.variantId!] = local(
+              design.getBoundingClientRect(),
+            );
           });
-        const key = JSON.stringify(next);
+        const nextPins: Record<string, Point> = {};
+        for (const comment of commentsRef.current) {
+          const element = findCommentElement(comment);
+          if (!element || !container.contains(element)) continue;
+          const box = local(element.getBoundingClientRect());
+          const point = comment.target.pin ?? { x: 1, y: 0 };
+          nextPins[comment.id] = {
+            x: box.x + box.width * point.x,
+            y: box.y + box.height * point.y,
+          };
+        }
+        const key = JSON.stringify([nextBoxes, nextPins]);
         if (key !== previous) {
           previous = key;
-          setBoxes(next);
+          setBoxes(nextBoxes);
+          setPins(nextPins);
         }
-        setScale(Math.round(scale * 1000) / 1000);
+        setScale(Math.round(zoom * 1000) / 1000);
       }
       frame = requestAnimationFrame(measure);
     };
@@ -89,18 +77,15 @@ export function LineageMap({
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  const placed = edges.flatMap((edge) => {
-    const a = boxes[edge.from];
-    const b = boxes[edge.to];
-    if (!a || !b) return [];
-    const start = { x: a.x + a.width, y: a.y + a.height / 2 };
-    const end = { x: b.x, y: b.y + b.height / 2 };
-    return [{ edge, start, end }];
-  });
   return (
     <div ref={root} data-lineage-map className="lineage-map">
       <svg aria-hidden="true" className="lineage-lines" width="1" height="1">
-        {placed.map(({ edge, start, end }) => {
+        {edges.map((edge) => {
+          const a = boxes[edge.from];
+          const b = boxes[edge.to];
+          if (!a || !b) return null;
+          const start = { x: a.x + a.width, y: a.y + a.height / 2 };
+          const end = { x: b.x, y: b.y + b.height / 2 };
           const bend = (end.x - start.x) / 2;
           return (
             <path
@@ -112,50 +97,21 @@ export function LineageMap({
           );
         })}
       </svg>
-      {placed
-        .filter(({ edge }) => edge.comments.length)
-        .map(({ edge, start, end }) => (
-          <div
-            key={`label:${edge.from}:${edge.to}`}
-            data-lineage-label={`${edge.from}:${edge.to}`}
-            data-compact={
-              (end.x - start.x) * scale < readableWidth || undefined
-            }
-            className="lineage-labels"
-            style={{
-              left: (start.x + end.x) / 2,
-              top: (start.y + end.y) / 2,
-              scale: 1 / scale,
-            }}
-          >
-            {edge.comments.map((comment) => (
-              <Quote
-                key={comment.id}
-                comment={comment}
-                repeated={edge.repeated.has(comment.id)}
-              />
-            ))}
-          </div>
-        ))}
-      {[...verdicts].map(([id, comments]) => {
-        const box = boxes[id];
-        if (!box) return null;
+      {comments.map((comment) => {
+        const pin = pins[comment.id];
+        if (!pin) return null;
         return (
-          <div
-            key={`verdict:${id}`}
-            data-lineage-verdict={id}
-            data-compact={scale < 0.5 || undefined}
-            className="lineage-labels lineage-verdict"
-            style={{
-              left: box.x + box.width + 20 / scale,
-              top: box.y + box.height / 2,
-              scale: 1 / scale,
-            }}
+          <p
+            key={comment.id}
+            data-lineage-comment={comment.id}
+            className="lineage-comment"
+            style={{ left: pin.x, top: pin.y, scale: 1 / scale }}
           >
-            {comments.map((comment) => (
-              <Quote key={comment.id} comment={comment} repeated={false} />
-            ))}
-          </div>
+            <span aria-hidden="true" className="feedback-pin lineage-pin">
+              {comment.number}
+            </span>
+            <span className="lineage-text">“{comment.body}”</span>
+          </p>
         );
       })}
     </div>

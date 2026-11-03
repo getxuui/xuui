@@ -2,7 +2,10 @@ import { expect, test } from '@playwright/test';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { defineStudy } from '../src/xuui/model';
-import { ticketHistoryReview } from './fixtures/ticket-history/review';
+import {
+  ticketComments,
+  ticketHistoryReview,
+} from './fixtures/ticket-history/review';
 
 const reviewFile = resolve(
   '.xuui-test/reviews',
@@ -33,26 +36,46 @@ test('All lays a study with lineage out as its history, labelled with review com
     'history-morning-v2',
   );
 
+  // Wires join the frames on their own; comments aren't moved onto them.
   await expect(page.locator('[data-lineage-line]')).toHaveCount(2);
-  await expect(
-    page.locator(
-      '[data-lineage-label="history-botanical-v1:history-morning-v1"]',
-    ),
-  ).toContainText('Make it warmer');
-  await expect(
-    page.locator(
-      '[data-lineage-label="history-morning-v1:history-morning-v2"]',
-    ),
-  ).toContainText('Softer still');
-  // Comments that didn't lead to a new variant stay beside their variant.
-  await expect(
-    page.locator('[data-lineage-verdict="history-night-v1"]'),
-  ).toContainText('Too dark');
+  await expect(page.locator('[data-lineage-label]')).toHaveCount(0);
   await expect(
     page
       .locator('[data-variant-id="history-morning-v2"]')
       .locator('[data-variant-label]'),
   ).toHaveText('Shipped');
+
+  // Each submitted comment stays pinned where it was posted: by default the
+  // top-right corner of the element it points at.
+  const pins = page.locator('[data-lineage-comment]');
+  await expect(pins).toHaveCount(3);
+  const warmer = page.locator(
+    `[data-lineage-comment="${ticketComments.warmer}"]`,
+  );
+  const heading = page.locator(
+    '[data-variant-id="history-botanical-v1"] [data-xuui-design] h2',
+  );
+  await expect
+    .poll(async () => {
+      const pin = (await warmer.boundingBox())!;
+      const target = (await heading.boundingBox())!;
+      return (
+        Math.abs(pin.x + 3 - (target.x + target.width)) < 2 &&
+        Math.abs(pin.y + 3 - target.y) < 2
+      );
+    })
+    .toBe(true);
+  await expect(warmer).toContainText('Make it warmer');
+
+  // Pins keep their on-screen size when the canvas zooms out.
+  const before = (await warmer.locator('.lineage-pin').boundingBox())!;
+  await page.keyboard.press('Shift+1');
+  await expect
+    .poll(async () => {
+      const after = (await warmer.locator('.lineage-pin').boundingBox())!;
+      return Math.round(after.width) === Math.round(before.width);
+    })
+    .toBe(true);
 
   // Lines live in the canvas scene, so they pan with the frames.
   const moved = await page.evaluate(() => {

@@ -29,7 +29,7 @@ import type { LayerProperties } from './layerProperties';
 import { LayerPanel } from './LayerPanel';
 import { useLayerTree } from './useLayerTree';
 import { useNewVariants } from './useNewVariants';
-import { lineageColumns, lineageEdges } from './lineage';
+import { lineageColumns, lineageEdges, postedComments } from './lineage';
 import { LineageMap } from './LineageMap';
 import type { LayerNode } from './useLayerTree';
 import { StudyControls } from './StudyControls';
@@ -331,7 +331,11 @@ export default function Preview({
     if (!allVariants) return null;
     const columns = lineageColumns(study.variants);
     if (!columns) return null;
-    return { columns, ...lineageEdges(study.variants, review.reviews) };
+    return {
+      columns,
+      edges: lineageEdges(study.variants),
+      comments: postedComments(review.reviews),
+    };
   }, [allVariants, study.variants, review.reviews]);
   const renderFrame = (variant: Variant) => (
     <div
@@ -468,7 +472,7 @@ export default function Preview({
                   ))}
                   <LineageMap
                     edges={lineage.edges}
-                    verdicts={lineage.verdicts}
+                    comments={lineage.comments}
                   />
                 </div>
               ) : (

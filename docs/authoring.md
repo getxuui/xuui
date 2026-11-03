@@ -54,7 +54,7 @@ A registered component receives `{ props, state, machine }` as `StudioBindings`.
 
 ## History
 
-When a variant develops from earlier ones, record where it came from. The All view then lays the study out as its history: generations as columns, joined by lines that carry the review comments that led from one variant to the next.
+When a variant develops from earlier ones, record where it came from. The All view then lays the study out as its history: generations as columns, joined by wires from each variant to the ones developed from it. Submitted comments stay pinned where they were posted on their artboards, so each keeps pointing at what it was about; hover a pin to read it.
 
 ```tsx
 {
@@ -71,10 +71,10 @@ When a variant develops from earlier ones, record where it came from. The All vi
 ```
 
 - `from` lists the variants in the same study this one was developed from. A variant can have several.
-- `answers` lists the IDs of the submitted review comments it responds to. Each comment appears on the line from the variant it was made on.
+- `answers` lists the IDs of the submitted review comments it responds to.
 - `labels` are up to three short tags shown beside the variant's name, such as "Shipped". They record the reviewer's verdict in their words; xuui gives them no meaning and treats every variant the same.
 
-Comments that no variant answers stay beside the variant they were made on, so verdicts and feedback still to act on remain visible. All three fields are optional; a study without `from` keeps a single row.
+All three fields are optional; a study without `from` keeps a single row.
 
 ## Updates
 

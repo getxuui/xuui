@@ -1,6 +1,6 @@
-import type { Review, Variant } from './model';
+import type { Comment, Review, Variant } from './model';
 
-type Lineage = Pick<Variant, 'id' | 'from' | 'answers'>;
+type Lineage = Pick<Variant, 'id' | 'from'>;
 
 /**
  * Columns of variant IDs, one per generation: a variant sits one column to
@@ -48,61 +48,26 @@ export function lineageColumns(variants: Lineage[]): string[][] | null {
   return columns;
 }
 
-export type LineageComment = {
-  id: string;
-  body: string;
-  /** The comment's number in its review, as on its card and pin. */
+export type LineageEdge = { from: string; to: string };
+
+/** Lines from each variant to the ones developed from it. */
+export function lineageEdges(variants: Lineage[]): LineageEdge[] {
+  return variants.flatMap((variant) =>
+    (variant.from ?? []).map((from) => ({ from, to: variant.id })),
+  );
+}
+
+export type PostedComment = Comment & {
+  /** The comment's number in its review, as on its card. */
   number: number;
 };
 
-export type LineageEdge = {
-  from: string;
-  to: string;
-  comments: LineageComment[];
-  /** Comment IDs already labelled on an earlier line; show only their pin. */
-  repeated: Set<string>;
-};
-
-/**
- * Lines from each variant to the ones developed from it, labelled with the
- * submitted comments they answer, plus each variant's comments that no
- * variant answers yet, such as a verdict or feedback still to act on.
- */
-export function lineageEdges(variants: Lineage[], reviews: Review[]) {
-  const comments = new Map<string, LineageComment & { variantId: string }>();
-  for (const review of reviews)
-    review.comments.forEach((comment, index) =>
-      comments.set(comment.id, {
-        id: comment.id,
-        body: comment.body,
-        number: index + 1,
-        variantId: comment.variantId,
-      }),
-    );
-  const answered = new Set(
-    variants.flatMap((variant) => variant.answers ?? []),
+/** Submitted comments, to show where they were posted on their artboards. */
+export function postedComments(reviews: Review[]): PostedComment[] {
+  return reviews.flatMap((review) =>
+    review.comments.map((comment, index) => ({
+      ...comment,
+      number: index + 1,
+    })),
   );
-  const labelled = new Set<string>();
-  const edges: LineageEdge[] = [];
-  for (const variant of variants)
-    for (const parent of variant.from ?? []) {
-      const own = (variant.answers ?? [])
-        .map((id) => comments.get(id))
-        .filter((comment) => comment?.variantId === parent)
-        .map((comment) => comment!);
-      const repeated = new Set(
-        own.filter((comment) => labelled.has(comment.id)).map(({ id }) => id),
-      );
-      own.forEach((comment) => labelled.add(comment.id));
-      edges.push({ from: parent, to: variant.id, comments: own, repeated });
-    }
-  const verdicts = new Map<string, LineageComment[]>();
-  for (const variant of variants) {
-    const own = [...comments.values()].filter(
-      (comment) =>
-        comment.variantId === variant.id && !answered.has(comment.id),
-    );
-    if (own.length) verdicts.set(variant.id, own);
-  }
-  return { edges, verdicts };
 }
