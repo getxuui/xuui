@@ -2,16 +2,16 @@
 
 ## Unreleased
 
-- Clicking a frame's title selects the variant's top layer, in the focused view and in All.
+- Clicking a frame's title selects the variant's top layer. In All, the Open icon beside the title, or double-clicking the title, opens the variant on its own. Frame titles keep their on-screen size at any zoom, and Layers starts with one collapsed row per variant.
 - Copying an inspector value replaces it with a tick in place, so the row no longer shifts. Copy fields have no focus ring, pressed shift or copied border.
 - The comment field no longer clips text at its corners, and its Clear button is gone.
 - Comment cards lead with their pin number. Clicking a card opens its comment: drafts reopen with the caret after the text, and submitted comments select the element they point at.
 - Comment pins move with the canvas in the same frame instead of trailing it.
-- Shift+1 zooms to fit every variant, Shift+2 zooms to the selection and Shift+0 zooms to 100%.
+- Shift+1 zooms to fit every variant, Shift+2 zooms to the selection (or the active variant when nothing is selected) and Shift+0 zooms to 100%. They also work while focus is in a sidebar.
 - Variants that arrive after your last visit flash once in the variant list and on the canvas.
 - Reopening the Layers panel no longer flickers the divider.
 - The studio carries xuui's Matcha green, sparingly: the mark, comment pins and new-variant highlights.
-- Comment pins are solid green teardrops pointing at the commented spot, and comment bubbles are dark, outline-free blobs.
+- Comment pins are solid green teardrops pointing at the commented spot.
 - Variants can record their history with optional `from`, `answers` and `labels`. The All view then lays the study out as columns of generations, joined by wires. Submitted comments stay pinned where they were posted on their artboards, keep their size at any zoom and show their text on hover.
 
 ## 0.1.0-alpha.2

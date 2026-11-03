@@ -51,7 +51,9 @@ export function LayerPanel({
     return flat;
   }, [tree]);
   useEffect(() => {
-    setExpanded(new Set(rootIds.split('|')));
+    // One variant opens its tree; several (All) start as one row each.
+    const roots = rootIds ? rootIds.split('|') : [];
+    setExpanded(new Set(roots.length > 1 ? [] : roots));
   }, [rootIds]);
   useEffect(() => {
     if (!selection.length) return;

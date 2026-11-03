@@ -95,3 +95,36 @@ test('clicking a frame title selects the variant’s top layer', async ({
     page.getByRole('region', { name: 'Selected layer' }),
   ).toBeVisible();
 });
+
+test('from All, a frame title opens its variant and keeps its size when zoomed out', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1&view=all');
+  const titles = page.locator('[data-frame-title]');
+  const after = titles.filter({
+    has: page.getByRole('button', { name: 'After hours', exact: true }),
+  });
+
+  // Each variant starts as one collapsed row in Layers.
+  const layers = page.getByRole('tree', { name: 'Component layers' });
+  await expect(layers.locator('[aria-expanded="true"]')).toHaveCount(0);
+
+  // Titles hold their on-screen size at any zoom.
+  const before = (await after.boundingBox())!;
+  await page.keyboard.press('Shift+1');
+  await expect
+    .poll(async () => Math.round((await after.boundingBox())!.height))
+    .toBe(Math.round(before.height));
+
+  // The hover icon opens the variant on its own.
+  await after.hover();
+  await after.getByRole('button', { name: 'Open After hours' }).click();
+  await expect(page).toHaveURL(/variant=after-hours-v1$/);
+  await expect(page.locator('[data-variant-id]')).toHaveCount(1);
+
+  // So does double-clicking the title.
+  await page.goto('/?variant=paper-v1&view=all');
+  await titles.getByRole('button', { name: 'Paper', exact: true }).dblclick();
+  await expect(page).toHaveURL(/variant=paper-v1$/);
+  await expect(page.locator('[data-variant-id]')).toHaveCount(1);
+});

@@ -110,7 +110,7 @@ export function LineageMap({
             <span aria-hidden="true" className="feedback-pin lineage-pin">
               {comment.number}
             </span>
-            <span className="lineage-text">“{comment.body}”</span>
+            <span className="lineage-text">{comment.body}</span>
           </p>
         );
       })}

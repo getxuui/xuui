@@ -739,9 +739,11 @@
   padding: 8px 12px;
   border: 1px solid transparent;
   border-radius: 4px 14px 14px 14px;
-  background: var(--foreground);
-  box-shadow: 0 8px 20px -6px rgb(0 0 0 / 35%);
-  color: var(--background);
+  background: var(--popover);
+  box-shadow:
+    0 0 0 1px var(--border),
+    var(--studio-floating-shadow);
+  color: var(--popover-foreground);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -761,6 +763,10 @@
   width: 24px;
   height: 24px;
   transform: none;
+}
+[data-frame-title] {
+  scale: calc(1 / var(--canvas-zoom, 1));
+  transform-origin: left bottom;
 }
 .variant-label-tag {
   padding: 1px 7px;

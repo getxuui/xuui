@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Copy, Frame } from 'lucide-react';
+import { Check, Copy, Frame, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -9,12 +9,15 @@ export function VariantLabel({
   active,
   comparison,
   onSelect,
+  onOpen,
 }: {
   studyId: string;
   variant: { id: string; name: string; labels?: string[] };
   active: boolean;
   comparison: boolean;
   onSelect: () => void;
+  /** Open the variant on its own, from All. */
+  onOpen: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const [fallback, setFallback] = useState('');
@@ -59,7 +62,9 @@ export function VariantLabel({
         size="sm"
         className="frame-title-name h-5 rounded-none px-0 text-[11px] font-medium text-muted-foreground aria-pressed:text-foreground"
         aria-pressed={comparison ? active : undefined}
+        title={comparison ? 'Double-click to open' : undefined}
         onClick={onSelect}
+        onDoubleClick={comparison ? onOpen : undefined}
       >
         {variant.name}
       </Button>
@@ -68,6 +73,18 @@ export function VariantLabel({
           {label}
         </span>
       ))}
+      {comparison && (
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          className="frame-title-open pointer-events-none size-5 opacity-0 transition-opacity group-hover/frame-title:pointer-events-auto group-hover/frame-title:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100"
+          aria-label={`Open ${variant.name}`}
+          title="Open variant"
+          onClick={onOpen}
+        >
+          <Maximize2 data-icon="inline-start" />
+        </Button>
+      )}
       <Button
         variant="ghost"
         size="icon-xs"

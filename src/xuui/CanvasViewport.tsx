@@ -109,6 +109,7 @@ export function CanvasViewport({
     const apply = () => {
       world.style.transform = `translate(${pan.current.x}px, ${pan.current.y}px) scale(${scale.current})`;
       world.dataset.canvasScale = String(scale.current);
+      world.style.setProperty('--canvas-zoom', String(scale.current));
       setZoomPercent(Math.round(scale.current * 100));
       window.dispatchEvent(new Event('xuui:camera-change'));
       if (!storageKey) return;
@@ -226,22 +227,37 @@ export function CanvasViewport({
         if (!event.repeat) resetZoom();
         return;
       }
-      if (inputTarget(event.target)) return;
+      // Zoom shortcuts also work from the sidebars, where layers and frame
+      // titles are selected; only typing in a field keeps them out.
       if (
         event.shiftKey &&
         !event.metaKey &&
         !event.ctrlKey &&
         !event.altKey &&
-        ['Digit0', 'Digit1', 'Digit2'].includes(event.code)
+        ['Digit0', 'Digit1', 'Digit2'].includes(event.code) &&
+        !(
+          event.target instanceof Element &&
+          event.target.closest('input,textarea,select,[contenteditable="true"]')
+        )
       ) {
         event.preventDefault();
         if (event.repeat) return;
         if (event.code === 'Digit0') resetZoom();
         else if (event.code === 'Digit1')
           zoomToFit([...world.querySelectorAll('[data-variant-id]')]);
-        else zoomToFit(selected.current);
+        else
+          zoomToFit(
+            selected.current.length
+              ? selected.current
+              : [
+                  ...world.querySelectorAll(
+                    `[data-variant-id="${CSS.escape(activeId)}"] [data-xuui-design]`,
+                  ),
+                ],
+          );
         return;
       }
+      if (inputTarget(event.target)) return;
       if (event.code === 'Space') {
         event.preventDefault();
         space.current = true;

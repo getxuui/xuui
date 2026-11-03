@@ -362,6 +362,7 @@ export default function Preview({
         variant={variant}
         active={variant.id === variantId}
         comparison={allVariants}
+        onOpen={() => onVariantChange(variant.id, true)}
         onSelect={() => {
           // Like a frame name in a design tool, the title selects
           // the variant's top layer.

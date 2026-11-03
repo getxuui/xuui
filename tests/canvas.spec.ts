@@ -381,3 +381,45 @@ test('Shift+1 fits every variant, Shift+2 zooms to the selection and Shift+0 ret
   await page.keyboard.press('Shift+0');
   await expect(scene).toHaveAttribute('data-canvas-scale', '1');
 });
+
+test('zoom shortcuts work after selecting from the sidebar, and Shift+2 falls back to the variant', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  const canvas = page.getByRole('main', { name: 'Variant canvas' });
+  const scene = page.locator('[data-canvas-scene]');
+
+  // Nothing selected: Shift+2 fits the active variant.
+  await page.keyboard.press('Shift+2');
+  await expect(scene).not.toHaveAttribute('data-canvas-scale', '1');
+  await page.keyboard.press('Shift+0');
+  await expect(scene).toHaveAttribute('data-canvas-scale', '1');
+
+  // Selecting in Layers leaves focus in the sidebar; Shift+2 still zooms.
+  const layers = page.getByRole('complementary', {
+    name: 'Layers',
+    exact: true,
+  });
+  await layers
+    .getByRole('treeitem', { name: 'Paper', exact: true })
+    .locator(':scope > .layer-tree-row')
+    .click();
+  await expect(page.locator(':focus')).toBeAttached();
+  expect(
+    await page.evaluate(() =>
+      Boolean(document.activeElement?.closest('aside')),
+    ),
+  ).toBe(true);
+  await page.keyboard.press('Shift+2');
+  const area = (await canvas.boundingBox())!;
+  const design = page.locator(
+    '[data-variant-id="paper-v1"] [data-xuui-design]',
+  );
+  await expect
+    .poll(async () => {
+      const box = (await design.boundingBox())!;
+      return Math.abs(box.x + box.width / 2 - (area.x + area.width / 2)) < 2;
+    })
+    .toBe(true);
+  await expect(scene).not.toHaveAttribute('data-canvas-scale', '1');
+});
