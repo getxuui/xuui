@@ -32,7 +32,6 @@ The companion [`/present` skill](.agents/skills/present/SKILL.md) guides registr
 - [Authoring studies and controls](docs/authoring.md)
 - [Canvas controls and shortcuts](docs/controls.md)
 - [Reviews and MCP](docs/mcp.md)
-- [Companion skills and future workflows](docs/skills.md)
 
 The alpha supports standalone React study workspaces. Supply the providers, data, styles, and dependencies your design needs. Automatic imports from arbitrary applications are outside this release.
 

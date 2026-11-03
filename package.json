@@ -81,8 +81,7 @@
     "CHANGELOG.md",
     "docs/authoring.md",
     "docs/controls.md",
-    "docs/mcp.md",
-    "docs/skills.md"
+    "docs/mcp.md"
   ],
   "engines": {
     "node": ">=24"

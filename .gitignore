@@ -6,3 +6,8 @@ test-results/
 playwright-report/
 .DS_Store
 .xuui-test/
+
+# Internal notes, kept out of the public repo
+docs/research/
+docs/skills.md
+xuui-spec-draft.md
