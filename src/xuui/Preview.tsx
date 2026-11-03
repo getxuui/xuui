@@ -13,7 +13,7 @@ import {
   SheetDescription,
   SheetTitle,
 } from '@/components/ui/sheet';
-import type { Comment, Study } from './model';
+import type { Comment, Study, Variant } from './model';
 import { useStudioTheme } from './useStudioTheme';
 import { WorkspaceRulers } from './WorkspaceRulers';
 import { useParameters } from './useParameters';
@@ -29,6 +29,8 @@ import type { LayerProperties } from './layerProperties';
 import { LayerPanel } from './LayerPanel';
 import { useLayerTree } from './useLayerTree';
 import { useNewVariants } from './useNewVariants';
+import { lineageColumns, lineageEdges } from './lineage';
+import { LineageMap } from './LineageMap';
 import type { LayerNode } from './useLayerTree';
 import { StudyControls } from './StudyControls';
 import { VariantLabel } from './VariantLabel';
@@ -323,6 +325,54 @@ export default function Preview({
     study.id,
     study.variants.map((item) => item.id),
   );
+  // In All, a study with lineage is laid out as its history: generations as
+  // columns, joined by the review comments that led from one to the next.
+  const lineage = useMemo(() => {
+    if (!allVariants) return null;
+    const columns = lineageColumns(study.variants);
+    if (!columns) return null;
+    return { columns, ...lineageEdges(study.variants, review.reviews) };
+  }, [allVariants, study.variants, review.reviews]);
+  const renderFrame = (variant: Variant) => (
+    <div
+      key={variant.id}
+      data-variant-id={variant.id}
+      data-variant-name={variant.name}
+      data-new-variant={newVariantIds.has(variant.id) || undefined}
+      className="relative shrink-0"
+      onPointerDownCapture={(event) => {
+        if (
+          allVariants &&
+          mode !== 'comment' &&
+          variant.id !== variantId &&
+          event.target instanceof Element &&
+          event.target.closest('[data-xuui-design]') &&
+          !event.altKey &&
+          !event.currentTarget.closest('[data-pan-mode="true"]')
+        )
+          onVariantChange(variant.id);
+      }}
+    >
+      <VariantLabel
+        studyId={study.id}
+        variant={variant}
+        active={variant.id === variantId}
+        comparison={allVariants}
+        onSelect={() => {
+          // Like a frame name in a design tool, the title selects
+          // the variant's top layer.
+          const root = tree.find((node) => node.variantId === variant.id);
+          if (root) selectLayer(root);
+          else onVariantChange(variant.id);
+        }}
+      />
+      <VariantSurface
+        variant={variant}
+        bindings={parameters.bindingsFor(variant.id, variant.controls)}
+        designRef={variant.id === variantId ? design : undefined}
+      />
+    </div>
+  );
   const selectLayer = (node: LayerNode) => {
     setMode('select');
     setPendingComment(null);
@@ -404,51 +454,26 @@ export default function Preview({
               selection={selection}
               mode={allVariants ? 'all' : 'focused'}
             >
-              {visible.map((variant) => (
-                <div
-                  key={variant.id}
-                  data-variant-id={variant.id}
-                  data-variant-name={variant.name}
-                  data-new-variant={newVariantIds.has(variant.id) || undefined}
-                  className="relative shrink-0"
-                  onPointerDownCapture={(event) => {
-                    if (
-                      allVariants &&
-                      mode !== 'comment' &&
-                      variant.id !== variantId &&
-                      event.target instanceof Element &&
-                      event.target.closest('[data-xuui-design]') &&
-                      !event.altKey &&
-                      !event.currentTarget.closest('[data-pan-mode="true"]')
-                    )
-                      onVariantChange(variant.id);
-                  }}
-                >
-                  <VariantLabel
-                    studyId={study.id}
-                    variant={variant}
-                    active={variant.id === variantId}
-                    comparison={allVariants}
-                    onSelect={() => {
-                      // Like a frame name in a design tool, the title selects
-                      // the variant's top layer.
-                      const root = tree.find(
-                        (node) => node.variantId === variant.id,
-                      );
-                      if (root) selectLayer(root);
-                      else onVariantChange(variant.id);
-                    }}
-                  />
-                  <VariantSurface
-                    variant={variant}
-                    bindings={parameters.bindingsFor(
-                      variant.id,
-                      variant.controls,
-                    )}
-                    designRef={variant.id === variantId ? design : undefined}
+              {lineage ? (
+                <div data-lineage className="lineage-layout">
+                  {lineage.columns.map((column, index) => (
+                    <div key={index} className="lineage-column">
+                      {column.map((id) => {
+                        const item = study.variants.find(
+                          (candidate) => candidate.id === id,
+                        );
+                        return item ? renderFrame(item) : null;
+                      })}
+                    </div>
+                  ))}
+                  <LineageMap
+                    edges={lineage.edges}
+                    verdicts={lineage.verdicts}
                   />
                 </div>
-              ))}
+              ) : (
+                visible.map(renderFrame)
+              )}
             </CanvasViewport>
             <WorkspaceRulers
               key={variantId}

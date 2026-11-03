@@ -11,7 +11,7 @@ export function VariantLabel({
   onSelect,
 }: {
   studyId: string;
-  variant: { id: string; name: string };
+  variant: { id: string; name: string; labels?: string[] };
   active: boolean;
   comparison: boolean;
   onSelect: () => void;
@@ -63,6 +63,11 @@ export function VariantLabel({
       >
         {variant.name}
       </Button>
+      {variant.labels?.map((label) => (
+        <span key={label} data-variant-label className="variant-label-tag">
+          {label}
+        </span>
+      ))}
       <Button
         variant="ghost"
         size="icon-xs"

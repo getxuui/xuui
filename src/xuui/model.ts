@@ -22,7 +22,24 @@ export type Variant = VariantRecord & {
   component: ComponentType<StudioBindings>;
   color: string;
   controls?: Controls;
+  /** Variants in the same study this one was developed from. */
+  from?: string[];
+  /** IDs of the submitted review comments this variant responds to. */
+  answers?: string[];
+  /**
+   * Short labels the agent adds in the reviewer's words, such as "Shipped".
+   * xuui shows them beside the variant's name and gives them no meaning.
+   */
+  labels?: string[];
 };
+
+const lineageSchema = z
+  .object({
+    from: z.array(z.string().min(1)).max(20).optional(),
+    answers: z.array(z.uuid()).max(100).optional(),
+    labels: z.array(z.string().trim().min(1).max(24)).max(3).optional(),
+  })
+  .strict();
 
 export type Study = {
   id: string;
@@ -36,11 +53,33 @@ export function defineStudy(study: Study): Study {
   const ids = new Set<string>();
   for (const variant of study.variants) {
     variantRecordSchema.parse(toVariantRecord(variant));
+    lineageSchema.parse({
+      from: variant.from,
+      answers: variant.answers,
+      labels: variant.labels,
+    });
     validateControls(variant.controls);
     if (ids.has(variant.id))
       throw new Error(`Duplicate variant ID: ${variant.id}`);
     ids.add(variant.id);
   }
+  // Lineage stays within the study and never loops back on itself.
+  const parents = new Map(
+    study.variants.map((variant) => [variant.id, variant.from ?? []]),
+  );
+  for (const [id, from] of parents)
+    for (const parent of from)
+      if (!ids.has(parent))
+        throw new Error(`Variant ${id} comes from unknown variant ${parent}.`);
+  const settled = new Set<string>();
+  const visit = (id: string, path: string[]) => {
+    if (path.includes(id))
+      throw new Error(`Variant lineage loops: ${[...path, id].join(' → ')}.`);
+    if (settled.has(id)) return;
+    for (const parent of parents.get(id) ?? []) visit(parent, [...path, id]);
+    settled.add(id);
+  };
+  for (const id of ids) visit(id, []);
   return study;
 }
 

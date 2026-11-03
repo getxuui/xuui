@@ -52,6 +52,30 @@ controls: {
 
 A registered component receives `{ props, state, machine }` as `StudioBindings`. An adapter can pass these values to an ordinary React design. `machine.value` is the current machine state; `machine.send(event)` follows the declared transition. The sidebar can preview any registered state. Number, boolean, string, select, and color dropdowns with swatches are supported. Copy parameters produces JSON with the study and variant IDs, current props, state values, and machine state.
 
+## History
+
+When a variant develops from earlier ones, record where it came from. The All view then lays the study out as its history: generations as columns, joined by lines that carry the review comments that led from one variant to the next.
+
+```tsx
+{
+  id: 'card-v3',
+  name: 'Rounder action',
+  description: 'The quiet card with a rounder, softer button.',
+  rationale: 'Answers the request for a rounder button.',
+  color: '#e8ecdf',
+  component: RounderCard,
+  from: ['card-v2'],
+  answers: ['0b37972e-64c2-4fec-9f70-fc49b6bc1621'],
+  labels: ['Shipped'],
+}
+```
+
+- `from` lists the variants in the same study this one was developed from. A variant can have several.
+- `answers` lists the IDs of the submitted review comments it responds to. Each comment appears on the line from the variant it was made on.
+- `labels` are up to three short tags shown beside the variant's name, such as "Shipped". They record the reviewer's verdict in their words; xuui gives them no meaning and treats every variant the same.
+
+Comments that no variant answers stay beside the variant they were made on, so verdicts and feedback still to act on remain visible. All three fields are optional; a study without `from` keeps a single row.
+
 ## Updates
 
 Generated workspaces pin an exact alpha version. Update deliberately with `npm install --save-dev --save-exact @getxuui/xuui@alpha`, then check the changelog and verify the study. Updating the dependency does not rewrite authored components or registrations.

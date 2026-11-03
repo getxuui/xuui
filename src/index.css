@@ -685,3 +685,97 @@
     outline-offset: 2px;
   }
 }
+
+/* History layout: generations as columns, with lines carrying the review
+   comments that led from one variant to the next. */
+.lineage-layout {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 360px;
+}
+.lineage-column {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.lineage-map {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.lineage-lines {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+.lineage-lines path {
+  fill: none;
+  stroke: var(--brand);
+  stroke-width: 1.5;
+  opacity: 0.55;
+}
+.lineage-labels {
+  position: absolute;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: max-content;
+  max-width: 220px;
+  translate: -50% -50%;
+}
+.lineage-verdict {
+  translate: 0 -50%;
+  transform-origin: left center;
+}
+/* Without room for the text, a label shrinks to its pin until hovered. The
+   text stays available to screen readers. */
+.lineage-labels[data-compact]:not(:hover) .lineage-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.lineage-labels[data-compact]:not(:hover) .lineage-label {
+  align-self: center;
+  padding: 3px;
+}
+.lineage-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 10px 6px 6px;
+  border-radius: 10px;
+  background: var(--popover);
+  box-shadow:
+    0 0 0 1px var(--border),
+    var(--studio-floating-shadow);
+  color: var(--popover-foreground);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.lineage-label-pin {
+  align-self: center;
+  padding: 3px;
+}
+.lineage-pin {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  transform: none;
+  box-shadow: none;
+}
+.variant-label-tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 600;
+}
