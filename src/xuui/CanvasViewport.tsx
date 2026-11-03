@@ -7,6 +7,7 @@ import {
 } from 'react';
 import type { ReactNode } from 'react';
 import { RotateCcw } from 'lucide-react';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 
 type PanGesture = {
@@ -24,12 +25,40 @@ type NativeGestureEvent = Event & {
   clientY: number;
 };
 
+const cameraSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  scale: z.number().min(0.1).max(8),
+});
+type Camera = z.infer<typeof cameraSchema>;
+
+function readCamera(key: string): Camera | null {
+  try {
+    const parsed = cameraSchema.safeParse(
+      JSON.parse(localStorage.getItem(key) ?? 'null'),
+    );
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCamera(key: string, camera: Camera) {
+  try {
+    localStorage.setItem(key, JSON.stringify(camera));
+  } catch {
+    // The camera still applies for this visit.
+  }
+}
+
 export function CanvasViewport({
   children,
+  studyId,
   activeId,
   mode,
 }: {
   children: ReactNode;
+  studyId: string;
   activeId: string;
   mode: 'focused' | 'all';
 }) {
@@ -62,11 +91,24 @@ export function CanvasViewport({
     const touches = new Map<number, Point>();
     let pinch: PinchGesture | null = null;
     let nativePinch: { scale: number; center: Point } | null = null;
+    // Each focused variant keeps its own camera. All variants recentres on
+    // the selected one instead, so navigating there stays predictable.
+    const storageKey =
+      mode === 'focused' ? `xuui:${studyId}:${activeId}:camera:v1` : null;
+    let saveTimer = 0;
+    const save = () => {
+      if (storageKey)
+        writeCamera(storageKey, { ...pan.current, scale: scale.current });
+      saveTimer = 0;
+    };
     const apply = () => {
       world.style.transform = `translate(${pan.current.x}px, ${pan.current.y}px) scale(${scale.current})`;
       world.dataset.canvasScale = String(scale.current);
       setZoomPercent(Math.round(scale.current * 100));
       window.dispatchEvent(new Event('xuui:camera-change'));
+      if (!storageKey) return;
+      clearTimeout(saveTimer);
+      saveTimer = window.setTimeout(save, 150);
     };
     const zoomAt = (next: number, anchor: Point) => {
       const zoom = Math.max(0.1, Math.min(8, next));
@@ -342,9 +384,18 @@ export function CanvasViewport({
     window.addEventListener('blur', blur);
     window.addEventListener('xuui:center-canvas', center);
     window.addEventListener('xuui:reset-zoom', resetZoom);
-    center();
+    const stored = storageKey ? readCamera(storageKey) : null;
+    if (stored) {
+      pan.current = { x: stored.x, y: stored.y };
+      scale.current = stored.scale;
+      apply();
+    } else center();
     return () => {
       clearTimeout(clickTimer);
+      if (saveTimer) {
+        clearTimeout(saveTimer);
+        save();
+      }
       blur();
       delete section.dataset.panSuppressClick;
       section.removeEventListener('pointerdown', down, true);
@@ -361,7 +412,7 @@ export function CanvasViewport({
       window.removeEventListener('xuui:center-canvas', center);
       window.removeEventListener('xuui:reset-zoom', resetZoom);
     };
-  }, [activeId, mode, scheduleZoomDismiss]);
+  }, [studyId, activeId, mode, scheduleZoomDismiss]);
 
   return (
     <>

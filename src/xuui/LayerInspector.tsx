@@ -170,7 +170,10 @@ export function LayerInspector({
           className="mt-0.5 shrink-0 text-muted-foreground"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h2 className="min-w-0 text-xs leading-5 font-semibold wrap-anywhere">
+          <h2
+            title={layer.name}
+            className="min-w-0 truncate text-xs leading-5 font-semibold"
+          >
             {layer.name}
           </h2>
           {layer.tag && (

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Each variant remembers its own canvas position and zoom.
+- Long layer names stay on one line in the inspector, with the full name on hover.
+
 ## 0.1.0-alpha.1
 
 First experimental npm alpha. Standalone React study workspaces with a local canvas, variant comparison, layers and copyable properties, guides, comments, and file-based reviews. Register studies with `defineStudy` and a `variants` collection. Includes an optional stdio MCP server; the `/present` skill is available separately from [getxuui/skills](https://github.com/getxuui/skills).

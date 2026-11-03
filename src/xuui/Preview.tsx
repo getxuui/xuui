@@ -390,6 +390,7 @@ export default function Preview({
             className="relative h-full min-w-0 rounded-xl border border-canvas-border bg-canvas"
           >
             <CanvasViewport
+              studyId={study.id}
               activeId={variantId}
               mode={allVariants ? 'all' : 'focused'}
             >

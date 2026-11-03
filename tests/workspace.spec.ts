@@ -218,6 +218,25 @@ test('guide dragging shows element bounds and snaps to their edges', async ({
   await expect(page.locator('[data-element-bound]')).toHaveCount(0);
 });
 
+test('the inspector keeps a long layer name to one line', async ({ page }) => {
+  await page.goto('/?variant=paper-v1');
+  await page
+    .locator('[data-xuui-design]')
+    .getByText('A slow walk. A fresh perspective.')
+    .click();
+  const name = page
+    .getByRole('region', { name: 'Selected layer' })
+    .getByRole('heading', { level: 2 });
+  await expect(name).toHaveAttribute(
+    'title',
+    /^A slow walk\. A fresh perspective\./,
+  );
+  expect((await name.boundingBox())!.height).toBeLessThanOrEqual(20);
+  expect(
+    await name.evaluate((element) => element.scrollWidth > element.clientWidth),
+  ).toBe(true);
+});
+
 test('the external right sidebar controls the design, copies parameters, and collapses', async ({
   page,
   context,
@@ -393,6 +412,39 @@ test('each variant restores its own guides when using the variant list', async (
   await expect(guide).toHaveAttribute('aria-valuenow', '-24');
   await page.reload();
   await expect(guide).toHaveAttribute('aria-valuenow', '-24');
+});
+
+test('each variant restores its own canvas position and zoom', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  const scene = page.locator('[data-canvas-scene]');
+  const variants = page.getByRole('navigation', { name: 'Variants' });
+  const canvas = page.getByRole('main', { name: 'Variant canvas' });
+  const centred = await scene.getAttribute('style');
+  const box = (await canvas.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.wheel(120, 80);
+  await page.keyboard.down('Control');
+  await page.mouse.wheel(0, -40);
+  await page.keyboard.up('Control');
+  await expect(scene).not.toHaveAttribute('style', centred!);
+  const moved = await scene.getAttribute('style');
+  await variants
+    .getByRole('link', { name: 'After hours', exact: true })
+    .click();
+  await expect(page).toHaveURL(/variant=after-hours-v1/);
+  await expect(scene).not.toHaveAttribute('style', moved!);
+  const other = await scene.getAttribute('style');
+  await variants.getByRole('link', { name: 'Paper', exact: true }).click();
+  await expect(page).toHaveURL(/variant=paper-v1/);
+  await expect(scene).toHaveAttribute('style', moved!);
+  await page.reload();
+  await expect(scene).toHaveAttribute('style', moved!);
+  await variants
+    .getByRole('link', { name: 'After hours', exact: true })
+    .click();
+  await expect(scene).toHaveAttribute('style', other!);
 });
 
 test('all variants are side by side and the canvas pans without losing selection', async ({
