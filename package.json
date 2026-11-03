@@ -1,7 +1,7 @@
 {
   "name": "@getxuui/xuui",
   "version": "0.1.0-alpha.1",
-  "description": "Present React UI, compare variants, and collect feedback in a local studio. Experimental alpha.",
+  "description": "Review the UIs your agents build: compare variants on a local canvas and send comments back to the agent. Experimental alpha.",
   "scripts": {
     "dev": "vite",
     "mcp": "node src/xuui/mcp.ts",

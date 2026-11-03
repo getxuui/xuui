@@ -1,8 +1,8 @@
 # xuui
 
-A local workspace for presenting UI and giving feedback.
+Review the UIs your agents build.
 
-Agents bring ordinary React components and the reasoning behind each direction. xuui provides the canvas, variant comparison, inspection, and point-and-comment feedback. Designs stay separate from the controls used to review them.
+Your agent puts its React components on a local canvas. You compare the variants, point at what to change, and send your comments back to the agent.
 
 **Experimental alpha. Breaking changes expected. Requires Node 24 or newer.**
 
