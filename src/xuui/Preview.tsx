@@ -284,7 +284,8 @@ export default function Preview({
   useEffect(() => {
     const toggle = (event: KeyboardEvent) => {
       if (
-        event.key.toLowerCase() !== 'b' ||
+        // ⌘\ like design tools; ⌘B belongs to the browser's bookmarks bar.
+        event.code !== 'Backslash' ||
         !(event.metaKey || event.ctrlKey) ||
         event.altKey ||
         event.repeat
@@ -521,7 +522,7 @@ export default function Preview({
                 size="icon-sm"
                 className="absolute top-3 right-3"
                 aria-label="Expand sidebar"
-                title="Expand sidebar (⌘B / Ctrl+B)"
+                title="Expand sidebar (⌘\ / Ctrl+\)"
                 onClick={() => setSidebarOpen(true)}
               >
                 <ChevronsLeft data-icon="inline-start" />

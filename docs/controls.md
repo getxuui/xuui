@@ -9,7 +9,7 @@ The canvas toolbar switches between selecting layers, interacting with a design,
 | V / C               | Select layers / comment                                                  |
 | ⌘L / Ctrl+L         | Copy the active variant link                                             |
 | L                   | Open Layers and focus the selected layer; return to canvas from the tree |
-| ⌘B / Ctrl+B         | Toggle the right sidebar                                                 |
+| ⌘\\ / Ctrl+\\       | Toggle the right sidebar                                                 |
 | D                   | Switch light/dark theme                                                  |
 | R                   | Toggle rulers, retaining guides                                          |
 | Home                | Center the active variant                                                |

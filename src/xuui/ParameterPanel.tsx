@@ -277,7 +277,7 @@ export function ParameterPanel({
         variant="ghost"
         size="icon-xs"
         aria-label="Collapse sidebar"
-        title="Collapse sidebar (⌘B / Ctrl+B)"
+        title="Collapse sidebar (⌘\ / Ctrl+\)"
         onClick={onCollapse}
       >
         <ChevronsRight data-icon="inline-start" />

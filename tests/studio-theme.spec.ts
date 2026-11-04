@@ -23,7 +23,7 @@ test('D changes the page, sidebar, and canvas theme together', async ({
   );
   await expect(canvas).toHaveCSS(
     'background-color',
-    'oklch(0.208 0.042 265.755)',
+    'oklch(0.208 0.03 150)',
   );
   await sidebar
     .getByRole('combobox', { name: 'Reservation', exact: true })
@@ -43,7 +43,7 @@ test('D changes the page, sidebar, and canvas theme together', async ({
   );
   await expect(canvas).toHaveCSS(
     'background-color',
-    'oklch(0.984 0.003 247.858)',
+    'oklch(0.984 0.004 150)',
   );
   await expect(canvas).toHaveCSS('border-top-width', '1px');
   await page.screenshot({

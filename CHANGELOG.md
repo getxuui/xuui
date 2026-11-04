@@ -16,6 +16,7 @@
 - Selection uses the brand green instead of purple: the outline, its handles, the size label and the selected layer.
 - The studio's neutrals use a matcha-tinted ramp instead of slate, at the same lightness steps, so contrast is unchanged. Rows in the variant list and layer tree share one set of states, with green hover tints and icons and no weight change.
 - Layer rows are spaced like the variant list at every depth.
+- The right sidebar toggles with ⌘\\ / Ctrl+\\ instead of ⌘B, which browsers use for the bookmarks bar.
 - Variants can record their history with optional `from`, `answers` and `labels`. The All view then lays the study out as columns of generations, joined by wires. Submitted comments stay pinned where they were posted on their artboards, keep their size at any zoom and show their text on hover.
 
 ## 0.1.0-alpha.2

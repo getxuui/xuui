@@ -324,9 +324,9 @@ test('the external right sidebar controls the design, copies parameters, and col
   await expect(sidebar).toHaveCount(0);
   await page.getByRole('button', { name: 'Expand sidebar' }).click();
   await expect(sidebar).toBeVisible();
-  await page.keyboard.press('Control+b');
+  await page.keyboard.press('Control+Backslash');
   await expect(sidebar).toHaveCount(0);
-  await page.keyboard.press('Control+b');
+  await page.keyboard.press('Control+Backslash');
   await expect(sidebar).toBeVisible();
 });
 
