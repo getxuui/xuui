@@ -454,9 +454,9 @@
 .layer-panel-toggle {
   background: transparent;
 }
-/* The variant list and the layer tree share one set of row states: grey on
-   hover and keyboard focus; the current variant or selected layer tinted
-   green, a shade stronger on hover and focus. */
+/* The variant list and the layer tree share one set of row states: a light
+   green on hover and keyboard focus; the current variant or selected layer
+   tinted green, a shade stronger on hover and focus. */
 .variant-list-link {
   cursor: var(--cursor-default);
 }
@@ -473,12 +473,12 @@
 .variant-list-link:focus-visible,
 .layer-tree-item:focus-visible > .layer-tree-row {
   outline: none;
-  background: var(--muted);
+  background: color-mix(in oklch, var(--brand) 6%, transparent);
 }
 @media (hover: hover) {
   .variant-list-link:hover,
   .layer-tree-row:hover {
-    background: var(--muted);
+    background: color-mix(in oklch, var(--brand) 6%, transparent);
   }
 }
 .variant-list-link[aria-current='page']:focus-visible,
