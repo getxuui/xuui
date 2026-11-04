@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Copy, Frame, Maximize2 } from 'lucide-react';
+import { Check, Frame, Link, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -49,7 +49,7 @@ export function VariantLabel({
       input.current?.select();
     }
   };
-  const Icon = copied ? Check : Copy;
+  const Icon = copied ? Check : Link;
   return (
     <div
       data-workspace-control
