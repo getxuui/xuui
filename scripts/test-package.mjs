@@ -26,7 +26,14 @@ let output = '';
 try {
   const { stdout } = await run(
     'npm',
-    ['pack', '--ignore-scripts', '--json', '--pack-destination', temporary],
+    [
+      'pack',
+      ...(process.argv[2] ? [process.argv[2]] : []),
+      '--ignore-scripts',
+      '--json',
+      '--pack-destination',
+      temporary,
+    ],
     { cwd: root, env, maxBuffer: 1024 * 1024 },
   );
   const [packed] = JSON.parse(stdout);
@@ -104,31 +111,34 @@ try {
   await once(socket, 'listening');
   const port = socket.address().port;
   await new Promise((resolve) => socket.close(resolve));
-  server = spawn(process.execPath, [cli, 'dev', '--port', String(port)], {
-    cwd: workspace,
-    env,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  server.stdout.on('data', (data) => {
-    output = (output + data).slice(-16000);
-  });
-  server.stderr.on('data', (data) => {
-    output = (output + data).slice(-16000);
-  });
   const origin = `http://127.0.0.1:${port}`;
-  await expect
-    .poll(
-      async () => {
-        if (server.exitCode !== null) throw new Error(output);
-        try {
-          return (await fetch(origin)).status;
-        } catch {
-          return 0;
-        }
-      },
-      { timeout: 30000 },
-    )
-    .toBe(200);
+  const start = async () => {
+    server = spawn(process.execPath, [cli, 'dev', '--port', String(port)], {
+      cwd: workspace,
+      env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    server.stdout.on('data', (data) => {
+      output = (output + data).slice(-16000);
+    });
+    server.stderr.on('data', (data) => {
+      output = (output + data).slice(-16000);
+    });
+    await expect
+      .poll(
+        async () => {
+          if (server.exitCode !== null) throw new Error(output);
+          try {
+            return (await fetch(origin)).status;
+          } catch {
+            return 0;
+          }
+        },
+        { timeout: 30000 },
+      )
+      .toBe(200);
+  };
+  await start();
   await mkdir(join(workspace, 'public'), { recursive: true });
   await writeFile(
     join(workspace, 'public/workspace-asset.txt'),
@@ -214,13 +224,70 @@ try {
     stored.variants.map((variant) => variant.id),
     ['starter-v1'],
   );
-  await writeFile(
-    join(workspace, 'xuui.studies.ts'),
-    original.replace('Make room to explore.', 'Updated in the workspace.'),
+  await heading.click();
+  await input.fill('Keep this draft through workspace changes.');
+  await input.press('Control+Enter');
+  const drafts = page.getByRole('list', { name: 'Draft comments' });
+  await expect(drafts).toContainText(
+    'Keep this draft through workspace changes.',
   );
+  const draftNumber = await drafts
+    .locator('[data-comment-number]')
+    .textContent();
+  const draftKey = 'xuui:first-study:feedback-draft:v2';
+  const savedDraft = await page.evaluate(
+    (key) => JSON.parse(localStorage.getItem(key)),
+    draftKey,
+  );
+  assert.equal(savedDraft.comments.length, 1);
+  const assertDraftStored = async () => {
+    const current = await page.evaluate(
+      (key) => JSON.parse(localStorage.getItem(key)),
+      draftKey,
+    );
+    assert.deepEqual(current, savedDraft);
+  };
+  const registry = join(workspace, 'xuui.studies.ts');
+  const updated = original.replace(
+    'Make room to explore.',
+    'Updated in the workspace.',
+  );
+  await writeFile(registry, updated);
   await expect(heading).toHaveText('Updated in the workspace.', {
     timeout: 15000,
   });
+  await expect(drafts).toContainText(savedDraft.comments[0].body);
+  await assertDraftStored();
+  // An agent can temporarily remove a variant while changing the registry.
+  await writeFile(
+    registry,
+    updated.replace("id: 'starter-v1'", "id: 'replacement-v1'"),
+  );
+  await expect(page.locator('[data-variant-id="replacement-v1"]')).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(drafts).toHaveCount(0);
+  await assertDraftStored();
+  await writeFile(registry, updated);
+  await expect(page.locator('[data-variant-id="starter-v1"]')).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(drafts).toContainText(savedDraft.comments[0].body);
+  await assertDraftStored();
+  // Keep the browser's origin and storage while restarting the actual CLI.
+  const stopped = once(server, 'exit');
+  server.kill('SIGTERM');
+  await stopped;
+  await start();
+  await page.reload();
+  await expect(heading).toHaveText('Updated in the workspace.');
+  await expect(drafts).toContainText(savedDraft.comments[0].body);
+  await expect(drafts.locator('[data-comment-number]')).toHaveText(draftNumber);
+  await assertDraftStored();
+  await page.getByRole('button', { name: 'Comment mode', exact: true }).click();
+  await expect(
+    page.locator(`[data-comment-pin="${savedDraft.comments[0].id}"]`),
+  ).toBeVisible();
   await mkdir(join(root, '.xuui-test'), { recursive: true });
   await page.screenshot({ path: join(root, '.xuui-test/packed-alpha.png') });
   assert.deepEqual(errors, [], `Browser errors: ${errors.join(', ')}`);
@@ -242,7 +309,7 @@ try {
   assert.notEqual(result.isError, true);
   assert.equal(result.structuredContent.review.id, review.id);
   console.log(
-    `xuui ${packed.version}: clean install, types, live design, inspection, links, comments, persistence, hot reload, and compiled MCP passed.`,
+    `xuui ${packed.version}: clean install, types, live design, inspection, links, comments, draft recovery through hot reload and server restart, and compiled MCP passed.`,
   );
 } catch (error) {
   if (output) console.error(output);
@@ -250,7 +317,7 @@ try {
 } finally {
   await client?.close();
   await browser?.close();
-  if (server && server.exitCode === null) {
+  if (server && server.exitCode === null && server.signalCode === null) {
     server.kill('SIGTERM');
     await once(server, 'exit');
   }

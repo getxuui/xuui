@@ -151,14 +151,9 @@ test('a browser review reaches a waiting MCP agent and remains readable after di
     });
     expect(repeated.structuredContent).toEqual(acknowledged.structuredContent);
     await expect(row).toContainText('Read by agent');
-    const filter = page.getByRole('group', {
-      name: 'Comment filter',
-      exact: true,
-    });
-    await filter.getByRole('button', { name: 'Unread', exact: true }).click();
-    await expect(row).toHaveCount(0);
-    await filter.getByRole('button', { name: 'All', exact: true }).click();
-    await expect(row).toContainText('Read by agent');
+    await expect(
+      page.getByRole('group', { name: 'Comment filter', exact: true }),
+    ).toHaveCount(0);
     expect(
       JSON.parse(
         await readFile(

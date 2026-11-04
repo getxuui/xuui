@@ -3,7 +3,6 @@ import { Check, Copy, Pencil, Send, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { formatReview } from './model';
 import type { Comment, Study, Review } from './model';
 import type { ReviewState } from './useReviews';
@@ -22,14 +21,10 @@ export function ReviewPanel({
   /** Show a submitted comment's element on the canvas. */
   onOpen: (comment: Comment) => void;
 }) {
-  const [filter, setFilter] = useState('all');
   const [copied, setCopied] = useState<string | null>(null);
   const [fallback, setFallback] = useState('');
   const variantName = (id: string) =>
     study.variants.find((item) => item.id === id)?.name ?? id;
-  const reviews = state.reviews.filter(
-    (review) => filter !== 'unread' || !state.receipts[review.id],
-  );
   const targetName = (comment: Comment) =>
     comment.agentation?.element ||
     comment.target.accessibleName ||
@@ -54,19 +49,6 @@ export function ReviewPanel({
       <h2 id="comments-heading" className="text-xs font-semibold">
         Comments
       </h2>
-      {state.reviews.length > 0 && (
-        <ToggleGroup
-          aria-label="Comment filter"
-          size="sm"
-          value={[filter]}
-          onValueChange={(values) => {
-            if (values[0]) setFilter(values[0]);
-          }}
-        >
-          <ToggleGroupItem value="all">All</ToggleGroupItem>
-          <ToggleGroupItem value="unread">Unread</ToggleGroupItem>
-        </ToggleGroup>
-      )}
       {!state.comments.length && !state.reviews.length && (
         <p className="text-xs leading-relaxed text-muted-foreground">
           Press C, then click an element to comment.
@@ -139,7 +121,7 @@ export function ReviewPanel({
       {state.reviews.length > 0 && (
         <>
           <ol aria-label="Submitted comments" className="flex flex-col gap-2">
-            {reviews.flatMap((review) =>
+            {state.reviews.flatMap((review) =>
               review.comments.map((comment) => (
                 <CommentThread
                   key={`${review.id}:${comment.id}`}
@@ -194,14 +176,6 @@ export function ReviewPanel({
               )),
             )}
           </ol>
-          {!reviews.length && (
-            <p
-              role="status"
-              className="py-3 text-center text-xs text-muted-foreground"
-            >
-              All reviews have been read.
-            </p>
-          )}
         </>
       )}
       {fallback && (

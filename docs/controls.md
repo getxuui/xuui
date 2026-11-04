@@ -48,6 +48,10 @@ Open View settings, the sliders icon in the canvas toolbar, to change how the ca
 
 Click an element in Comment mode, type, then add the comment. Clicking outside dismisses the editor and retains unfinished text for reopening; Cancel discards it. ⌘Enter/Ctrl+Enter saves.
 
+Saved draft comments survive reloads and dev-server restarts at the same browser address. A draft on `127.0.0.1` is separate from one on `localhost`, and changing the port also changes its browser storage. Comments on a temporarily missing variant stay stored and return when the variant does.
+
 Comments collect in a draft until **Submit review**. Numbered pins follow their target through panning and zooming. Browser drafts remain separate per study; submitted records and read receipts live in the workspace. See [Reviews and MCP](mcp.md).
 
 Every saved comment gets a unique workspace number, across studies and variants. Numbers keep increasing and survive deletion and submission. Clicking a comment card reveals its matching pin, bringing the target into view; draft cards also reopen the editor.
+
+Submitted comments stay visible after the agent reads them; their receipt changes from Awaiting agent to Read by agent.
