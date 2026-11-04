@@ -140,6 +140,7 @@
   --color-guide: var(--guide);
   --color-guide-foreground: var(--guide-foreground);
   --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-measurement: var(--measurement);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -472,7 +473,7 @@
 }
 /* The variant list and the layer tree share one set of row states: a light
    green on hover and keyboard focus; the current variant or selected layer
-   tinted green, a shade stronger on hover and focus. */
+   stays tinted green on hover, with a stronger tint for keyboard focus. */
 .variant-list-link {
   cursor: var(--cursor-default);
 }
@@ -491,8 +492,8 @@
   background: color-mix(in oklch, var(--brand) 6%, transparent);
 }
 @media (hover: hover) {
-  .variant-list-link:hover,
-  .layer-tree-row:hover {
+  .variant-list-link:not([aria-current='page']):hover,
+  .layer-tree-row:not(.is-selected):hover {
     background: color-mix(in oklch, var(--brand) 6%, transparent);
   }
   /* Icons take the green with the row, so they don't clash with the tint. */
@@ -508,12 +509,6 @@
 .variant-list-link[aria-current='page']:focus-visible,
 .layer-tree-item:focus-visible > .layer-tree-row.is-selected {
   background: color-mix(in oklch, var(--brand) 18%, transparent);
-}
-@media (hover: hover) {
-  .variant-list-link[aria-current='page']:hover,
-  .layer-tree-row.is-selected:hover {
-    background: color-mix(in oklch, var(--brand) 18%, transparent);
-  }
 }
 [data-slot='sheet-content'].layers-sheet {
   width: min(280px, 85vw);

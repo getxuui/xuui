@@ -365,11 +365,23 @@ export default function Preview({
         comparison={allVariants}
         onOpen={() => onVariantChange(variant.id, true)}
         onSelect={() => {
-          // Like a frame name in a design tool, the title selects
-          // the variant's top layer.
+          // Like a frame name in a design tool, the title selects the
+          // variant's top layer and fits it to the canvas, as Shift+2 does.
           const root = tree.find((node) => node.variantId === variant.id);
           if (root) selectLayer(root);
           else onVariantChange(variant.id);
+          // Fit once a variant switch has settled, so recentring can't undo it.
+          requestAnimationFrame(() =>
+            window.dispatchEvent(
+              new CustomEvent('xuui:zoom-to', {
+                detail: root?.elements ?? [
+                  ...document.querySelectorAll(
+                    `[data-variant-id="${CSS.escape(variant.id)}"] [data-xuui-design]`,
+                  ),
+                ],
+              }),
+            ),
+          );
         }}
       />
       <VariantSurface

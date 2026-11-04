@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import type { MouseEvent } from 'react';
 import { Diamond, GalleryHorizontalEnd } from 'lucide-react';
 import { Field, FieldLabel } from '@/components/ui/field';
@@ -33,6 +34,28 @@ export function StudyNavigation({
   onAllVariantsChange: (all: boolean) => void;
   newVariantIds: ReadonlySet<string>;
 }) {
+  const navigation = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const list = navigation.current;
+    if (!list || !variantId) return;
+    const link = list.querySelector<HTMLElement>(
+      `[data-variant-link="${CSS.escape(variantId)}"]`,
+    );
+    if (!link) return;
+    const area = list.getBoundingClientRect();
+    const row = link.getBoundingClientRect();
+    // Leave room above the bottom fade when possible. Scroll only the list,
+    // so revealing a variant cannot move the canvas or take keyboard focus.
+    const inset = Math.min(
+      parseFloat(getComputedStyle(list).paddingBottom),
+      Math.max(0, area.height - row.height),
+    );
+    const delta =
+      row.top < area.top
+        ? Math.floor(row.top - area.top)
+        : Math.max(0, Math.ceil(row.bottom - area.bottom + inset));
+    if (delta) list.scrollBy({ top: delta, behavior: 'instant' });
+  }, [studyId, variantId, allVariants]);
   const study = studies.find((item) => item.id === studyId);
   const navigate = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -84,9 +107,10 @@ export function StudyNavigation({
         </Select>
       </Field>
       <nav
+        ref={navigation}
         aria-label="Variants"
         data-variant-navigation
-        className="sidebar-scroll-mask min-h-0 flex-1 overflow-y-auto overscroll-contain pb-3"
+        className="sidebar-scroll-mask min-h-0 flex-1 overflow-y-auto overscroll-contain pb-5"
         onKeyDown={(event) => {
           if (
             !['Tab', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Escape'].includes(
@@ -153,6 +177,7 @@ export function StudyNavigation({
             <li key={variant.id} className="min-w-0">
               <a
                 href={variantUrl(variant.id)}
+                data-variant-link={variant.id}
                 aria-current={
                   !allVariants && variant.id === variantId ? 'page' : undefined
                 }

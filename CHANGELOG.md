@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-alpha.3
 
-- Clicking a frame's title selects the variant's top layer. In All, the Open icon beside the title, or double-clicking the title, opens the variant on its own. Frame titles keep their on-screen size at any zoom, and Layers starts with one collapsed row per variant.
+- Clicking a frame's title selects the variant's top layer and fits it to the canvas, like Shift+2. In All, the Open icon beside the title, or double-clicking the title, opens the variant on its own. Frame titles keep their on-screen size at any zoom, and Layers starts with one collapsed row per variant.
 - Copying an inspector value replaces it with a tick in place, so the row no longer shifts. Copy fields have no focus ring, pressed shift or copied border.
 - The comment field no longer clips text at its corners, and its Clear button is gone.
 - Comment cards lead with their pin number. Clicking a card opens its comment: drafts reopen with the caret after the text, and submitted comments select the element they point at.
@@ -15,6 +15,8 @@
 - The current variant in the variant list is tinted green.
 - Selection uses the brand green instead of purple: the outline, its handles, the size label and the selected layer.
 - The studio's neutrals use a matcha-tinted ramp instead of slate, at the same lightness steps, so contrast is unchanged. Rows in the variant list and layer tree share one set of states, with green hover tints and icons and no weight change.
+- Selected navigation rows keep their background on hover, and dropdown selection ticks use the brand green.
+- Selecting a variant from the canvas, Layers, a comment or a shortcut scrolls its sidebar row into view without moving keyboard focus.
 - Layer rows are spaced like the variant list at every depth.
 - The right sidebar toggles with ⌘\\ / Ctrl+\\ instead of ⌘B, which browsers use for the bookmarks bar.
 - Variants can record their history with optional `from`, `answers` and `labels`. The All view then lays the study out as columns of generations, joined by wires. Submitted comments stay pinned where they were posted on their artboards, keep their size at any zoom and show their text on hover.

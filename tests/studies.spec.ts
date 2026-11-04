@@ -241,3 +241,63 @@ test('variants that arrive after a visit flash once in the list and on the canva
   await expect(page.locator('[data-variant-id="paper-v1"]')).toBeVisible();
   await expect(fresh).toHaveCount(0);
 });
+
+test('canvas navigation reveals the active variant in a scrolled sidebar without taking focus', async ({
+  page,
+}) => {
+  await page.goto('/?variant=essential-v1&view=all');
+  const navigation = variants(page);
+  const essential = navigation.getByRole('link', {
+    name: 'Essential',
+    exact: true,
+  });
+  const resetScroll = async () => {
+    const divider = page.getByRole('separator', {
+      name: 'Resize pages and layers',
+      exact: true,
+    });
+    await divider.focus();
+    await divider.press('Home');
+    await navigation.evaluate((element) => {
+      element.scrollTop = 0;
+    });
+    await expect(essential).not.toBeInViewport();
+  };
+
+  // Opening the already-active variant from All must reveal its row too.
+  await resetScroll();
+  const open = page.getByRole('button', {
+    name: 'Open Essential',
+    exact: true,
+  });
+  await page
+    .locator('[data-variant-id="essential-v1"] [data-frame-title]')
+    .hover();
+  await open.click();
+  await expect(essential).toHaveAttribute('aria-current', 'page');
+  await expect(essential).toBeInViewport({ ratio: 1 });
+  await expect(essential).not.toBeFocused();
+
+  // Frame-title selection in All follows the same active-variant change.
+  await page.goto('/?variant=paper-v1&view=all');
+  await resetScroll();
+  await page.keyboard.press('Shift+1');
+  const title = page
+    .locator('[data-frame-title]')
+    .getByRole('button', { name: 'Essential', exact: true });
+  await title.click();
+  await expect(page).toHaveURL(/variant=essential-v1&view=all$/);
+  await expect(essential).toBeInViewport({ ratio: 1 });
+  await expect(title).toBeFocused();
+
+  // Keyboard and browser navigation also reveal the selected row.
+  await page.getByRole('main', { name: 'Variant canvas' }).focus();
+  await page.keyboard.press('ArrowUp');
+  await expect(page).toHaveURL(/variant=soft-focus-v1&view=all$/);
+  await expect(
+    navigation.getByRole('link', { name: 'Soft focus', exact: true }),
+  ).toBeInViewport({ ratio: 1 });
+  await page.goBack();
+  await expect(page).toHaveURL(/variant=essential-v1&view=all$/);
+  await expect(essential).toBeInViewport({ ratio: 1 });
+});

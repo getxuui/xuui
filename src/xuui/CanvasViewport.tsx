@@ -181,6 +181,15 @@ export function CanvasViewport({
       };
       apply();
     };
+    // Other parts of the studio ask to fit particular elements, as Shift+2 does.
+    const zoomTo = (event: Event) => {
+      if (
+        event instanceof CustomEvent &&
+        Array.isArray(event.detail) &&
+        event.detail.every((item: unknown) => item instanceof Element)
+      )
+        zoomToFit(event.detail);
+    };
     const touchPinch = (): PinchGesture => {
       const [a, b] = [...touches.values()];
       return {
@@ -462,6 +471,7 @@ export function CanvasViewport({
     window.addEventListener('blur', blur);
     window.addEventListener('xuui:center-canvas', center);
     window.addEventListener('xuui:reset-zoom', resetZoom);
+    window.addEventListener('xuui:zoom-to', zoomTo);
     const stored = storageKey ? readCamera(storageKey) : null;
     if (stored) {
       pan.current = { x: stored.x, y: stored.y };
@@ -489,6 +499,7 @@ export function CanvasViewport({
       window.removeEventListener('blur', blur);
       window.removeEventListener('xuui:center-canvas', center);
       window.removeEventListener('xuui:reset-zoom', resetZoom);
+      window.removeEventListener('xuui:zoom-to', zoomTo);
     };
   }, [studyId, activeId, mode, scheduleZoomDismiss]);
 
