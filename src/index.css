@@ -471,6 +471,13 @@
   .variant-list-link:hover {
     background: var(--muted);
   }
+  /* The current variant keeps its tint on hover, a shade stronger. */
+  .variant-list-link[aria-current='page']:hover {
+    background: color-mix(in oklch, var(--brand) 18%, transparent);
+  }
+}
+.variant-list-link[aria-current='page']:focus-visible {
+  background: color-mix(in oklch, var(--brand) 18%, transparent);
 }
 .layer-tree-row:hover {
   background: var(--muted);
