@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-alpha.4
 
 - Enter selects child layers and Shift+Enter selects the parent from Layers and frame-title focus, as well as the canvas.
 - The Study dropdown uses the same green background, text and icon colors as active navigation rows.
