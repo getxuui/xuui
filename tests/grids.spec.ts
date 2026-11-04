@@ -77,95 +77,79 @@ test('pixel, column and row grids follow the design through zoom and pan without
   ).toBeCloseTo(72.5 * 1.5);
 });
 
-test('grid controls accept custom measurements and persist separately for each variant', async ({
+test('view settings edit grids the agent set up and persist them per variant', async ({
   page,
 }) => {
   await page.addInitScript(() => localStorage.setItem('xuui-theme', 'light'));
   await page.goto('/?study=grid-study&variant=grid-plain-v1');
-  const open = page.getByRole('button', { name: 'Grid settings', exact: true });
+  const open = page.getByRole('button', { name: 'View settings', exact: true });
   await open.click();
-  const settings = page.getByRole('dialog', { name: 'Grids', exact: true });
-  const pixelSwitch = settings.getByRole('switch', {
-    name: 'Pixel grid',
-    exact: true,
-  });
+  const settings = page.getByRole('dialog', { name: 'View', exact: true });
+  // Without authored layout grids, only the pixel grid is offered.
+  await expect(settings.getByRole('switch', { name: 'Columns' })).toHaveCount(
+    0,
+  );
+  await expect(settings).toContainText('Agent hasn’t set up columns or rows.');
+  const pixelGrid = settings.getByRole('region', { name: 'Pixel grid' });
+  const pixelSwitch = pixelGrid.getByRole('switch', { name: 'Pixel grid' });
+  const size = pixelGrid.getByRole('slider', { name: 'Size' });
+  // Values fold away, out of reach, while their grid is off.
+  const folded = pixelGrid.locator('[inert]');
+  await expect(folded).toHaveCount(1);
   await pixelSwitch.click();
-  const size = settings.getByRole('spinbutton', {
-    name: 'Pixel size',
-    exact: true,
-  });
+  await expect(folded).toHaveCount(0);
+  await expect(size).toBeVisible();
   const pixels = page.locator('[data-grid-type="pixels"]');
   await expect(pixels).toHaveAttribute('data-grid-size', '8');
-  for (const value of ['10', '12.5']) {
-    await size.fill(value);
-    await size.press('Enter');
-    await expect(pixels).toHaveCSS(
-      'background-size',
-      `${value}px ${value}px, ${value}px ${value}px`,
-    );
-  }
-  await size.fill('0');
-  await size.press('Enter');
-  await expect(size).toHaveAttribute('aria-invalid', 'true');
-  await expect(pixels).toHaveAttribute('data-grid-size', '12.5');
-  await size.press('Escape');
-  await expect(size).toHaveValue('12.5');
+  await pixelGrid.getByRole('button', { name: 'Edit Size' }).click();
+  const sizeValue = pixelGrid.getByRole('textbox', { name: 'Size value' });
+  await sizeValue.fill('12.5');
+  await sizeValue.press('Enter');
+  await expect(pixels).toHaveCSS(
+    'background-size',
+    '12.5px 12.5px, 12.5px 12.5px',
+  );
   await pixelSwitch.click();
   await expect(pixels).toHaveCount(0);
   await pixelSwitch.click();
   await expect(pixels).toHaveAttribute('data-grid-size', '12.5');
-  await settings.getByRole('switch', { name: 'Columns', exact: true }).click();
-  const count = settings.getByRole('spinbutton', {
-    name: 'Column count',
-    exact: true,
-  });
-  await count.fill('5');
-  await count.press('Enter');
-  const gutter = settings.getByRole('spinbutton', {
-    name: 'Column gutter',
-    exact: true,
-  });
-  await gutter.fill('10.5');
-  await gutter.press('Enter');
-  const margin = settings.getByRole('spinbutton', {
-    name: 'Column margin',
-    exact: true,
-  });
-  await margin.fill('20');
-  await margin.press('Enter');
-  await expect(page.locator('[data-grid-type="columns"] span')).toHaveCount(5);
-  await expect(page.locator('[data-grid-type="columns"]')).toHaveCSS(
-    'column-gap',
-    '10.5px',
-  );
-  await settings.getByRole('switch', { name: 'Rows', exact: true }).click();
-  const rowCount = settings.getByRole('spinbutton', {
-    name: 'Row count',
-    exact: true,
-  });
-  await rowCount.fill('3');
-  await rowCount.press('Enter');
-  await expect(page.locator('[data-grid-type="rows"] span')).toHaveCount(3);
+
+  // Rulers and buffer zones are canvas-wide view preferences.
+  await settings.getByRole('switch', { name: 'Rulers and guides' }).click();
+  await expect(page.locator('[data-ruler-axis]')).toHaveCount(0);
+  const zones = page.locator('[data-canvas-decoration]').first();
+  await settings.getByRole('switch', { name: 'Buffer zones' }).click();
+  await expect(zones).toHaveCSS('opacity', '0');
   await page.screenshot({
-    path: '.xuui-test/grid-controls-light.png',
+    path: '.xuui-test/view-settings-light.png',
     animations: 'disabled',
   });
   await page.keyboard.press('Escape');
+
+  // A variant with authored layout grids offers columns and rows.
   const nav = page.getByRole('navigation', { name: 'Variants' });
   await nav.getByRole('link', { name: 'Authored grids', exact: true }).click();
   await expect(pixels).toHaveAttribute('data-grid-size', '10');
+  await open.click();
+  await expect(settings).not.toContainText('Agent hasn’t set up');
+  const columns = settings.getByRole('region', { name: 'Columns' });
+  await columns.getByRole('button', { name: 'Edit Count' }).click();
+  const count = columns.getByRole('textbox', { name: 'Count value' });
+  await count.fill('5');
+  await count.press('Enter');
+  await expect(page.locator('[data-grid-type="columns"] span')).toHaveCount(5);
+  await page.keyboard.press('Escape');
+
   await nav.getByRole('link', { name: 'Without grids', exact: true }).click();
   await page.reload();
   await expect(pixels).toHaveAttribute('data-grid-size', '12.5');
+  await expect(zones).toHaveCSS('opacity', '0');
   await open.click();
-  await expect(
-    settings.getByRole('spinbutton', { name: 'Column count', exact: true }),
-  ).toHaveValue('5');
-  await page.keyboard.press('Escape');
+  await settings.getByRole('switch', { name: 'Buffer zones' }).click();
+  await expect(zones).toHaveCSS('opacity', '1');
   await page.keyboard.press('d');
-  await open.click();
   await page.screenshot({
-    path: '.xuui-test/grid-controls-dark.png',
+    path: '.xuui-test/view-settings-dark.png',
     animations: 'disabled',
   });
   await page.setViewportSize({ width: 320, height: 800 });
@@ -174,4 +158,18 @@ test('grid controls accept custom measurements and persist separately for each v
     .getByRole('button', { name: 'Reset grids', exact: true })
     .click();
   await expect(pixels).toHaveCount(0);
+});
+
+test('stored layout grids never appear on a variant the agent did not set up', async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem(
+      'xuui:grid-study:grid-plain-v1:grids:v1',
+      JSON.stringify([{ type: 'columns', count: 4, gutter: 8, margin: 8 }]),
+    ),
+  );
+  await page.goto('/?study=grid-study&variant=grid-plain-v1');
+  await expect(page.locator('[data-xuui-design]')).toBeVisible();
+  await expect(page.locator('[data-grid-type="columns"]')).toHaveCount(0);
 });

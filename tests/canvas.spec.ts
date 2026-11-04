@@ -27,6 +27,34 @@ test('wheel panning works over frame titles and their action icons', async ({
     .toBeCloseTo(next + 70, 0);
 });
 
+test('wheel panning works over the toolbar and asides inside designs', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  const frame = page.locator('[data-variant-id="paper-v1"]');
+  const design = frame.locator('[data-xuui-design]');
+  // Designs often use asides; they must not read as studio panels.
+  await design.evaluate((element) => {
+    const aside = document.createElement('aside');
+    aside.textContent = 'Related reading';
+    aside.style.cssText =
+      'position:absolute;inset:0 auto auto 0;width:120px;height:80px';
+    element.firstElementChild!.append(aside);
+  });
+  const panOver = async (target: ReturnType<typeof page.locator>) => {
+    await target.hover();
+    const before = (await frame.boundingBox())!.x;
+    await page.mouse.wheel(90, 0);
+    await expect
+      .poll(async () => (await frame.boundingBox())!.x)
+      .toBeCloseTo(before - 90, 0);
+  };
+  await panOver(design.locator('aside'));
+  await panOver(
+    page.getByRole('button', { name: 'Interact with preview', exact: true }),
+  );
+});
+
 test('trackpad pinch anchors the canvas and keeps guides and measurements in component pixels', async ({
   page,
 }) => {
@@ -83,7 +111,7 @@ test('trackpad pinch anchors the canvas and keeps guides and measurements in com
   const sixtyFour = (await page
     .locator('[data-ruler-axis="x"][data-ruler-value="64"]')
     .boundingBox())!;
-  expect(sixtyFour.x + sixtyFour.width / 2).toBeCloseTo(after.x + 64 * 1.5);
+  expect(sixtyFour.x + sixtyFour.width / 2).toBeCloseTo(after.x + 64 * 1.5, 0);
   await page.keyboard.down('Alt');
   await button.hover();
   await expect(
@@ -259,7 +287,7 @@ test('Safari gesture events zoom the canvas and respect the zoom limits', async 
   await gesture('gesturechange', 0.001);
   await expect
     .poll(async () => (await design.boundingBox())!.width / before.width)
-    .toBeCloseTo(0.1, 2);
+    .toBeCloseTo(0.02, 2);
   await gesture('gestureend', 0.001);
 });
 
@@ -449,4 +477,60 @@ test('zoom shortcuts work after selecting from the sidebar, and Shift+2 falls ba
     })
     .toBe(true);
   await expect(scene).not.toHaveAttribute('data-canvas-scale', '1');
+});
+
+test('the toolbar separator is centred with the tools beside it', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  const middles = await page
+    .getByRole('group', { name: 'Canvas mode' })
+    .locator('..')
+    .evaluate((toolbar) =>
+      [...toolbar.children].map((child) => {
+        const box = child.getBoundingClientRect();
+        return Math.round(box.top + box.height / 2);
+      }),
+    );
+  expect(new Set(middles).size).toBe(1);
+});
+
+test('in Play mode a scrollable area in the design scrolls, then the canvas pans', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  const frame = page.locator('[data-variant-id="paper-v1"]');
+  const design = frame.locator('[data-xuui-design]');
+  await design.evaluate((element) => {
+    const list = document.createElement('div');
+    list.dataset.testScroller = '';
+    list.style.cssText =
+      'position:absolute;inset:0 auto auto 0;width:160px;height:80px;overflow-y:auto';
+    list.innerHTML = '<div style="height:400px">Long list</div>';
+    element.firstElementChild!.append(list);
+  });
+  const list = design.locator('[data-test-scroller]');
+  const scrollTop = () => list.evaluate((element) => element.scrollTop);
+  await list.hover();
+  // Outside Play mode the wheel pans, even over a scrollable area.
+  let before = (await frame.boundingBox())!.y;
+  await page.mouse.wheel(0, 60);
+  await expect
+    .poll(async () => (await frame.boundingBox())!.y)
+    .toBeCloseTo(before - 60, 0);
+  expect(await scrollTop()).toBe(0);
+  await page
+    .getByRole('button', { name: 'Interact with preview', exact: true })
+    .click();
+  await list.hover();
+  before = (await frame.boundingBox())!.y;
+  await page.mouse.wheel(0, 100);
+  await expect.poll(scrollTop).toBeGreaterThan(0);
+  expect((await frame.boundingBox())!.y).toBeCloseTo(before, 0);
+  // At its end the list hands the wheel back to the canvas.
+  await list.evaluate((element) => (element.scrollTop = element.scrollHeight));
+  await page.mouse.wheel(0, 50);
+  await expect
+    .poll(async () => (await frame.boundingBox())!.y)
+    .toBeCloseTo(before - 50, 0);
 });

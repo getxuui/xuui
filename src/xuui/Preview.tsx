@@ -20,7 +20,7 @@ import { useParameters } from './useParameters';
 import { ParameterPanel } from './ParameterPanel';
 import { CanvasViewport } from './CanvasViewport';
 import { VariantSurface } from './VariantSurface';
-import { GridControls } from './GridControls';
+import { ViewSettings } from './GridControls';
 import { useGrids } from './useGrids';
 import { CanvasFeedback, CanvasTools, CommentEditor } from './CanvasFeedback';
 import type { CanvasMode } from './CanvasFeedback';
@@ -162,6 +162,13 @@ export default function Preview({
       return true;
     }
   });
+  const [bufferZonesVisible, setBufferZonesVisible] = useState(() => {
+    try {
+      return localStorage.getItem('xuui-buffer-zones') !== 'hidden';
+    } catch {
+      return true;
+    }
+  });
   useStudioTheme();
 
   const changeMode = (next: CanvasMode) => {
@@ -266,6 +273,16 @@ export default function Preview({
       /* Optional preference. */
     }
   }, [rulersVisible]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        'xuui-buffer-zones',
+        bufferZonesVisible ? 'visible' : 'hidden',
+      );
+    } catch {
+      /* Optional preference. */
+    }
+  }, [bufferZonesVisible]);
   useEffect(() => {
     const toggle = (event: KeyboardEvent) => {
       if (
@@ -528,6 +545,7 @@ export default function Preview({
           <section
             ref={canvas}
             data-canvas-mode={mode}
+            data-buffer-zones={bufferZonesVisible ? undefined : 'hidden'}
             aria-label="Canvas"
             className="relative h-full min-w-0 rounded-xl border border-canvas-border bg-canvas"
           >
@@ -577,10 +595,14 @@ export default function Preview({
               onChange={changeMode}
               grids={
                 variant && (
-                  <GridControls
+                  <ViewSettings
                     key={variant.id}
-                    name={variant.name}
                     grids={grids.forVariant(variant)}
+                    declared={(variant.grids ?? []).map((grid) => grid.type)}
+                    rulers={rulersVisible}
+                    onRulersChange={setRulersVisible}
+                    bufferZones={bufferZonesVisible}
+                    onBufferZonesChange={setBufferZonesVisible}
                     onChange={(value) => grids.update(variant.id, value)}
                     onReset={() => grids.reset(variant.id)}
                   />

@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type {
-  CSSProperties,
-  KeyboardEvent,
-  PointerEvent,
-  RefObject,
-} from 'react';
+import type { KeyboardEvent, PointerEvent, RefObject } from 'react';
 import { cn } from '@/lib/utils';
 import { CanvasSelection } from './CanvasSelection';
+import { RulerMarks, usePresence } from './RulerMarks';
 import { GuideEditor } from './GuideEditor';
 import { relativeBounds, useWorkspaceGeometry } from './workspaceGeometry';
 import type { Bounds } from './workspaceGeometry';
@@ -102,6 +98,9 @@ export function WorkspaceRulers({
 }) {
   const container = useRef<HTMLDivElement>(null);
   const geometry = useWorkspaceGeometry(container, designRef);
+  // Rulers and guides fade in and out instead of popping.
+  const rulers = usePresence(visible);
+  const guideFade = usePresence(guidesVisible);
   const storageKey = `xuui:${studyId}:${variantId}:guides:v1`;
   const [guides, setGuides] = useState<Guide[]>(() =>
     readGuides(storageKey, `xuui:${studyId}:guides:v1`),
@@ -394,12 +393,6 @@ export function WorkspaceRulers({
         'workspace-rulers pointer-events-none absolute inset-0',
         dragging && 'is-dragging-guide',
       )}
-      style={
-        {
-          '--ruler-minor-step': `${(rulerStep(geometry.scale) * geometry.scale) / 8}px`,
-          '--ruler-major-step': `${rulerStep(geometry.scale) * geometry.scale}px`,
-        } as CSSProperties
-      }
       onPointerMove={moveDrag}
       onPointerUp={finishDrag}
       onPointerCancel={cancelDrag}
@@ -435,7 +428,7 @@ export function WorkspaceRulers({
               }}
             />
           ))}
-        {(guidesVisible ? guides : []).map((guide) => {
+        {(guideFade.mounted ? guides : []).map((guide) => {
           const position =
             geometry.origin[guide.axis] + guide.position * geometry.scale;
           const range = limit(guide.axis);
@@ -460,7 +453,8 @@ export function WorkspaceRulers({
               aria-orientation={guide.axis === 'x' ? 'horizontal' : 'vertical'}
               data-guide-id={guide.id}
               className={cn(
-                'workspace-guide pointer-events-auto absolute touch-none select-none outline-none',
+                'workspace-guide pointer-events-auto absolute touch-none select-none outline-none transition-opacity duration-200 ease-out motion-reduce:transition-none',
+                !guideFade.shown && 'pointer-events-none opacity-0',
                 guide.axis === 'x'
                   ? 'inset-y-0 w-[11px] cursor-ew-resize'
                   : 'inset-x-0 h-[11px] cursor-ns-resize',
@@ -503,15 +497,21 @@ export function WorkspaceRulers({
           );
         })}
       </div>
-      {visible && (
-        <>
+      {rulers.mounted && (
+        <div
+          data-rulers
+          className={cn(
+            'pointer-events-none absolute inset-0 transition-opacity duration-200 ease-out motion-reduce:transition-none',
+            rulers.shown ? 'opacity-100' : 'opacity-0',
+          )}
+          inert={!visible}
+        >
           <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
             <button
               type="button"
               aria-label="Top ruler: drag to add a horizontal guide"
               title="Drag to add a horizontal guide"
-              className="ruler-horizontal pointer-events-auto absolute inset-x-0 top-0 h-6 cursor-ns-resize touch-none"
-              style={{ backgroundPosition: `${geometry.origin.x}px top` }}
+              className="pointer-events-auto absolute inset-x-0 top-0 h-6 cursor-ns-resize touch-none"
               onPointerDown={(event) => beginDrag(event, 'y')}
               onKeyDown={(event) => createWithKeyboard(event, 'y')}
             />
@@ -519,53 +519,26 @@ export function WorkspaceRulers({
               type="button"
               aria-label="Left ruler: drag to add a vertical guide"
               title="Drag to add a vertical guide"
-              className="ruler-vertical pointer-events-auto absolute inset-y-6 left-0 w-6 cursor-ew-resize touch-none"
-              style={{ backgroundPosition: `left ${geometry.origin.y - 24}px` }}
+              className="pointer-events-auto absolute inset-y-6 left-0 w-6 cursor-ew-resize touch-none"
               onPointerDown={(event) => beginDrag(event, 'x')}
               onKeyDown={(event) => createWithKeyboard(event, 'x')}
             />
           </div>
-          <div
-            aria-hidden="true"
-            className="ruler-labels-horizontal pointer-events-none absolute -top-4 inset-x-0 h-3 overflow-hidden"
-          >
-            {rulerLabels(geometry.width, geometry.origin.x, geometry.scale).map(
-              (label) => (
-                <span
-                  key={`x-${label.value}`}
-                  aria-hidden="true"
-                  data-ruler-axis="x"
-                  data-ruler-value={label.value}
-                  className="ruler-label absolute top-0 flex h-3 -translate-x-1/2 items-center justify-center rounded-sm px-0.5 font-mono text-[8px] leading-none tabular-nums"
-                  style={{ left: label.position }}
-                >
-                  {label.value}
-                </span>
-              ),
-            )}
-          </div>
-          <div
-            aria-hidden="true"
-            className="ruler-labels-vertical pointer-events-none absolute -left-4 inset-y-0 w-3 overflow-hidden"
-          >
-            {rulerLabels(
-              geometry.height,
-              geometry.origin.y,
-              geometry.scale,
-            ).map((label) => (
-              <span
-                key={`y-${label.value}`}
-                aria-hidden="true"
-                data-ruler-axis="y"
-                data-ruler-value={label.value}
-                className="ruler-label absolute left-0 flex w-3 -translate-y-1/2 items-center justify-center rounded-sm py-0.5 font-mono text-[8px] leading-none tabular-nums [writing-mode:vertical-rl]"
-                style={{ top: label.position }}
-              >
-                {label.value}
-              </span>
-            ))}
-          </div>
-        </>
+          <RulerMarks
+            width={geometry.width}
+            height={geometry.height}
+            origin={geometry.origin}
+            scale={geometry.scale}
+            step={rulerStep(geometry.scale)}
+            labels={(axis) =>
+              rulerLabels(
+                axis === 'x' ? geometry.width : geometry.height,
+                geometry.origin[axis],
+                geometry.scale,
+              )
+            }
+          />
+        </div>
       )}
       {guidesVisible && edited && editing && (
         <GuideEditor

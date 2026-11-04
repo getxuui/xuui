@@ -7,7 +7,7 @@ test('D changes the page, sidebar, and canvas theme together', async ({
   await page.goto('/?variant=paper-v1');
   const canvas = page.getByRole('region', { name: 'Canvas' });
   const sidebar = page.getByRole('complementary', { name: 'Sidebar' });
-  const pageBackground = page.locator('.bg-studio-background');
+  const pageBackground = page.locator('.h-dvh.bg-studio-background');
   const light = await sidebar.evaluate(
     (element) => getComputedStyle(element).color,
   );
@@ -21,9 +21,13 @@ test('D changes the page, sidebar, and canvas theme together', async ({
     'background-color',
     'rgb(255, 255, 255)',
   );
-  await expect(canvas).toHaveCSS(
+  await expect(canvas).toHaveCSS('background-color', 'oklch(0.208 0.03 150)');
+  // Panels sit on the page background in both themes; only the canvas is inset.
+  await expect(sidebar).toHaveCSS(
     'background-color',
-    'oklch(0.208 0.03 150)',
+    await pageBackground.evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    ),
   );
   await sidebar
     .getByRole('combobox', { name: 'Reservation', exact: true })
@@ -41,10 +45,7 @@ test('D changes the page, sidebar, and canvas theme together', async ({
     'background-color',
     'rgb(255, 255, 255)',
   );
-  await expect(canvas).toHaveCSS(
-    'background-color',
-    'oklch(0.984 0.004 150)',
-  );
+  await expect(canvas).toHaveCSS('background-color', 'oklch(0.984 0.004 150)');
   await expect(canvas).toHaveCSS('border-top-width', '1px');
   await page.screenshot({
     path: '.xuui-test/studio-light.png',

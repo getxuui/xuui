@@ -58,7 +58,11 @@ export function CanvasTools({
           <MessageSquare data-icon="inline-start" />
         </ToggleGroupItem>
       </ToggleGroup>
-      <Separator orientation="vertical" className="h-5" />
+      {/* A fixed-height separator can't stretch, so centre it with the tools. */}
+      <Separator
+        orientation="vertical"
+        className="h-5 data-vertical:self-center"
+      />
       {grids}
     </div>
   );

@@ -319,3 +319,21 @@ test('clicking a frame title fits its variant to the canvas, like Shift+2', asyn
     .click();
   await expect.poll(() => fitted('paper-v1')).toBe(true);
 });
+
+test('the frame title explains why a variant exists', async ({ page }) => {
+  await page.goto('/?variant=paper-v1');
+  const about = page
+    .locator('[data-variant-id="paper-v1"] [data-frame-title]')
+    .getByRole('button', { name: 'About Paper', exact: true });
+  await about.click();
+  const popover = page.getByRole('dialog', {
+    name: 'Warm, tactile, and a little slower.',
+  });
+  await expect(popover).toBeVisible();
+  await expect(popover).toHaveAccessibleDescription(
+    /^Lead with a quiet botanical study\./,
+  );
+  await page.keyboard.press('Escape');
+  await expect(popover).toHaveCount(0);
+  await expect(about).toBeFocused();
+});

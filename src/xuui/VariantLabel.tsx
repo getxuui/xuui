@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, Frame, Link, Maximize2 } from 'lucide-react';
+import { Check, Frame, Info, Link, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { selectorFor } from './feedback';
 
 export function VariantLabel({
@@ -14,7 +21,13 @@ export function VariantLabel({
   onOpen,
 }: {
   studyId: string;
-  variant: { id: string; name: string; labels?: string[] };
+  variant: {
+    id: string;
+    name: string;
+    description: string;
+    rationale: string;
+    labels?: string[];
+  };
   active: boolean;
   comparison: boolean;
   selection: Element[];
@@ -103,6 +116,34 @@ export function VariantLabel({
           {label}
         </span>
       ))}
+      <Popover>
+        <PopoverTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="frame-title-about -ml-0.5 size-5 text-muted-foreground aria-expanded:text-foreground"
+              aria-label={`About ${variant.name}`}
+              title="Why this variant"
+            />
+          }
+        >
+          <Info data-icon="inline-start" />
+        </PopoverTrigger>
+        {/* The description leads as the title; the rationale explains it. */}
+        <PopoverContent
+          align="start"
+          data-workspace-control
+          className="studio-chrome gap-1 p-3"
+        >
+          <PopoverTitle className="text-sm leading-5 text-balance">
+            {variant.description}
+          </PopoverTitle>
+          <PopoverDescription className="text-xs leading-[18px] text-pretty">
+            {variant.rationale}
+          </PopoverDescription>
+        </PopoverContent>
+      </Popover>
       <span className="-ml-1 flex items-center">
         {comparison && (
           <Button

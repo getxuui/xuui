@@ -2,6 +2,17 @@
 
 ## 0.1.0-alpha.4
 
+- Draft comments are no longer wiped on reload when a variant is missing from the study or a saved comment fails validation. They stay in storage, and unreadable ones are kept under a separate `:unreadable` key.
+- The ⓘ beside a variant's frame title opens its description as a title, with its rationale beneath. Reviewers can now read why each variant exists.
+- Variant descriptions are limited to 100 characters, and rationales to a single paragraph of 280 characters. Studies with longer text fail to load until it is shortened; reviews submitted earlier still open.
+- Ruler ticks and labels follow the canvas's rounded corners. Ticks point at the corner's centre and the two rulers meet at 45°; label text bends along the curve and fades out as it turns.
+- Rulers and guides fade in and out when toggled.
+- In Play mode, scrollable areas in a design scroll with the wheel; at their end, the canvas pans.
+- The grid popover becomes View settings, behind a sliders icon. It uses the sidebar's rows and sliders, adds switches for rulers and guides and for buffer zones (the hatching around each frame), and folds a grid's values away while it is off. Columns and rows appear only on variants whose agent set them up; a note says when they're missing.
+- The canvas toolbar's separator is centred with the tools instead of sitting 4px high.
+- The canvas zooms out to 2% instead of 10%, so Shift+1 fits large studies.
+- Scrolling over the canvas toolbar, comment pins, rulers and asides inside designs pans the canvas. Only scrollable studio panels, such as the comment editor, keep the wheel.
+- In dark mode, the Layers panel and sidebar sit on the page background, as they do in light mode. Only the canvas is inset.
 - Enter selects child layers and Shift+Enter selects the parent from Layers and frame-title focus, as well as the canvas.
 - The Study dropdown uses the same green background, text and icon colors as active navigation rows.
 - Comments have durable workspace-wide numbers across studies and variants. Deletion and submission never reuse or renumber them. Clicking a comment card brings its target and matching pin into view.

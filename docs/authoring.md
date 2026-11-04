@@ -26,7 +26,7 @@ export const studies = [
 ];
 ```
 
-A study contains variants. Register it with `defineStudy({ ..., variants: [...] })` and give every variant a stable ID unique across the workspace. Each variant includes a rationale explaining the design choice. Add a new ID and implementation when a new alternative should remain reviewable alongside the existing variants.
+A study contains variants. Register it with `defineStudy({ ..., variants: [...] })` and give every variant a stable ID unique across the workspace. Each variant includes a description and a rationale. The description is a one-line subtitle of at most 100 characters. The rationale explains the design choice in one or two sentences: one paragraph of at most 280 characters. Reviewers read both from the ⓘ beside the variant's frame title. Add a new ID and implementation when a new alternative should remain reviewable alongside the existing variants.
 
 Supply the providers, styles, data, and dependencies the design needs. Use scoped CSS so a study does not restyle studio controls or another variant. Give the design meaningful dimensions; a percentage width without a sized parent can collapse on the canvas. Add `data-xuui-layer-name` when an element needs a clearer name in Layers.
 
@@ -90,7 +90,7 @@ grids: [
 
 Use at most one of each type. Layout counts are whole numbers from 1 to 1000; gutters and margins are nonnegative CSS-pixel values. `visible` defaults to true. Grids start at the design's top-left corner and follow it through pan and zoom in both focused and All views. They are visual references; they do not change or snap the design's layout.
 
-The toolbar's Grids control lets reviewers toggle overlays and enter custom measurements for the active variant. These overrides persist per variant in the current browser. Reset grids restores the authored configuration.
+View settings in the canvas toolbar lets reviewers toggle overlays and adjust their measurements for the active variant. Reviewers can use a pixel grid on any variant, but columns and rows only on variants that declare them, so declare every layout grid the design follows. Overrides persist per variant in the current browser. Reset grids restores the authored configuration.
 
 ## Updates
 

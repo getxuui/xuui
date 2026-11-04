@@ -2,7 +2,7 @@
 
 The left panel contains the study switcher, variant list, and layer tree. Drag the horizontal divider to resize navigation and Layers; collapse Layers with its chevron or by dragging the divider down. Both sidebars can be resized or collapsed. On narrow screens, Layers opens in a drawer.
 
-The canvas toolbar switches between selecting layers, interacting with a design, and commenting. Decorative lines and hatching remain visible in every mode. The title above each frame shows a copy-link action on hover or keyboard focus; copied links open that variant directly.
+The canvas toolbar switches between selecting layers, interacting with a design, and commenting. Buffer zones, the hatching and dashed outline around each frame, stay visible in every mode unless you turn them off in View settings. The title above each frame shows a copy-link action on hover or keyboard focus; copied links open that variant directly.
 
 | Shortcut            | Action                                                                        |
 | ------------------- | ----------------------------------------------------------------------------- |
@@ -42,7 +42,7 @@ Rulers and guides appear only in the focused view. All preserves the focused-vie
 
 ## Grids
 
-Open Grids in the canvas toolbar to configure the active variant. Enable a pixel grid with any positive spacing, or columns and rows with a count, gutter and margin. Type a value and press Enter or leave the field to apply it. Settings persist per variant; disabling an overlay retains its measurements. Reset grids restores the study's authored settings. Overlays follow the design through pan and zoom in both views, without changing its layout.
+Open View settings, the sliders icon in the canvas toolbar, to change how the canvas looks. Rulers and guides and Buffer zones apply to every variant; R also toggles rulers. The pixel grid is available on every variant. Columns and rows appear only when the agent set them up for the active variant; otherwise a note says so. Drag a value or click it to type an exact number. A grid's values fold away while it is off and keep their measurements. Grid settings persist per variant, and Reset grids restores the study's authored settings. Overlays follow the design through pan and zoom in both views, without changing its layout.
 
 ## Comments
 

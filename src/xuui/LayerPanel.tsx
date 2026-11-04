@@ -307,7 +307,7 @@ export function LayerPanel({
       data-workspace-control
       data-layer-panel
       aria-label="Layers"
-      className="studio-chrome flex h-full min-w-0 flex-col bg-card"
+      className="studio-chrome flex h-full min-w-0 flex-col bg-studio-background"
     >
       <ResizablePanelGroup orientation="vertical" className="min-h-0 flex-1">
         <ResizablePanel

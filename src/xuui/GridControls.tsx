@@ -1,20 +1,13 @@
-import { useEffect, useId, useState } from 'react';
-import { Grid2X2 } from 'lucide-react';
+import { useId } from 'react';
+import type { ReactNode } from 'react';
+import { RotateCcw, Settings2 } from 'lucide-react';
+import { cn } from 'cn';
 import { Button } from '@/components/ui/button';
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { ParameterSlider } from '@/components/ui/parameter-slider';
 import {
   Popover,
   PopoverContent,
-  PopoverDescription,
-  PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
 } from '@/components/ui/popover';
@@ -22,89 +15,131 @@ import { Switch } from '@/components/ui/switch';
 import { defaultGrids } from './grids';
 import type { Grid } from './grids';
 
-function GridNumber({
+const gridLabels = { pixels: 'Pixel grid', columns: 'Columns', rows: 'Rows' };
+
+function SwitchRow({
   label,
-  name = label,
-  value,
-  minimum,
-  integer = false,
-  positive = false,
+  checked,
   onChange,
 }: {
   label: string;
-  name?: string;
-  value: number;
-  minimum: number;
-  integer?: boolean;
-  positive?: boolean;
-  onChange: (value: number) => void;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
 }) {
   const id = useId();
-  const [text, setText] = useState(String(value));
-  useEffect(() => setText(String(value)), [value]);
-  const number = Number(text);
-  const valid =
-    text.trim() !== '' &&
-    Number.isFinite(number) &&
-    (positive ? number > minimum : number >= minimum) &&
-    (!integer || (Number.isInteger(number) && number <= 1000));
   return (
-    <Field data-invalid={!valid || undefined} className="min-w-0 gap-1">
+    <Field orientation="horizontal" className="parameter-field">
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <Input
+      <Switch
         id={id}
-        type="number"
-        aria-label={name}
-        min={minimum}
-        max={integer ? 1000 : undefined}
-        step={integer ? 1 : 'any'}
-        value={text}
-        aria-invalid={!valid}
-        aria-describedby={!valid ? `${id}-error` : undefined}
-        onChange={(event) => setText(event.target.value)}
-        onBlur={() => {
-          if (valid) onChange(number);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            if (valid) {
-              onChange(number);
-              event.currentTarget.blur();
-            }
-          }
-          if (event.key === 'Escape') {
-            event.stopPropagation();
-            setText(String(value));
-            event.currentTarget.blur();
-          }
-        }}
+        size="sm"
+        className="ml-auto data-checked:bg-brand"
+        checked={checked}
+        onCheckedChange={onChange}
       />
-      {!valid && (
-        <FieldDescription id={`${id}-error`}>
-          {integer
-            ? 'Use a whole number from 1 to 1000.'
-            : `Use ${positive || minimum > 0 ? 'a positive number' : 'zero or a positive number'}.`}
-        </FieldDescription>
-      )}
     </Field>
   );
 }
 
-export function GridControls({
-  name,
+/* Rows in a block touch with hairline gaps under one rounded outline. The
+   studio's .parameter-field radius outranks utilities, hence !important. */
+function Block({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <section
+      aria-label={label}
+      className="flex flex-col overflow-hidden rounded-[10px] [&_.parameter-field]:rounded-none! [&_.parameter-slider]:rounded-none [&_.parameter-slider_*]:rounded-none"
+    >
+      {children}
+    </section>
+  );
+}
+
+/** A grid's values fold away under its switch while it is off. */
+function Collapsible({
+  open,
+  children,
+}: {
+  open: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      inert={!open}
+      className={cn(
+        'grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none',
+        open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+      )}
+    >
+      <div className="min-h-0 overflow-hidden">
+        {/* The hairline sits inside, so a closed block keeps round corners. */}
+        <div className="flex flex-col gap-px pt-px">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/* Sliders cover the common range; an authored value beyond it widens the
+   range instead of being clamped. */
+function Measure({
+  label,
+  value,
+  max,
+  unit,
+  min = 0,
+  step = 0.5,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  unit?: string;
+  min?: number;
+  step?: number;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <ParameterSlider
+      label={label}
+      value={value}
+      min={min}
+      max={Math.max(max, value)}
+      step={step}
+      unit={unit}
+      onChange={onChange}
+    />
+  );
+}
+
+export function ViewSettings({
   grids,
+  declared,
+  rulers,
+  onRulersChange,
+  bufferZones,
+  onBufferZonesChange,
   onChange,
   onReset,
 }: {
-  name: string;
   grids: Grid[];
+  /** Layout grids the agent set up for this variant. */
+  declared: Grid['type'][];
+  rulers: boolean;
+  onRulersChange: (visible: boolean) => void;
+  bufferZones: boolean;
+  onBufferZonesChange: (visible: boolean) => void;
   onChange: (grids: Grid[]) => void;
   onReset: () => void;
 }) {
-  const baseId = useId();
   const update = (grid: Grid) =>
     onChange([...grids.filter((item) => item.type !== grid.type), grid]);
+  // The pixel grid measures any design. Columns and rows only mean something
+  // for a layout the agent set up.
+  const shown = defaultGrids.filter(
+    (grid) => grid.type === 'pixels' || declared.includes(grid.type),
+  );
+  const missing = (['columns', 'rows'] as const).filter(
+    (type) => !declared.includes(type),
+  );
   return (
     <Popover>
       <PopoverTrigger
@@ -112,93 +147,103 @@ export function GridControls({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Grid settings"
-            title="Grids"
+            aria-label="View settings"
+            title="View"
           />
         }
       >
-        <Grid2X2 data-icon="inline-start" />
+        <Settings2 data-icon="inline-start" />
       </PopoverTrigger>
       <PopoverContent
         side="top"
         sideOffset={12}
         data-workspace-control
-        className="studio-chrome max-h-[min(680px,80dvh)] w-72 overflow-y-auto p-4"
+        className="studio-chrome max-h-[min(680px,80dvh)] w-72 gap-5 overflow-y-auto rounded-xl border border-border p-3 text-xs shadow-studio-floating ring-0"
       >
-        <PopoverHeader>
-          <PopoverTitle>Grids</PopoverTitle>
-          <PopoverDescription>{name}</PopoverDescription>
-        </PopoverHeader>
-        <FieldGroup className="gap-4">
-          {defaultGrids.map((defaults) => {
-            const grid =
-              grids.find((item) => item.type === defaults.type) ?? defaults;
-            const enabled = grids.some(
-              (item) => item.type === defaults.type && item.visible !== false,
-            );
-            const label =
-              grid.type === 'pixels'
-                ? 'Pixel grid'
-                : grid.type === 'columns'
-                  ? 'Columns'
-                  : 'Rows';
-            const prefix = grid.type === 'columns' ? 'Column' : 'Row';
-            const id = `${baseId}-${grid.type}`;
-            return (
-              <FieldSet key={grid.type} className="gap-2">
-                <FieldLegend className="sr-only">{label}</FieldLegend>
-                <Field orientation="horizontal">
-                  <FieldLabel htmlFor={id}>{label}</FieldLabel>
-                  <Switch
-                    id={id}
-                    size="sm"
-                    checked={enabled}
-                    onCheckedChange={(visible) => update({ ...grid, visible })}
+        <header className="flex items-center justify-between gap-2">
+          <PopoverTitle className="text-sm">View</PopoverTitle>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Reset grids"
+            title="Reset grids"
+            onClick={onReset}
+          >
+            <RotateCcw data-icon="inline-start" />
+          </Button>
+        </header>
+        <div className="flex flex-col gap-px overflow-hidden rounded-[10px] [&_.parameter-field]:rounded-none!">
+          <SwitchRow
+            label="Rulers and guides"
+            checked={rulers}
+            onChange={onRulersChange}
+          />
+          <SwitchRow
+            label="Buffer zones"
+            checked={bufferZones}
+            onChange={onBufferZonesChange}
+          />
+        </div>
+        {shown.map((defaults) => {
+          const grid =
+            grids.find((item) => item.type === defaults.type) ?? defaults;
+          const enabled = grids.some(
+            (item) => item.type === defaults.type && item.visible !== false,
+          );
+          const label = gridLabels[grid.type];
+          return (
+            <Block key={grid.type} label={label}>
+              <SwitchRow
+                label={label}
+                checked={enabled}
+                onChange={(visible) => update({ ...grid, visible })}
+              />
+              <Collapsible open={enabled}>
+                {grid.type === 'pixels' ? (
+                  <Measure
+                    label="Size"
+                    value={grid.size}
+                    min={0.5}
+                    max={64}
+                    unit="px"
+                    onChange={(size) => update({ ...grid, size })}
                   />
-                </Field>
-                {enabled &&
-                  (grid.type === 'pixels' ? (
-                    <GridNumber
-                      label="Pixel size (px)"
-                      name="Pixel size"
-                      value={grid.size}
-                      minimum={0}
-                      positive
-                      onChange={(size) => update({ ...grid, size })}
+                ) : (
+                  <>
+                    <Measure
+                      label="Count"
+                      value={grid.count}
+                      min={1}
+                      max={24}
+                      step={1}
+                      onChange={(count) => update({ ...grid, count })}
                     />
-                  ) : (
-                    <FieldGroup className="grid grid-cols-3 gap-2">
-                      <GridNumber
-                        label="Count"
-                        name={`${prefix} count`}
-                        value={grid.count}
-                        minimum={1}
-                        integer
-                        onChange={(count) => update({ ...grid, count })}
-                      />
-                      <GridNumber
-                        label="Gutter (px)"
-                        name={`${prefix} gutter`}
-                        value={grid.gutter}
-                        minimum={0}
-                        onChange={(gutter) => update({ ...grid, gutter })}
-                      />
-                      <GridNumber
-                        label="Margin (px)"
-                        name={`${prefix} margin`}
-                        value={grid.margin}
-                        minimum={0}
-                        onChange={(margin) => update({ ...grid, margin })}
-                      />
-                    </FieldGroup>
-                  ))}
-              </FieldSet>
-            );
-          })}
-        </FieldGroup>
-        <Button variant="ghost" size="sm" onClick={onReset}>
-          Reset grids
-        </Button>
+                    <Measure
+                      label="Gutter"
+                      value={grid.gutter}
+                      max={64}
+                      unit="px"
+                      onChange={(gutter) => update({ ...grid, gutter })}
+                    />
+                    <Measure
+                      label="Margin"
+                      value={grid.margin}
+                      max={128}
+                      unit="px"
+                      onChange={(margin) => update({ ...grid, margin })}
+                    />
+                  </>
+                )}
+              </Collapsible>
+            </Block>
+          );
+        })}
+        {missing.length > 0 && (
+          <p className="-mt-2 px-2.5 text-center text-[11px] leading-4 text-muted-foreground">
+            Agent hasn’t set up{' '}
+            {missing.length === 2 ? 'columns or rows' : missing[0]}.
+          </p>
+        )}
       </PopoverContent>
     </Popover>
   );

@@ -23,10 +23,11 @@ const draftSchema = z.object({
 type Draft = z.infer<typeof draftSchema>;
 const newDraft = (): Draft => ({ id: crypto.randomUUID(), comments: [] });
 const storageKey = (id: string) => `xuui:${id}:feedback-draft:v2`;
-const storedDraftSchema = z.union([
-  draftSchema,
-  draftSchema.extend({ comments: z.array(legacyCommentSchema).max(100) }),
-]);
+const storedDraftSchema = z.object({
+  id: z.uuid(),
+  comments: z.array(z.unknown()).max(100),
+});
+const storedCommentSchema = z.union([commentSchema, legacyCommentSchema]);
 
 async function reserveNumbers(
   ids: string[],
@@ -46,31 +47,39 @@ async function reserveNumbers(
   return z.record(z.uuid(), commentNumberSchema).parse(await response.json());
 }
 
-function readDraft(study: Study): Draft {
+// Reading never discards stored comments: a reload must not turn a registry
+// that is briefly missing a variant, or a comment from an older schema, into
+// an empty draft that the effect below then writes over the saved one.
+function readDraft(studyId: string): Draft {
+  let raw: string | null = null;
   try {
-    const result = storedDraftSchema.safeParse(
-      JSON.parse(
-        localStorage.getItem(storageKey(study.id)) ??
-          localStorage.getItem(`xuui:${study.id}:feedback-draft:v1`) ??
-          'null',
-      ),
-    );
-    if (result.success)
-      return {
-        ...result.data,
-        comments: result.data.comments.filter((comment) =>
-          study.variants.some((variant) => variant.id === comment.variantId),
-        ),
-      };
+    raw =
+      localStorage.getItem(storageKey(studyId)) ??
+      localStorage.getItem(`xuui:${studyId}:feedback-draft:v1`);
+    const stored = storedDraftSchema.safeParse(JSON.parse(raw ?? 'null'));
+    if (stored.success) {
+      const comments = stored.data.comments.flatMap((comment) => {
+        const result = storedCommentSchema.safeParse(comment);
+        return result.success ? [result.data] : [];
+      });
+      if (comments.length < stored.data.comments.length)
+        localStorage.setItem(`${storageKey(studyId)}:unreadable`, raw ?? '');
+      return { id: stored.data.id, comments };
+    }
   } catch {
     /* A draft remains usable without browser storage. */
+  }
+  try {
+    if (raw) localStorage.setItem(`${storageKey(studyId)}:unreadable`, raw);
+  } catch {
+    /* Optional draft persistence. */
   }
   return newDraft();
 }
 
 export function useReviews(studies: Study[], study: Study) {
   const [drafts, setDrafts] = useState<Record<string, Draft>>(() =>
-    Object.fromEntries(studies.map((item) => [item.id, readDraft(item)])),
+    Object.fromEntries(studies.map((item) => [item.id, readDraft(item.id)])),
   );
   const [reviews, setReviews] = useState<Review[]>([]);
   const [receipts, setReceipts] = useState<Record<string, ReviewReceipt>>({});
@@ -79,6 +88,10 @@ export function useReviews(studies: Study[], study: Study) {
   const [busy, setBusy] = useState<string[]>([]);
   const submitting = useRef(new Set<string>());
   const draft = drafts[study.id];
+  // Comments on variants the registry no longer lists stay stored, but are neither shown nor submitted.
+  const comments = draft.comments.filter((comment) =>
+    study.variants.some((variant) => variant.id === comment.variantId),
+  );
   const draftsRef = useRef(drafts);
   draftsRef.current = drafts;
 
@@ -230,7 +243,7 @@ export function useReviews(studies: Study[], study: Study) {
     }));
   };
   const submit = async () => {
-    if (!draft.comments.length || submitting.current.has(study.id)) return;
+    if (!comments.length || submitting.current.has(study.id)) return;
     submitting.current.add(study.id);
     setBusy((previous) => [...previous, study.id]);
     setErrors((previous) => ({ ...previous, [study.id]: '' }));
@@ -239,7 +252,7 @@ export function useReviews(studies: Study[], study: Study) {
       id: draft.id,
       studyId: study.id,
       variants: study.variants.map(toVariantRecord),
-      comments: draft.comments,
+      comments,
     };
     try {
       const response = await fetch('/__xuui/reviews', {
@@ -257,7 +270,16 @@ export function useReviews(studies: Study[], study: Study) {
         review,
         ...previous.filter((item) => item.id !== review.id),
       ]);
-      setDrafts((previous) => ({ ...previous, [study.id]: newDraft() }));
+      const sent = new Set(comments.map((comment) => comment.id));
+      setDrafts((previous) => ({
+        ...previous,
+        [study.id]: {
+          id: crypto.randomUUID(),
+          comments: previous[study.id].comments.filter(
+            (comment) => !sent.has(comment.id),
+          ),
+        },
+      }));
     } catch {
       setErrors((previous) => ({
         ...previous,
@@ -270,7 +292,7 @@ export function useReviews(studies: Study[], study: Study) {
     }
   };
   return {
-    comments: draft.comments,
+    comments,
     reviews: reviews.filter((review) => review.studyId === study.id),
     receipts,
     error: errors[study.id] ?? '',

@@ -288,7 +288,7 @@ export function ParameterPanel({
     <aside
       data-workspace-control
       aria-label="Sidebar"
-      className="studio-chrome sidebar-scroll-mask flex h-full min-h-0 flex-col gap-6 overflow-y-auto overscroll-contain bg-card px-4 pt-2 pb-6"
+      className="studio-chrome sidebar-scroll-mask flex h-full min-h-0 flex-col gap-6 overflow-y-auto overscroll-contain bg-studio-background px-4 pt-2 pb-6"
     >
       {selectedLayer ? (
         <LayerInspector layer={selectedLayer} action={actions} />

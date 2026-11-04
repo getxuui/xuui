@@ -19,6 +19,19 @@ export const variantRecordSchema = z
   })
   .strict();
 
+/* Authoring is stricter than stored reviews, which keep the older limits so
+   reviews submitted before them still load. A one-line subtitle and a short
+   paragraph let reviewers read both at a glance. */
+const authoredVariantSchema = variantRecordSchema.extend({
+  description: z.string().trim().min(1).max(100),
+  rationale: z
+    .string()
+    .trim()
+    .min(1)
+    .max(280)
+    .regex(/^[^\n]*$/, 'Write the rationale as a single paragraph.'),
+});
+
 export type VariantRecord = z.infer<typeof variantRecordSchema>;
 export type Variant = VariantRecord & {
   component: ComponentType<StudioBindings>;
@@ -56,7 +69,7 @@ export type Study = {
 export function defineStudy(study: Study): Study {
   const ids = new Set<string>();
   for (const variant of study.variants) {
-    variantRecordSchema.parse(toVariantRecord(variant));
+    authoredVariantSchema.parse(toVariantRecord(variant));
     lineageSchema.parse({
       from: variant.from,
       answers: variant.answers,

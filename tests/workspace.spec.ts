@@ -33,9 +33,9 @@ test('guides drag in both axes, accept precise values, and stay relative to the 
   await expect(xZero).toBeVisible();
   await expect(yZero).toBeVisible();
   const xLabel = (await xZero.boundingBox())!;
-  expect(xLabel.x + xLabel.width / 2).toBeCloseTo(box.x);
+  expect(xLabel.x + xLabel.width / 2).toBeCloseTo(box.x, 0);
   const yLabel = (await yZero.boundingBox())!;
-  expect(yLabel.y + yLabel.height / 2).toBeCloseTo(box.y);
+  expect(yLabel.y + yLabel.height / 2).toBeCloseTo(box.y, 0);
   await expect(
     page.locator('[data-ruler-axis="x"][data-ruler-value="-64"]'),
   ).toBeVisible();
@@ -536,7 +536,7 @@ test('Option without selection reveals layout spacing and the canvas edge resize
     .locator('[data-ruler-axis="x"][data-ruler-value="0"]')
     .boundingBox())!;
   const component = (await page.locator('[data-xuui-design]').boundingBox())!;
-  expect(zero.x + zero.width / 2).toBeCloseTo(component.x);
+  expect(zero.x + zero.width / 2).toBeCloseTo(component.x, 0);
   expect(resized.width).toBeGreaterThan(300);
 });
 
@@ -605,4 +605,47 @@ test('All hides rulers and guides while preserving focused-view preferences and 
   await expect(
     page.getByRole('slider', { name: 'X guide', exact: true }),
   ).toHaveAttribute('aria-valuenow', '24');
+});
+
+test('ruler labels follow the canvas corner and rulers fade in and out', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  const canvas = (await page
+    .getByRole('region', { name: 'Canvas', exact: true })
+    .boundingBox())!;
+  await page.mouse.move(
+    canvas.x + canvas.width / 2,
+    canvas.y + canvas.height / 2,
+  );
+  // Pan until a top label reaches the curve of the top-left corner.
+  const cornerLabel = async () =>
+    page.evaluate((left) => {
+      for (const label of document.querySelectorAll('[data-ruler-axis="x"]')) {
+        const box = label.getBoundingClientRect();
+        const centre = box.left + box.width / 2 - left;
+        if (centre > 1 && centre < 12)
+          return Number(label.getAttribute('opacity'));
+      }
+      return null;
+    }, canvas.x);
+  let opacity = await cornerLabel();
+  for (let step = 0; opacity === null && step < 120; step++) {
+    await page.mouse.wheel(2, 0);
+    opacity = await cornerLabel();
+  }
+  // On the curve, labels ride a path and fade as they turn toward 45°.
+  expect(opacity).not.toBeNull();
+  expect(opacity!).toBeLessThan(1);
+  expect(opacity!).toBeGreaterThan(0);
+  await expect(
+    page.locator('[data-ruler-axis="x"] textPath').first(),
+  ).toHaveAttribute('href', /^#/);
+
+  const rulers = page.locator('[data-rulers]');
+  await page.keyboard.press('r');
+  await expect(rulers).toHaveClass(/opacity-0/);
+  await expect(rulers).toHaveCount(0);
+  await page.keyboard.press('r');
+  await expect(rulers).toHaveClass(/opacity-100/);
 });

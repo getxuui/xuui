@@ -28,7 +28,7 @@ type NativeGestureEvent = Event & {
 const cameraSchema = z.object({
   x: z.number(),
   y: z.number(),
-  scale: z.number().min(0.1).max(8),
+  scale: z.number().min(0.02).max(8),
 });
 type Camera = z.infer<typeof cameraSchema>;
 
@@ -117,7 +117,8 @@ export function CanvasViewport({
       saveTimer = window.setTimeout(save, 150);
     };
     const zoomAt = (next: number, anchor: Point) => {
-      const zoom = Math.max(0.1, Math.min(8, next));
+      // 2%, like Figma, so large histories still fit on screen with Shift+1.
+      const zoom = Math.max(0.02, Math.min(8, next));
       if (!Number.isFinite(zoom)) return;
       if (zoom !== scale.current) {
         setZoomControlVisible(true);
@@ -225,6 +226,61 @@ export function CanvasViewport({
       target.closest(
         'input,textarea,select,[contenteditable="true"],aside,[data-workspace-control]',
       );
+    // A studio control that can scroll along the wheel keeps it, as does a
+    // design's scrollable area in Play mode. Otherwise the toolbar, pins,
+    // rulers and designs, asides included, pan the canvas.
+    const scrollsWheel = (event: WheelEvent) => {
+      if (!(event.target instanceof Element)) return false;
+      // In Play mode a design scrolls like the real thing: a scrollable area
+      // keeps the wheel while it can still move that way, then the canvas pans.
+      const design =
+        section.dataset.canvasMode === 'interact' &&
+        event.target.closest('[data-xuui-design]');
+      if (design)
+        for (
+          let element: Element | null = event.target;
+          element && element !== design.parentElement;
+          element = element.parentElement
+        ) {
+          const { overflowX, overflowY } = getComputedStyle(element);
+          if (
+            (event.deltaY < 0 && element.scrollTop > 0) ||
+            (event.deltaY > 0 &&
+              element.scrollTop + element.clientHeight <
+                element.scrollHeight - 1)
+          ) {
+            if (/auto|scroll/.test(overflowY)) return true;
+          }
+          if (
+            (event.deltaX < 0 && element.scrollLeft > 0) ||
+            (event.deltaX > 0 &&
+              element.scrollLeft + element.clientWidth <
+                element.scrollWidth - 1)
+          ) {
+            if (/auto|scroll/.test(overflowX)) return true;
+          }
+        }
+      const control = event.target.closest('[data-workspace-control]');
+      if (!control) return false;
+      for (
+        let element: Element | null = event.target;
+        element;
+        element = element.parentElement
+      ) {
+        const { overflowX, overflowY } = getComputedStyle(element);
+        if (
+          (event.deltaY &&
+            /auto|scroll/.test(overflowY) &&
+            element.scrollHeight > element.clientHeight) ||
+          (event.deltaX &&
+            /auto|scroll/.test(overflowX) &&
+            element.scrollWidth > element.clientWidth)
+        )
+          return true;
+        if (element === control) break;
+      }
+      return false;
+    };
     const keydown = (event: KeyboardEvent) => {
       if (
         event.key === '0' &&
@@ -406,10 +462,7 @@ export function CanvasViewport({
           });
         return;
       }
-      const onFrameTitle =
-        event.target instanceof Element &&
-        event.target.closest('[data-frame-title]');
-      if (event.metaKey || (inputTarget(event.target) && !onFrameTitle)) return;
+      if (event.metaKey || scrollsWheel(event)) return;
       event.preventDefault();
       pan.current = {
         x: pan.current.x - event.deltaX * factor,

@@ -9,13 +9,21 @@ export function useGrids(studyId: string) {
   >({});
   const keyFor = (id: string) => `xuui:${studyId}:${id}:grids:v1`;
   const forVariant = (variant: Variant): Grid[] => {
+    // Columns and rows exist only where the agent set them up; the pixel grid
+    // is available on every variant.
+    const allowed = (grids: Grid[]) =>
+      grids.filter(
+        (grid) =>
+          grid.type === 'pixels' ||
+          variant.grids?.some((authored) => authored.type === grid.type),
+      );
     const key = keyFor(variant.id);
-    if (overrides[key]) return overrides[key];
+    if (overrides[key]) return allowed(overrides[key]);
     try {
       const stored = gridsSchema.safeParse(
         JSON.parse(localStorage.getItem(key) ?? 'null'),
       );
-      if (stored.success) return stored.data;
+      if (stored.success) return allowed(stored.data);
     } catch {
       /* Authored grids still work without browser storage. */
     }
