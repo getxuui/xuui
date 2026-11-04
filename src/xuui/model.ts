@@ -2,6 +2,8 @@ import { z } from 'zod';
 import type { ComponentType } from 'react';
 import type { Controls, StudioBindings } from './parameters.ts';
 import { validateControls } from './parameters.ts';
+import { gridsSchema } from './grids.ts';
+import type { Grid } from './grids.ts';
 
 const shortText = z.string().trim().min(1).max(300);
 
@@ -31,6 +33,8 @@ export type Variant = VariantRecord & {
    * xuui shows them beside the variant's name and gives them no meaning.
    */
   labels?: string[];
+  /** Alignment overlays measured in the variant's own CSS pixels. */
+  grids?: Grid[];
 };
 
 const lineageSchema = z
@@ -59,6 +63,7 @@ export function defineStudy(study: Study): Study {
       labels: variant.labels,
     });
     validateControls(variant.controls);
+    gridsSchema.parse(variant.grids ?? []);
     if (ids.has(variant.id))
       throw new Error(`Duplicate variant ID: ${variant.id}`);
     ids.add(variant.id);
@@ -141,9 +146,12 @@ const annotationSchema = z
   })
   .strict();
 
+export const commentNumberSchema = z.number().int().positive().safe();
+
 export const commentSchema = z
   .object({
     id: z.uuid(),
+    number: commentNumberSchema.optional(),
     variantId: shortText,
     body: z.string().trim().min(1).max(4000),
     target: targetSchema,
@@ -220,7 +228,7 @@ export function formatReview(review: Review): string {
       (item) => item.id === comment.variantId,
     );
     lines.push(
-      `## ${index + 1}. ${variant?.name ?? comment.variantId} (${comment.variantId})`,
+      `## ${comment.number ?? index + 1}. ${variant?.name ?? comment.variantId} (${comment.variantId})`,
       comment.body,
       '',
       `Target: ${comment.target.selector}`,

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import {
   commentSchema,
+  commentNumberSchema,
   reviewSchema,
   reviewReceiptSchema,
   toVariantRecord,
@@ -26,6 +27,24 @@ const storedDraftSchema = z.union([
   draftSchema,
   draftSchema.extend({ comments: z.array(legacyCommentSchema).max(100) }),
 ]);
+
+async function reserveNumbers(
+  ids: string[],
+  signal?: AbortSignal,
+): Promise<Record<string, number>> {
+  if (!ids.length) return {};
+  const response = await fetch('/__xuui/reviews/comment-numbers', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+    signal,
+  });
+  if (!response.ok)
+    throw new Error(
+      'Could not reserve comment numbers. Your comment is kept; try again.',
+    );
+  return z.record(z.uuid(), commentNumberSchema).parse(await response.json());
+}
 
 function readDraft(study: Study): Draft {
   try {
@@ -60,6 +79,8 @@ export function useReviews(studies: Study[], study: Study) {
   const [busy, setBusy] = useState<string[]>([]);
   const submitting = useRef(new Set<string>());
   const draft = drafts[study.id];
+  const draftsRef = useRef(drafts);
+  draftsRef.current = drafts;
 
   useEffect(() => {
     for (const [id, value] of Object.entries(drafts)) {
@@ -85,6 +106,29 @@ export function useReviews(studies: Study[], study: Study) {
         ].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)),
       );
       setHistoryError('');
+      const comments = Object.values(draftsRef.current)
+        .flatMap((draft) => draft.comments)
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      const numbers = await reserveNumbers(
+        comments.map((comment) => comment.id),
+        signal,
+      );
+      if (signal?.aborted) return;
+      setDrafts((previous) =>
+        Object.fromEntries(
+          Object.entries(previous).map(([id, draft]) => [
+            id,
+            {
+              ...draft,
+              comments: draft.comments.map((comment) =>
+                numbers[comment.id]
+                  ? { ...comment, number: numbers[comment.id] }
+                  : comment,
+              ),
+            },
+          ]),
+        ),
+      );
     } catch (error) {
       if (!signal?.aborted)
         setHistoryError(
@@ -130,7 +174,7 @@ export function useReviews(studies: Study[], study: Study) {
     };
   }, []);
 
-  const save = (comment: Comment) => {
+  const save = async (comment: Comment): Promise<boolean> => {
     if (submitting.current.has(study.id)) return false;
     const parsed = commentSchema.safeParse(comment);
     if (
@@ -142,6 +186,19 @@ export function useReviews(studies: Study[], study: Study) {
         ...previous,
         [study.id]:
           'Use up to 100 comments, with 4,000 characters per comment.',
+      }));
+      return false;
+    }
+    try {
+      const numbers = await reserveNumbers([comment.id]);
+      parsed.data.number = numbers[comment.id];
+    } catch (error) {
+      setErrors((previous) => ({
+        ...previous,
+        [study.id]:
+          error instanceof Error
+            ? error.message
+            : 'Could not save the comment.',
       }));
       return false;
     }

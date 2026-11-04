@@ -11,7 +11,7 @@ The canvas toolbar switches between selecting layers, interacting with a design,
 | L                   | Open Layers and focus the selected layer; return to canvas from the tree      |
 | ⌘\\ / Ctrl+\\       | Toggle the right sidebar                                                      |
 | D                   | Switch light/dark theme                                                       |
-| R                   | Toggle rulers, retaining guides                                               |
+| R                   | Toggle focused-view rulers, retaining guides                                  |
 | Home                | Center the active variant                                                     |
 | ⌘0 / Ctrl+0         | Reset canvas zoom to 100%                                                     |
 | Shift+0             | Zoom to 100%                                                                  |
@@ -32,14 +32,22 @@ Selecting a layer replaces State, Props, and Comments with its inspector. Click 
 
 ⌘L / Ctrl+L copies a deep link to the selected layers. Opening the link selects them, reveals them in Layers and fits them to the canvas. These links use the same DOM locators as comments, so they refer to the current component structure. The link button in a frame title always copies the whole variant.
 
-In Layers, arrows move through visible rows and expand or collapse groups. Home/End select the first/last visible layer. Tab cycles siblings; Escape returns focus to the canvas without clearing selection.
+In Layers, arrows move through visible rows and expand or collapse groups. Home/End select the first/last visible layer. Enter selects children and Shift+Enter selects the parent, including when focus is on a frame title. Tab cycles siblings; Escape returns focus to the canvas without clearing selection. The inspector includes the layer's CSS position value alongside its bounds.
 
 ## Guides
 
 Drag from a ruler to create a guide. Guides snap to nearby edges and centers. Click one to enter its component-pixel position; Enter confirms, Escape restores the previous position, and an empty value deletes it. Delete also removes a focused guide. Arrow keys move it by 1px, or 10px with Shift. Guides persist per variant in the current browser.
+
+Rulers and guides appear only in the focused view. All preserves the focused-view ruler setting while keeping selection and measurements available.
+
+## Grids
+
+Open Grids in the canvas toolbar to configure the active variant. Enable a pixel grid with any positive spacing, or columns and rows with a count, gutter and margin. Type a value and press Enter or leave the field to apply it. Settings persist per variant; disabling an overlay retains its measurements. Reset grids restores the study's authored settings. Overlays follow the design through pan and zoom in both views, without changing its layout.
 
 ## Comments
 
 Click an element in Comment mode, type, then add the comment. Clicking outside dismisses the editor and retains unfinished text for reopening; Cancel discards it. ⌘Enter/Ctrl+Enter saves.
 
 Comments collect in a draft until **Submit review**. Numbered pins follow their target through panning and zooming. Browser drafts remain separate per study; submitted records and read receipts live in the workspace. See [Reviews and MCP](mcp.md).
+
+Every saved comment gets a unique workspace number, across studies and variants. Numbers keep increasing and survive deletion and submission. Clicking a comment card reveals its matching pin, bringing the target into view; draft cards also reopen the editor.

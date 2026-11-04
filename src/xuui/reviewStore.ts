@@ -15,6 +15,7 @@ import {
 } from './model.ts';
 import type { Review, Submission, ReviewReceipt } from './model.ts';
 import { storedReviewSchema } from './legacyFeedback.ts';
+import { commentNumber } from './commentNumbers.ts';
 
 export async function readReviewReceipts(
   directory: string,
@@ -66,7 +67,7 @@ export async function acknowledgeReview(
   }
 }
 
-export async function readReview(
+async function readStoredReview(
   directory: string,
   id: string,
 ): Promise<Review | null> {
@@ -93,14 +94,44 @@ export async function readReviews(directory: string): Promise<Review[]> {
   const records = await Promise.all(
     files
       .filter((file) => /^[a-f0-9-]{36}\.json$/.test(file))
-      .map((file) => readReview(directory, file.slice(0, -5))),
+      .map((file) => readStoredReview(directory, file.slice(0, -5))),
   );
-  return records
-    .filter((record): record is Review => record !== null)
+  const reviews = records.filter((record): record is Review => record !== null);
+  const comments = [
+    ...new Map(
+      reviews
+        .flatMap((review) => review.comments)
+        .map((comment) => [comment.id, comment]),
+    ).values(),
+  ].sort(
+    (a, b) =>
+      a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id),
+  );
+  const numbers = new Map<string, number>();
+  for (const comment of comments)
+    numbers.set(comment.id, await commentNumber(directory, comment.id));
+  return reviews
+    .map((review) => ({
+      ...review,
+      comments: review.comments.map((comment) => ({
+        ...comment,
+        number: numbers.get(comment.id)!,
+      })),
+    }))
     .sort(
       (a, b) =>
         b.submittedAt.localeCompare(a.submittedAt) || b.id.localeCompare(a.id),
     );
+}
+
+export async function readReview(
+  directory: string,
+  id: string,
+): Promise<Review | null> {
+  reviewSchema.shape.id.parse(id);
+  return (
+    (await readReviews(directory)).find((review) => review.id === id) ?? null
+  );
 }
 
 export async function saveReview(
@@ -108,6 +139,17 @@ export async function saveReview(
   submission: Submission,
 ): Promise<Review> {
   await mkdir(directory, { recursive: true });
+  // Register historical comments before allocating any new numbers.
+  await readReviews(directory);
+  submission = {
+    ...submission,
+    comments: await Promise.all(
+      submission.comments.map(async (comment) => ({
+        ...comment,
+        number: await commentNumber(directory, comment.id),
+      })),
+    ),
+  };
   const review: Review = {
     ...submission,
     submittedAt: new Date().toISOString(),
@@ -128,7 +170,7 @@ export async function saveReview(
     const { submittedAt: _, ...original } = existing;
     if (
       JSON.stringify(submissionSchema.parse(original)) !==
-      JSON.stringify(submission)
+      JSON.stringify(submissionSchema.parse(submission))
     )
       throw new Error(
         'This review ID has already been submitted with different content.',

@@ -20,6 +20,8 @@ import { useParameters } from './useParameters';
 import { ParameterPanel } from './ParameterPanel';
 import { CanvasViewport } from './CanvasViewport';
 import { VariantSurface } from './VariantSurface';
+import { GridControls } from './GridControls';
+import { useGrids } from './useGrids';
 import { CanvasFeedback, CanvasTools, CommentEditor } from './CanvasFeedback';
 import type { CanvasMode } from './CanvasFeedback';
 import { ReviewPanel } from './ReviewPanel';
@@ -29,7 +31,12 @@ import type { LayerProperties } from './layerProperties';
 import { LayerPanel } from './LayerPanel';
 import { useLayerTree } from './useLayerTree';
 import { useNewVariants } from './useNewVariants';
-import { lineageColumns, lineageEdges, postedComments } from './lineage';
+import {
+  lineageColumns,
+  lineageEdges,
+  lineagePlacements,
+  postedComments,
+} from './lineage';
 import { LineageMap } from './LineageMap';
 import type { LayerNode } from './useLayerTree';
 import { StudyControls } from './StudyControls';
@@ -70,9 +77,22 @@ export default function Preview({
     null,
   );
   const [pendingComment, setPendingComment] = useState<Comment | null>(null);
+  const [requestedComment, setFocusedComment] = useState<Comment | null>(null);
+  const selectCanvasLayers = useCallback((elements: Element[]) => {
+    setFocusedComment(null);
+    setSelection(elements);
+  }, []);
   const commentEditorDrafts = useRef(new Map<string, string>());
   const review = useReviews(studies, study);
+  const focusedComment =
+    requestedComment &&
+    (review.comments.find((comment) => comment.id === requestedComment.id) ??
+      review.reviews
+        .flatMap((record) => record.comments)
+        .find((comment) => comment.id === requestedComment.id) ??
+      null);
   const parameters = useParameters(variant?.controls, variantId);
+  const grids = useGrids(study.id);
   const [compactLayout, setCompactLayout] = useState(
     () => window.matchMedia('(max-width: 767px)').matches,
   );
@@ -145,6 +165,7 @@ export default function Preview({
   useStudioTheme();
 
   const changeMode = (next: CanvasMode) => {
+    setFocusedComment(null);
     setPendingComment(null);
     setMode(next);
   };
@@ -166,6 +187,13 @@ export default function Preview({
     canvas.current?.querySelector('main')?.focus({ preventScroll: true });
   };
   useEffect(() => setPendingComment(null), [study.id, variantId]);
+  useEffect(
+    () =>
+      setFocusedComment((comment) =>
+        comment?.variantId === variantId ? comment : null,
+      ),
+    [study.id, variantId],
+  );
   useEffect(() => {
     const shortcut = (event: KeyboardEvent) => {
       if (
@@ -185,6 +213,7 @@ export default function Preview({
       const key = event.key.toLowerCase();
       if (key === 'c' || key === 'v' || (key === 'escape' && !pendingComment)) {
         event.preventDefault();
+        setFocusedComment(null);
         setPendingComment(null);
         setMode(key === 'c' ? 'comment' : 'select');
       }
@@ -241,6 +270,7 @@ export default function Preview({
     const toggle = (event: KeyboardEvent) => {
       if (
         event.key.toLowerCase() !== 'r' ||
+        allVariants ||
         event.metaKey ||
         event.ctrlKey ||
         event.altKey ||
@@ -257,7 +287,7 @@ export default function Preview({
     };
     window.addEventListener('keydown', toggle);
     return () => window.removeEventListener('keydown', toggle);
-  }, []);
+  }, [allVariants]);
   useEffect(() => {
     const toggle = (event: KeyboardEvent) => {
       if (
@@ -348,6 +378,7 @@ export default function Preview({
     if (!columns) return null;
     return {
       columns,
+      placements: lineagePlacements(columns, study.variants),
       edges: lineageEdges(study.variants),
       comments: postedComments(review.reviews),
     };
@@ -359,6 +390,7 @@ export default function Preview({
       data-variant-name={variant.name}
       data-new-variant={newVariantIds.has(variant.id) || undefined}
       className="relative shrink-0"
+      style={lineage?.placements.get(variant.id)}
       onPointerDownCapture={(event) => {
         if (
           allVariants &&
@@ -401,16 +433,34 @@ export default function Preview({
       />
       <VariantSurface
         variant={variant}
+        grids={grids.forVariant(variant)}
         bindings={parameters.bindingsFor(variant.id, variant.controls)}
         designRef={variant.id === variantId ? design : undefined}
       />
     </div>
   );
   const selectLayer = (node: LayerNode) => {
+    setFocusedComment(null);
     setMode('select');
     setPendingComment(null);
     if (node.variantId !== variantId) onVariantChange(node.variantId);
     setSelection(node.elements);
+  };
+  const revealComment = (comment: Comment, editable: boolean) => {
+    if (comment.variantId !== variantId) onVariantChange(comment.variantId);
+    setFocusedComment(comment);
+    setPendingComment(null);
+    setMode(editable ? 'comment' : 'select');
+    requestAnimationFrame(() => {
+      const element = findCommentElement(comment);
+      if (element) {
+        window.dispatchEvent(
+          new CustomEvent('xuui:zoom-to', { detail: [element] }),
+        );
+        if (!editable) setSelection([element]);
+      }
+      if (editable) editComment(comment);
+    });
   };
   const layerPanel = (
     <LayerPanel
@@ -501,7 +551,9 @@ export default function Preview({
                   ))}
                   <LineageMap
                     edges={lineage.edges}
-                    comments={lineage.comments}
+                    comments={lineage.comments.filter(
+                      (comment) => comment.id !== focusedComment?.id,
+                    )}
                   />
                 </div>
               ) : (
@@ -513,13 +565,28 @@ export default function Preview({
               designRef={design}
               studyId={study.id}
               variantId={variantId}
-              visible={rulersVisible}
+              visible={rulersVisible && !allVariants}
+              guidesVisible={!allVariants}
               selectionEnabled={mode === 'select'}
               selection={selection}
-              onSelect={setSelection}
+              onSelect={selectCanvasLayers}
               onInspect={setSelectedLayer}
             />
-            <CanvasTools mode={mode} onChange={changeMode} />
+            <CanvasTools
+              mode={mode}
+              onChange={changeMode}
+              grids={
+                variant && (
+                  <GridControls
+                    key={variant.id}
+                    name={variant.name}
+                    grids={grids.forVariant(variant)}
+                    onChange={(value) => grids.update(variant.id, value)}
+                    onReset={() => grids.reset(variant.id)}
+                  />
+                )
+              }
+            />
             {(compactLayout || !layersOpen) && (
               <Button
                 data-workspace-control
@@ -538,9 +605,18 @@ export default function Preview({
               canvasRef={canvas}
               mode={mode}
               comments={review.comments}
+              focused={focusedComment}
               pending={pendingComment}
               busy={review.busy}
-              onEdit={editComment}
+              onEdit={(comment) => {
+                if (
+                  review.reviews.some((record) =>
+                    record.comments.some((item) => item.id === comment.id),
+                  )
+                )
+                  revealComment(comment, false);
+                else editComment(comment);
+              }}
             />
             {!sidebarOpen && (
               <Button
@@ -585,24 +661,8 @@ export default function Preview({
                     key={study.id}
                     study={study}
                     state={review}
-                    onEdit={(comment) => {
-                      if (comment.variantId !== variantId)
-                        onVariantChange(comment.variantId, true);
-                      // Wait for the variant switch before opening its editor.
-                      requestAnimationFrame(() => editComment(comment));
-                    }}
-                    onOpen={(comment) => {
-                      if (comment.variantId !== variantId)
-                        onVariantChange(comment.variantId, true);
-                      // Submitted comments can't be edited, so select the
-                      // element they point at instead.
-                      requestAnimationFrame(() => {
-                        const element = findCommentElement(comment);
-                        setPendingComment(null);
-                        setMode('select');
-                        if (element) setSelection([element]);
-                      });
-                    }}
+                    onEdit={(comment) => revealComment(comment, true)}
+                    onOpen={(comment) => revealComment(comment, false)}
                   />
                 }
               />
@@ -645,8 +705,8 @@ export default function Preview({
           canDelete={review.comments.some(
             (comment) => comment.id === pendingComment.id,
           )}
-          onSave={(comment) => {
-            const saved = review.save(comment);
+          onSave={async (comment) => {
+            const saved = await review.save(comment);
             if (saved)
               commentEditorDrafts.current.delete(commentDraftKey(comment));
             return saved;

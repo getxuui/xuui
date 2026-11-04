@@ -1,8 +1,9 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
-import type { RefObject } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { MessageSquare, MousePointer2, Play, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -14,14 +15,16 @@ export type CanvasMode = 'select' | 'interact' | 'comment';
 export function CanvasTools({
   mode,
   onChange,
+  grids,
 }: {
   mode: CanvasMode;
   onChange: (mode: CanvasMode) => void;
+  grids: ReactNode;
 }) {
   return (
     <div
       data-workspace-control
-      className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-border bg-card p-1 shadow-studio-floating"
+      className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-border bg-card p-1 shadow-studio-floating"
     >
       <ToggleGroup
         aria-label="Canvas mode"
@@ -55,6 +58,8 @@ export function CanvasTools({
           <MessageSquare data-icon="inline-start" />
         </ToggleGroupItem>
       </ToggleGroup>
+      <Separator orientation="vertical" className="h-5" />
+      {grids}
     </div>
   );
 }
@@ -65,6 +70,7 @@ export function CanvasFeedback({
   canvasRef,
   mode,
   comments,
+  focused,
   pending,
   busy,
   onEdit,
@@ -72,6 +78,7 @@ export function CanvasFeedback({
   canvasRef: RefObject<HTMLElement | null>;
   mode: CanvasMode;
   comments: Comment[];
+  focused: Comment | null;
   pending: Comment | null;
   busy: boolean;
   onEdit: (comment: Comment) => void;
@@ -79,9 +86,14 @@ export function CanvasFeedback({
   const [pins, setPins] = useState<Pin[]>([]);
   const hovered = useRef<Element | null>(null);
   const [hoverBox, setHoverBox] = useState<Pin | null>(null);
+  const visibleComments = mode === 'comment' ? comments : [];
+  const posted =
+    focused && !visibleComments.some((comment) => comment.id === focused.id)
+      ? [...visibleComments, focused]
+      : visibleComments;
   const entries = pending
-    ? [...comments.filter((item) => item.id !== pending.id), pending]
-    : comments;
+    ? [...posted.filter((item) => item.id !== pending.id), pending]
+    : posted;
   const entriesRef = useRef(entries);
   entriesRef.current = entries;
 
@@ -152,7 +164,7 @@ export function CanvasFeedback({
   }, [mode, canvasRef, busy, pending, onEdit]);
 
   useLayoutEffect(() => {
-    if (mode !== 'comment') return;
+    if (mode !== 'comment' && !focused) return;
     let frame: number;
     const update = () => {
       const area = canvasRef.current?.getBoundingClientRect();
@@ -230,9 +242,9 @@ export function CanvasFeedback({
       cancelAnimationFrame(frame);
       window.removeEventListener('xuui:camera-change', follow);
     };
-  }, [canvasRef, mode]);
+  }, [canvasRef, mode, focused?.id]);
 
-  if (mode !== 'comment') return null;
+  if (mode !== 'comment' && !focused) return null;
   return (
     <div
       data-feedback-pins
@@ -252,7 +264,7 @@ export function CanvasFeedback({
       {pins.map((pin) => {
         const comment = entries.find((item) => item.id === pin.id);
         if (!comment) return null;
-        const index = comments.findIndex((item) => item.id === pin.id);
+        const number = comment.number;
         const point = comment.target.pin ?? { x: 1, y: 0 };
         return (
           <div key={pin.id}>
@@ -271,10 +283,10 @@ export function CanvasFeedback({
             <Button
               data-workspace-control
               data-comment-pin={pin.id}
-              data-comment-marker={index < 0 || undefined}
+              data-comment-marker={number === undefined || undefined}
               className="feedback-pin pointer-events-auto absolute"
               size="icon-xs"
-              aria-label={`Comment ${index >= 0 ? index + 1 : 'draft'}: ${comment.body || 'New comment'}`}
+              aria-label={`Comment ${number ?? 'draft'}: ${comment.body || 'New comment'}`}
               disabled={busy}
               style={{
                 left: pin.x + pin.width * point.x,
@@ -282,8 +294,8 @@ export function CanvasFeedback({
               }}
               onClick={() => onEdit(comment)}
             >
-              {index >= 0 ? (
-                index + 1
+              {number !== undefined ? (
+                number
               ) : (
                 <img
                   src="/cursors/comment.svg"
@@ -293,6 +305,18 @@ export function CanvasFeedback({
                 />
               )}
             </Button>
+            {focused?.id === pin.id && (
+              <span
+                data-focused-comment={pin.id}
+                className="lineage-text pointer-events-none absolute"
+                style={{
+                  left: pin.x + pin.width * point.x + 30,
+                  top: pin.y + pin.height * point.y,
+                }}
+              >
+                {comment.body}
+              </span>
+            )}
           </div>
         );
       })}
@@ -310,7 +334,7 @@ export function CommentEditor({
 }: {
   comment: Comment;
   canDelete: boolean;
-  onSave: (comment: Comment) => boolean;
+  onSave: (comment: Comment) => Promise<boolean>;
   onCancel: () => void;
   onDismiss: (comment: Comment) => void;
   onDelete: () => void;
@@ -320,12 +344,14 @@ export function CommentEditor({
   const id = useId();
   const [body, setBody] = useState(comment.body);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
   const [point, setPoint] = useState({
     x: Math.max(12, (window.innerWidth - 320) / 2),
     y: window.innerHeight / 2,
     availableHeight: window.innerHeight - 24,
   });
-  const save = () => {
+  const save = async () => {
+    if (saving) return;
     if (!body.trim()) {
       setError('Write a comment before adding it.');
       input.current?.focus();
@@ -335,16 +361,22 @@ export function CommentEditor({
       setError('Keep the comment under 4,000 characters.');
       return;
     }
-    if (
-      onSave({
-        ...comment,
-        body: body.trim(),
-        ...(comment.agentation
-          ? { agentation: { ...comment.agentation, comment: body.trim() } }
-          : {}),
-      })
-    )
-      onCancel();
+    setSaving(true);
+    try {
+      if (
+        await onSave({
+          ...comment,
+          body: body.trim(),
+          ...(comment.agentation
+            ? { agentation: { ...comment.agentation, comment: body.trim() } }
+            : {}),
+        })
+      )
+        onCancel();
+      else setError('Could not save the comment. Try again.');
+    } finally {
+      setSaving(false);
+    }
   };
   useLayoutEffect(() => {
     // Reopening a comment continues it, so the caret goes after the text.
@@ -355,6 +387,7 @@ export function CommentEditor({
   }, []);
   useEffect(() => {
     const dismiss = (event: MouseEvent) => {
+      if (saving) return;
       if (
         !(event.target instanceof Node) ||
         popup.current?.contains(event.target)
@@ -372,7 +405,7 @@ export function CommentEditor({
     };
     document.addEventListener('click', dismiss, true);
     return () => document.removeEventListener('click', dismiss, true);
-  }, [body, comment, onDismiss]);
+  }, [body, comment, onDismiss, saving]);
   useLayoutEffect(() => {
     let frame: number;
     const update = () => {
@@ -445,6 +478,10 @@ export function CommentEditor({
         save();
       }}
       onKeyDown={(event) => {
+        if (saving) {
+          event.preventDefault();
+          return;
+        }
         if (event.key === 'Escape') {
           event.preventDefault();
           event.stopPropagation();
@@ -461,6 +498,7 @@ export function CommentEditor({
         size="icon-xs"
         className="absolute top-3 right-3"
         aria-label="Close comment"
+        disabled={saving}
         onClick={onCancel}
       >
         <X data-icon="inline-start" />
@@ -473,6 +511,7 @@ export function CommentEditor({
           ref={input}
           id={`${id}-body`}
           value={body}
+          disabled={saving}
           rows={4}
           maxLength={4000}
           placeholder="Add a comment"
@@ -502,15 +541,22 @@ export function CommentEditor({
             size="icon-xs"
             className="me-auto"
             aria-label="Delete annotation"
+            disabled={saving}
             onClick={onDelete}
           >
             <Trash2 data-icon="inline-start" />
           </Button>
         )}
-        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onCancel}
+          disabled={saving}
+        >
           Cancel
         </Button>
-        <Button type="submit" size="sm">
+        <Button type="submit" size="sm" disabled={saving}>
           {canDelete ? 'Save' : 'Add comment'}
         </Button>
       </footer>

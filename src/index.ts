@@ -1,4 +1,5 @@
 export { defineStudy } from './xuui/model.ts';
+export type { Grid } from './xuui/grids.ts';
 export type {
   Study,
   Variant,

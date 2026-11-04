@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- Enter selects child layers and Shift+Enter selects the parent from Layers and frame-title focus, as well as the canvas.
+- The Study dropdown uses the same green background, text and icon colors as active navigation rows.
+- Comments have durable workspace-wide numbers across studies and variants. Deletion and submission never reuse or renumber them. Clicking a comment card brings its target and matching pin into view.
+- Variants support pixel grids with custom spacing and row/column layout grids with count, gutter and margin controls. Agents can declare alignment grids in the study; reviewers can adjust and persist them per variant.
+- The inspector shows the selected layer's CSS position value.
+- Rulers and guides are hidden in All, preserving the focused-view setting.
+- Scrolling over frame titles and their icons pans the canvas.
+- Child variants align with their parent's row in the history diagram; branches take nearby rows.
+- Variant names, layer names and ruler labels no longer allow accidental text selection.
+
 ## 0.1.0-alpha.3
 
 - ⌘L / Ctrl+L copies a deep link to the selected layers, falling back to the active variant when nothing is selected. Opening a layer link restores and fits the selection. Frame-title actions sit closer together.

@@ -365,6 +365,38 @@ test('compact screens open the layer tree in a dismissible left sheet', async ({
   ).toBeLessThanOrEqual(375);
 });
 
+test('Enter descends and Shift+Enter ascends when focus is in Layers', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  const tree = page.getByRole('tree', { name: 'Component layers' });
+  const heading = tree.getByRole('treeitem', {
+    name: 'The art of noticing.',
+    exact: true,
+  });
+  const content = tree.getByRole('treeitem', {
+    name: 'Card content',
+    exact: true,
+  });
+  const root = tree.getByRole('treeitem', { name: 'Paper', exact: true });
+  await page.locator('[data-xuui-design] h2').click();
+  await page.keyboard.press('l');
+  await expect(heading).toBeFocused();
+  await page.keyboard.press('Shift+Enter');
+  await expect(content).toHaveAttribute('aria-selected', 'true');
+  await expect(content).toBeFocused();
+  await page.keyboard.press('Shift+Enter');
+  await expect(root).toHaveAttribute('aria-selected', 'true');
+  await expect(root).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(
+    page.getByRole('region', { name: 'Selected layers', exact: true }),
+  ).toContainText('2 layers');
+  await page.keyboard.press('Shift+Enter');
+  await expect(root).toHaveAttribute('aria-selected', 'true');
+  await expect(root).toBeFocused();
+});
+
 test('L focuses the selected layer, Tab cycles siblings, and Escape returns to the canvas', async ({
   page,
 }) => {

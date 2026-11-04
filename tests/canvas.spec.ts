@@ -1,5 +1,32 @@
 import { expect, test } from '@playwright/test';
 
+test('wheel panning works over frame titles and their action icons', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  const frame = page.locator('[data-variant-id="paper-v1"]');
+  const name = frame
+    .locator('[data-frame-title]')
+    .getByRole('button', { name: 'Paper', exact: true });
+  await name.hover();
+  const before = (await frame.boundingBox())!.x;
+  await page.mouse.wheel(120, 0);
+  await expect
+    .poll(async () => (await frame.boundingBox())!.x)
+    .toBeCloseTo(before - 120, 0);
+  const copy = frame.getByRole('button', {
+    name: 'Copy link to Paper',
+    exact: true,
+  });
+  await name.hover();
+  await copy.hover();
+  const next = (await frame.boundingBox())!.x;
+  await page.mouse.wheel(-70, 0);
+  await expect
+    .poll(async () => (await frame.boundingBox())!.x)
+    .toBeCloseTo(next + 70, 0);
+});
+
 test('trackpad pinch anchors the canvas and keeps guides and measurements in component pixels', async ({
   page,
 }) => {

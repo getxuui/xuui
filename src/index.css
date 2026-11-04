@@ -271,6 +271,24 @@
 [data-xuui-design] {
   user-select: none;
 }
+.pixel-grid {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in oklch, var(--brand) 35%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--brand) 35%, transparent) 1px,
+      transparent 1px
+    );
+}
+.layout-grid > span {
+  background: color-mix(in oklch, var(--brand) 12%, transparent);
+  outline: 1px solid color-mix(in oklch, var(--brand) 24%, transparent);
+  outline-offset: -1px;
+}
 ::selection {
   background-color: color-mix(in oklab, var(--guide) 24%, var(--background));
   color: var(--foreground);
@@ -412,6 +430,11 @@
     transparent
   );
 }
+.masked-marquee,
+[data-ruler-axis] {
+  -webkit-user-select: none;
+  user-select: none;
+}
 .masked-marquee {
   max-width: 100%;
   outline: none;
@@ -438,6 +461,8 @@
 .frame-title-name,
 .frame-title-name:hover {
   background: transparent;
+  -webkit-user-select: none;
+  user-select: none;
 }
 [data-frame-title]:has(:focus-visible) .frame-title-copy {
   opacity: 1;
@@ -562,6 +587,13 @@
 .studio-chrome [data-slot='select-trigger'] {
   height: 28px;
   padding-block: 4px;
+}
+.studio-chrome #study-picker {
+  background: color-mix(in oklch, var(--brand) 12%, transparent);
+  color: var(--brand-text);
+}
+.studio-chrome #study-picker svg {
+  color: inherit;
 }
 .studio-chrome .parameter-field [data-slot='select-trigger'] {
   height: 24px;
@@ -725,14 +757,15 @@
    comments that led from one variant to the next. */
 .lineage-layout {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: 360px;
+  display: grid;
+  grid-auto-columns: max-content;
+  grid-auto-rows: max-content;
+  align-items: start;
+  column-gap: 360px;
+  row-gap: 32px;
 }
 .lineage-column {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
+  display: contents;
 }
 .lineage-map {
   position: absolute;
@@ -762,7 +795,7 @@
 }
 /* A posted comment shows as its pin; hovering opens its text beside it. The
    text stays available to screen readers. */
-.lineage-comment .lineage-text {
+.lineage-text {
   width: max-content;
   max-width: 260px;
   margin-top: 2px;

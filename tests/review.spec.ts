@@ -110,6 +110,7 @@ test('submitted files survive a server restart, duplicate retries, and invalid r
     await writeFile(legacyFile, original);
     expect(await (await fetch(running.url)).json()).toContainEqual({
       ...submission,
+      comments: saved.comments,
       id: legacy.id,
       submittedAt: legacy.submittedAt,
     });

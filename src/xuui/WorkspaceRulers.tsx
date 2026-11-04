@@ -84,6 +84,7 @@ export function WorkspaceRulers({
   studyId,
   variantId,
   visible,
+  guidesVisible = true,
   selectionEnabled = true,
   selection,
   onSelect,
@@ -93,6 +94,7 @@ export function WorkspaceRulers({
   studyId: string;
   variantId: string;
   visible: boolean;
+  guidesVisible?: boolean;
   selectionEnabled?: boolean;
   selection: Element[];
   onSelect: (elements: Element[]) => void;
@@ -433,7 +435,7 @@ export function WorkspaceRulers({
               }}
             />
           ))}
-        {guides.map((guide) => {
+        {(guidesVisible ? guides : []).map((guide) => {
           const position =
             geometry.origin[guide.axis] + guide.position * geometry.scale;
           const range = limit(guide.axis);
@@ -565,7 +567,7 @@ export function WorkspaceRulers({
           </div>
         </>
       )}
-      {edited && editing && (
+      {guidesVisible && edited && editing && (
         <GuideEditor
           key={edited.id}
           axis={edited.axis}

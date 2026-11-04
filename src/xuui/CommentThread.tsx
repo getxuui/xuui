@@ -10,7 +10,7 @@ export function CommentThread({
   reviewId,
   onOpen,
 }: {
-  number: number;
+  number?: number;
   /** Where the comment points, such as its variant and layer. */
   context: string;
   body: string;
@@ -33,11 +33,11 @@ export function CommentThread({
           type="button"
           data-comment-number={number}
           className="comment-number feedback-pin grid size-5 shrink-0 place-items-center after:absolute after:inset-0 after:rounded-[10px] after:content-['']"
-          aria-label={`Open comment ${number}: ${context}`}
+          aria-label={`Open comment ${number ?? 'draft'}: ${context}`}
           title={context}
           onClick={onOpen}
         >
-          {number}
+          {number ?? '…'}
         </button>
         <span className="flex-1" />
         {actions && (

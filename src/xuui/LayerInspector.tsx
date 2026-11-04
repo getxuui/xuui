@@ -194,6 +194,14 @@ export function LayerInspector({
       </header>
       <Separator />
       <PropertyGroup title="Position & size" geometry>
+        {layer.position && (
+          <Readout
+            label="Position"
+            value={layer.position}
+            fullWidth
+            {...readoutProps}
+          />
+        )}
         <Readout label="X" value={`${x}px`} {...readoutProps} />
         <Readout label="Y" value={`${y}px`} {...readoutProps} />
         <Readout

@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { defineStudy } from '../src/xuui/model';
+import { lineageColumns, lineagePlacements } from '../src/xuui/lineage';
 import {
   ticketComments,
   ticketHistoryReview,
@@ -34,6 +35,17 @@ test('All lays a study with lineage out as its history, labelled with review com
   await expect(columns.nth(2).locator('[data-variant-id]')).toHaveAttribute(
     'data-variant-id',
     'history-morning-v2',
+  );
+  const top = async (id: string) =>
+    (await layout.locator(`[data-variant-id="${id}"]`).boundingBox())!.y;
+  expect(await top('history-morning-v1')).toBeCloseTo(
+    await top('history-botanical-v1'),
+  );
+  expect(await top('history-morning-v2')).toBeCloseTo(
+    await top('history-morning-v1'),
+  );
+  expect(await top('history-night-v1')).toBeGreaterThan(
+    await top('history-botanical-v1'),
   );
 
   // Wires join the frames on their own; comments aren't moved onto them.
@@ -91,6 +103,33 @@ test('All lays a study with lineage out as its history, labelled with review com
     return line.getBoundingClientRect().x - before;
   });
   expect(moved).toBe(-80);
+});
+
+test('history branches use nearby rows while descendants follow their own parent', () => {
+  const variants = [
+    { id: 'a' },
+    { id: 'b' },
+    { id: 'c' },
+    { id: 'b-child', from: ['b'] },
+    { id: 'b-branch', from: ['b'] },
+    { id: 'c-child', from: ['c'] },
+    { id: 'next', from: ['b-branch'] },
+  ];
+  const positions = lineagePlacements(lineageColumns(variants)!, variants);
+  expect(positions.get('b-child')!.gridRow).toBe(positions.get('b')!.gridRow);
+  expect(positions.get('b-branch')!.gridRow).toBe(
+    positions.get('b')!.gridRow + 1,
+  );
+  expect(positions.get('next')!.gridRow).toBe(
+    positions.get('b-branch')!.gridRow,
+  );
+  expect(
+    new Set(
+      ['b-child', 'b-branch', 'c-child'].map(
+        (id) => positions.get(id)!.gridRow,
+      ),
+    ).size,
+  ).toBe(3);
 });
 
 test('the focused view and studies without lineage keep the usual layout', async ({

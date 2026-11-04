@@ -23,6 +23,7 @@ test('selected text exposes rendered properties and follows live parameter chang
   await page.locator('.reading-info h2').click();
   await expect(panel).toContainText('The quiet atlas');
   await expect(property(panel, 'X')).toHaveText('22px');
+  await expect(property(panel, 'Position')).toHaveText('static');
   await expect(property(panel, 'Width')).toHaveText('260px');
   await expect(property(panel, 'Font')).toHaveText('Newsreader');
   await expect(property(panel, 'Size')).toHaveText('32px');

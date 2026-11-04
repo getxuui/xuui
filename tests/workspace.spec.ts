@@ -29,6 +29,7 @@ test('guides drag in both axes, accept precise values, and stay relative to the 
   const box = (await component.boundingBox())!;
   const xZero = page.locator('[data-ruler-axis="x"][data-ruler-value="0"]');
   const yZero = page.locator('[data-ruler-axis="y"][data-ruler-value="0"]');
+  await expect(xZero).toHaveCSS('user-select', 'none');
   await expect(xZero).toBeVisible();
   await expect(yZero).toBeVisible();
   const xLabel = (await xZero.boundingBox())!;
@@ -572,4 +573,36 @@ test('R toggles rulers while retaining guides, selection, and the setting across
     .getByRole('link', { name: 'Paper', exact: true })
     .click();
   await expect(guide).toHaveAttribute('aria-valuenow', '24');
+});
+
+test('All hides rulers and guides while preserving focused-view preferences and layer selection', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  const ruler = page.getByRole('button', { name: /^Left ruler:/ });
+  await ruler.focus();
+  await ruler.press('Enter');
+  await page.getByRole('spinbutton', { name: 'X guide position' }).fill('24');
+  await page
+    .getByRole('spinbutton', { name: 'X guide position' })
+    .press('Enter');
+  const nav = page.getByRole('navigation', { name: 'Variants' });
+  await nav.getByRole('link', { name: 'All variants', exact: true }).click();
+  await expect(ruler).toHaveCount(0);
+  await expect(page.locator('[data-ruler-axis]')).toHaveCount(0);
+  await expect(
+    page.getByRole('slider', { name: 'X guide', exact: true }),
+  ).toHaveCount(0);
+  await page.keyboard.press('r');
+  await page
+    .locator('[data-variant-id="paper-v1"] [data-xuui-design] h2')
+    .click();
+  await expect(
+    page.getByRole('region', { name: 'Selected layer', exact: true }),
+  ).toBeVisible();
+  await nav.getByRole('link', { name: 'Paper', exact: true }).click();
+  await expect(ruler).toBeVisible();
+  await expect(
+    page.getByRole('slider', { name: 'X guide', exact: true }),
+  ).toHaveAttribute('aria-valuenow', '24');
 });

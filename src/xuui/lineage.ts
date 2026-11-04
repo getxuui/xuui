@@ -26,7 +26,7 @@ export function lineageColumns(variants: Lineage[]): string[][] | null {
   const columns: string[][] = [];
   for (const variant of variants)
     (columns[depth(variant.id)] ??= []).push(variant.id);
-  // Offset from the column's middle, matching the vertically centred columns.
+  // Keep siblings in their parents' order before assigning shared rows.
   const offsets = new Map<string, number>();
   columns.forEach((column, index) => {
     if (index > 0) {
@@ -43,9 +43,32 @@ export function lineageColumns(variants: Lineage[]): string[][] | null {
         (a, b) => centre(a) - centre(b) || order.get(a)! - order.get(b)!,
       );
     }
-    column.forEach((id, row) => offsets.set(id, row - (column.length - 1) / 2));
+    column.forEach((id, row) => offsets.set(id, row));
   });
   return columns;
+}
+
+/** A child shares a parent's row; branches take the next available row. */
+export function lineagePlacements(columns: string[][], variants: Lineage[]) {
+  const byId = new Map(variants.map((variant) => [variant.id, variant]));
+  const placements = new Map<string, { gridColumn: number; gridRow: number }>();
+  columns.forEach((column, index) => {
+    const occupied = new Set<number>();
+    for (const id of column) {
+      const parents = (byId.get(id)?.from ?? []).flatMap((parent) => {
+        const position = placements.get(parent);
+        return position ? [position.gridRow] : [];
+      });
+      let row =
+        parents.find((candidate) => !occupied.has(candidate)) ??
+        parents[0] ??
+        1;
+      while (occupied.has(row)) row++;
+      occupied.add(row);
+      placements.set(id, { gridColumn: index + 1, gridRow: row });
+    }
+  });
+  return placements;
 }
 
 export type LineageEdge = { from: string; to: string };
@@ -58,16 +81,15 @@ export function lineageEdges(variants: Lineage[]): LineageEdge[] {
 }
 
 export type PostedComment = Comment & {
-  /** The comment's number in its review, as on its card. */
-  number: number;
+  /** The comment's workspace-wide number, as on its card. */
+  number?: number;
 };
 
 /** Submitted comments, to show where they were posted on their artboards. */
 export function postedComments(reviews: Review[]): PostedComment[] {
   return reviews.flatMap((review) =>
-    review.comments.map((comment, index) => ({
+    review.comments.map((comment) => ({
       ...comment,
-      number: index + 1,
     })),
   );
 }

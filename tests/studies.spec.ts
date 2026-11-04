@@ -47,6 +47,7 @@ test('Tab switches whole variant rows, Shift+Tab reverses, and Escape leaves the
   await expect(botanical).toBeFocused();
   await expect(page).not.toHaveURL(/view=all/);
   await expect(botanical.locator('[data-marquee]')).not.toBeFocused();
+  await expect(botanical.locator('[data-marquee]')).toHaveCSS('user-select', 'none');
   await expect(botanical.locator('[data-marquee]')).toHaveCSS(
     'outline-style',
     'none',

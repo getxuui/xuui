@@ -10,6 +10,7 @@ export type LayerProperties = {
   name: string;
   tag: string;
   kind: LayerKind;
+  position?: string;
   bounds: Bounds;
   appearance: LayerProperty[];
   typography: LayerProperty[];
@@ -74,6 +75,7 @@ export function readLayerProperties(
         'h1, h2, h3, h4, h5, h6, p, button, a, label, legend, figcaption',
       ));
   result.tag = element.tagName.toLowerCase();
+  result.position = style.position;
   result.name = layerName(element);
   result.kind = layerKind(element);
 

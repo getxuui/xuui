@@ -54,7 +54,7 @@ A registered component receives `{ props, state, machine }` as `StudioBindings`.
 
 ## History
 
-When a variant develops from earlier ones, record where it came from. The All view then lays the study out as its history: generations as columns, joined by wires from each variant to the ones developed from it. Submitted comments stay pinned where they were posted on their artboards, so each keeps pointing at what it was about; hover a pin to read it.
+When a variant develops from earlier ones, record where it came from. The All view then lays the study out as its history: generations as columns, with children aligned to their parent's row and branches placed nearby. Wires connect each variant to the ones developed from it. Submitted comments stay pinned where they were posted on their artboards, so each keeps pointing at what it was about; hover a pin to read it.
 
 ```tsx
 {
@@ -75,6 +75,22 @@ When a variant develops from earlier ones, record where it came from. The All vi
 - `labels` are up to three short tags shown beside the variant's name, such as "Shipped". They record the reviewer's verdict in their words; xuui gives them no meaning and treats every variant the same.
 
 All three fields are optional; a study without `from` keeps a single row.
+
+## Alignment grids
+
+When aligning a design to a grid, declare it on the variant so the reviewer can see the same alignment. Pixel grids accept any positive CSS-pixel spacing, including 8, 10 and fractional values. Layout grids divide the design into equal columns or rows with a count, gutter and outer margin.
+
+```tsx
+grids: [
+  { type: 'pixels', size: 8 },
+  { type: 'columns', count: 12, gutter: 16, margin: 24 },
+  { type: 'rows', count: 6, gutter: 16, margin: 24, visible: false },
+],
+```
+
+Use at most one of each type. Layout counts are whole numbers from 1 to 1000; gutters and margins are nonnegative CSS-pixel values. `visible` defaults to true. Grids start at the design's top-left corner and follow it through pan and zoom in both focused and All views. They are visual references; they do not change or snap the design's layout.
+
+The toolbar's Grids control lets reviewers toggle overlays and enter custom measurements for the active variant. These overrides persist per variant in the current browser. Reset grids restores the authored configuration.
 
 ## Updates
 

@@ -108,7 +108,7 @@ export function LineageMap({
             style={{ left: pin.x, top: pin.y, scale: 1 / scale }}
           >
             <span aria-hidden="true" className="feedback-pin lineage-pin">
-              {comment.number}
+              {comment.number ?? '…'}
             </span>
             <span className="lineage-text">{comment.body}</span>
           </p>

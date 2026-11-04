@@ -265,6 +265,26 @@ test('from All, a frame title opens its variant and keeps its size when zoomed o
   await expect(page.locator('[data-variant-id]')).toHaveCount(1);
 });
 
+test('frame-title selection keeps Enter hierarchy shortcuts available', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  await page
+    .locator('[data-frame-title]')
+    .getByRole('button', { name: 'Paper', exact: true })
+    .click();
+  await page.keyboard.press('Enter');
+  await expect(
+    page.getByRole('region', { name: 'Selected layers', exact: true }),
+  ).toContainText('2 layers');
+  await page.keyboard.press('Shift+Enter');
+  await expect(
+    page
+      .getByRole('status', { name: 'Selected element' })
+      .locator('[data-selected-tag]'),
+  ).toHaveAttribute('data-selected-tag', 'article');
+});
+
 test('clicking a frame title fits its variant to the canvas, like Shift+2', async ({
   page,
 }) => {

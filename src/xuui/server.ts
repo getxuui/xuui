@@ -1,8 +1,10 @@
 import { resolve } from 'node:path';
+import { z } from 'zod';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
 import { submissionSchema } from './model.ts';
 import { readReviews, saveReview, readReviewReceipts } from './reviewStore.ts';
+import { commentNumber } from './commentNumbers.ts';
 
 const endpoint = '/__xuui/reviews';
 const maxBodyBytes = 512 * 1024;
@@ -41,7 +43,11 @@ export function xuuiReviewServer(options: {
     configureServer(server) {
       server.middlewares.use((request, response, next) => {
         const pathname = request.url?.split('?')[0];
-        if (pathname !== endpoint && pathname !== `${endpoint}/receipts`)
+        if (
+          pathname !== endpoint &&
+          pathname !== `${endpoint}/receipts` &&
+          pathname !== `${endpoint}/comment-numbers`
+        )
           return next();
         void (async () => {
           // Same-origin writes only. Review files stay on this machine.
@@ -51,6 +57,43 @@ export function xuuiReviewServer(options: {
               error:
                 'Open the review interface on this local server to submit feedback.',
             });
+            return;
+          }
+          if (pathname === `${endpoint}/comment-numbers`) {
+            if (request.method !== 'POST') {
+              reply(response, 405, {
+                error: 'Use POST to reserve comment numbers.',
+              });
+              return;
+            }
+            if (
+              !request.headers['content-type']?.startsWith('application/json')
+            ) {
+              reply(response, 415, {
+                error: 'Use application/json for comment numbers.',
+              });
+              return;
+            }
+            let input: unknown;
+            try {
+              input = await readBody(request);
+            } catch {
+              reply(response, 400, { error: 'Send valid comment IDs.' });
+              return;
+            }
+            const parsed = z
+              .object({ ids: z.array(z.uuid()).min(1).max(1000) })
+              .strict()
+              .safeParse(input);
+            if (!parsed.success) {
+              reply(response, 400, { error: 'Send valid comment IDs.' });
+              return;
+            }
+            await readReviews(directory);
+            const numbers: Record<string, number> = {};
+            for (const id of parsed.data.ids)
+              numbers[id] = await commentNumber(directory, id);
+            reply(response, 200, numbers);
             return;
           }
           if (pathname === `${endpoint}/receipts`) {

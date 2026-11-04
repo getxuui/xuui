@@ -406,7 +406,10 @@ export function CanvasViewport({
           });
         return;
       }
-      if (event.metaKey || inputTarget(event.target)) return;
+      const onFrameTitle =
+        event.target instanceof Element &&
+        event.target.closest('[data-frame-title]');
+      if (event.metaKey || (inputTarget(event.target) && !onFrameTitle)) return;
       event.preventDefault();
       pan.current = {
         x: pan.current.x - event.deltaX * factor,

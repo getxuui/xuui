@@ -74,11 +74,11 @@ export function ReviewPanel({
       )}
       {state.comments.length > 0 && (
         <ol aria-label="Draft comments" className="flex flex-col gap-2">
-          {state.comments.map((comment, index) => (
+          {state.comments.map((comment) => (
             <CommentThread
               key={comment.id}
               commentId={comment.id}
-              number={index + 1}
+              number={comment.number}
               context={context(variantName(comment.variantId), comment)}
               body={comment.body}
               onOpen={() => onEdit(comment)}
@@ -87,7 +87,7 @@ export function ReviewPanel({
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    aria-label={`Edit comment ${index + 1}`}
+                    aria-label={`Edit comment ${comment.number ?? 'draft'}`}
                     disabled={state.busy}
                     onClick={() => onEdit(comment)}
                   >
@@ -96,7 +96,7 @@ export function ReviewPanel({
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    aria-label={`Delete comment ${index + 1}`}
+                    aria-label={`Delete comment ${comment.number ?? 'draft'}`}
                     disabled={state.busy}
                     onClick={() => state.remove(comment.id)}
                   >
@@ -140,12 +140,12 @@ export function ReviewPanel({
         <>
           <ol aria-label="Submitted comments" className="flex flex-col gap-2">
             {reviews.flatMap((review) =>
-              review.comments.map((comment, index) => (
+              review.comments.map((comment) => (
                 <CommentThread
                   key={`${review.id}:${comment.id}`}
                   commentId={comment.id}
                   reviewId={review.id}
-                  number={index + 1}
+                  number={comment.number}
                   context={context(
                     review.variants.find(
                       (variant) => variant.id === comment.variantId,

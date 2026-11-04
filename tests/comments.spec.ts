@@ -161,8 +161,11 @@ test('Agentation comments collect across variants, edit, persist, and submit as 
   await commentOnHeading(page, 'Give this heading more room.');
   const drafts = page.getByRole('list', { name: 'Draft comments' });
   await expect(drafts.getByRole('listitem')).toHaveCount(1);
+  const firstNumber = await drafts
+    .locator('[data-comment-number]')
+    .textContent();
   await page
-    .getByRole('button', { name: 'Edit comment 1', exact: true })
+    .getByRole('button', { name: `Edit comment ${firstNumber}`, exact: true })
     .click();
   const editor = page.getByRole('dialog', { name: 'Element comment' });
   await editor
@@ -176,7 +179,7 @@ test('Agentation comments collect across variants, edit, persist, and submit as 
   await commentOnHeading(page, 'Keep this darker direction.');
   await expect(drafts.getByRole('listitem')).toHaveCount(2);
   await page
-    .getByRole('button', { name: 'Edit comment 1', exact: true })
+    .getByRole('button', { name: `Edit comment ${firstNumber}`, exact: true })
     .click();
   await expect(page).toHaveURL(/variant=paper-v1/);
   await expect(editor.getByPlaceholder('Add a comment')).toHaveValue(
@@ -377,12 +380,26 @@ test('comment cards lead with their number, open their comment, and pins keep up
   await page.goto('/?variant=paper-v1');
   await commentOnHeading(page, 'Tighten the heading.');
   const drafts = page.getByRole('list', { name: 'Draft comments' });
-  const number = drafts.getByRole('button', { name: /^Open comment 1: / });
-  await expect(number).toHaveText('1');
+  const number = drafts.getByRole('button', { name: /^Open comment \d+: / });
+  await expect(number).toHaveText(/^\d+$/);
+  const savedNumber = await number.textContent();
   await expect(number).toHaveAccessibleName(/Paper \//);
 
+  // Cards reveal their target even after it has been panned offscreen.
+  await page.evaluate(() =>
+    document.querySelector('main[aria-label="Variant canvas"]')!.dispatchEvent(
+      new WheelEvent('wheel', {
+        deltaX: 3000,
+        bubbles: true,
+        cancelable: true,
+      }),
+    ),
+  );
   // Clicking the card reopens the comment with the caret after its text.
   await number.click();
+  const pin = page.locator('[data-comment-pin]');
+  await expect(pin).toHaveText(savedNumber!);
+  await expect(pin).toBeInViewport();
   const editor = page.getByRole('dialog', { name: 'Element comment' });
   const field = editor.getByRole('textbox', { name: 'Comment', exact: true });
   await expect(field).toBeFocused();
@@ -418,11 +435,71 @@ test('comment cards lead with their number, open their comment, and pins keep up
     .getByRole('button', { name: 'Submit review', exact: true })
     .click();
   const submitted = page.getByRole('list', { name: 'Submitted comments' });
+  await page
+    .getByRole('button', { name: 'Select layers', exact: true })
+    .click();
+  await page.evaluate(() =>
+    document.querySelector('main[aria-label="Variant canvas"]')!.dispatchEvent(
+      new WheelEvent('wheel', {
+        deltaY: 3000,
+        bubbles: true,
+        cancelable: true,
+      }),
+    ),
+  );
   await submitted
-    .getByRole('button', { name: /^Open comment 1: / })
+    .getByRole('button', { name: new RegExp(`^Open comment ${savedNumber}: `) })
     .first()
     .click();
+  await expect(pin).toHaveText(savedNumber!);
+  await expect(pin).toBeInViewport();
+  await expect(editor).toHaveCount(0);
   await expect(
     page.getByRole('region', { name: 'Selected layer' }),
   ).toBeVisible();
+});
+
+test('deleting a draft keeps the sequence increasing across variants and studies', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  await commentOnHeading(page, 'First number.');
+  const drafts = page.getByRole('list', { name: 'Draft comments' });
+  const initial = Number(
+    await drafts.locator('[data-comment-number]').textContent(),
+  );
+  await drafts.locator('[data-comment-number]').click();
+  await page
+    .getByRole('dialog', { name: 'Element comment' })
+    .getByRole('button', { name: 'Cancel', exact: true })
+    .click();
+  await drafts
+    .getByRole('button', { name: `Delete comment ${initial}`, exact: true })
+    .click();
+  await expect(page.locator('[data-comment-pin]')).toHaveCount(0);
+  await commentOnHeading(page, 'After deletion.');
+  await expect(drafts.locator('[data-comment-number]')).toHaveText(
+    String(initial + 1),
+  );
+  await page
+    .getByRole('navigation', { name: 'Variants' })
+    .getByRole('link', { name: 'After hours', exact: true })
+    .click();
+  await commentOnHeading(page, 'Another variant.');
+  await expect(drafts.locator('[data-comment-number]')).toHaveText([
+    String(initial + 1),
+    String(initial + 2),
+  ]);
+  await page.getByRole('combobox', { name: 'Study', exact: true }).click();
+  await page
+    .getByRole('option', { name: 'Sunday tickets', exact: true })
+    .click();
+  await commentOnHeading(page, 'Another study.');
+  await expect(drafts.locator('[data-comment-number]')).toHaveText(
+    String(initial + 3),
+  );
+  await page.reload();
+  await expect(drafts.locator('[data-comment-number]')).toHaveText(
+    String(initial + 3),
+  );
 });

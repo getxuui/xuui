@@ -132,6 +132,12 @@ export function CanvasSelection({
             event.target.closest('input, textarea, select')))
       )
         return;
+      const inLayerTree =
+        event.target instanceof Element &&
+        event.target.matches('[data-layer-panel] [role="treeitem"]');
+      const onFrameTitle =
+        event.target instanceof Element &&
+        event.target.matches('.frame-title-name');
       if (event.key === 'Alt') {
         optionHeld.current = true;
         setMeasuring(true);
@@ -179,6 +185,8 @@ export function CanvasSelection({
         !event.metaKey &&
         selectedRef.current.length &&
         !(
+          !inLayerTree &&
+          !onFrameTitle &&
           event.target instanceof Element &&
           event.target.closest(
             'aside, [data-workspace-control], [data-slot="select-content"]',
@@ -211,7 +219,8 @@ export function CanvasSelection({
           );
           if (children.length) choose(children);
         }
-        workspace.querySelector('main')?.focus({ preventScroll: true });
+        if (!inLayerTree)
+          workspace.querySelector('main')?.focus({ preventScroll: true });
       }
       if (event.key === 'Escape') {
         choose([]);

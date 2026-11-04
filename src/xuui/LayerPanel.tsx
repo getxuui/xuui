@@ -75,12 +75,20 @@ export function LayerPanel({
       (node) => node.elements.length === 1 && node.elements[0] === selection[0],
     );
     if (active) {
+      const ownsFocus =
+        container.current?.contains(document.activeElement) &&
+        document.activeElement?.matches('[role="treeitem"]');
       setFocused(active.id);
-      requestAnimationFrame(() =>
-        container.current
-          ?.querySelector<HTMLElement>(`[data-layer-id="${active.id}"]`)
-          ?.scrollIntoView({ block: 'nearest' }),
-      );
+      const frame = requestAnimationFrame(() => {
+        const item = container.current?.querySelector<HTMLElement>(
+          `[data-layer-id="${active.id}"]`,
+        );
+        // A queued selection update must not take focus back after Escape.
+        if (ownsFocus && container.current?.contains(document.activeElement))
+          item?.focus({ preventScroll: true });
+        item?.scrollIntoView({ block: 'nearest' });
+      });
+      return () => cancelAnimationFrame(frame);
     }
   }, [selection, tree, nodes, focusRequest]);
 
@@ -173,6 +181,11 @@ export function LayerPanel({
         else next = visible[index]?.parent;
         break;
       case 'Enter':
+        // Selected layers use the canvas hierarchy shortcuts in both surfaces.
+        if (node.elements.some((element) => selection.includes(element)))
+          return;
+        next = node;
+        break;
       case ' ':
         next = node;
         break;
