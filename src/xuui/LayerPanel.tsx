@@ -250,6 +250,9 @@ export function LayerPanel({
                 variant="ghost"
                 size="icon-xs"
                 tabIndex={-1}
+                // Pull the icon in by the button's empty side, keeping the
+                // full hit area.
+                className="-me-1"
                 aria-label={`${open ? 'Collapse' : 'Expand'} ${node.name}`}
                 onClick={(event) => {
                   event.stopPropagation();
@@ -268,7 +271,7 @@ export function LayerPanel({
                 />
               </Button>
             ) : (
-              <span className="w-6 shrink-0" />
+              <span className="w-5 shrink-0" />
             )}
             <Icon
               aria-hidden="true"

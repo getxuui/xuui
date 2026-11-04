@@ -464,7 +464,6 @@
 .layer-tree-row.is-selected {
   background: color-mix(in oklch, var(--brand) 12%, transparent);
   color: var(--brand-text);
-  font-weight: 500;
 }
 .variant-list-link[aria-current='page'] svg,
 .layer-tree-row.is-selected .layer-tree-icon {
@@ -480,6 +479,15 @@
   .layer-tree-row:hover {
     background: color-mix(in oklch, var(--brand) 6%, transparent);
   }
+  /* Icons take the green with the row, so they don't clash with the tint. */
+  .variant-list-link:hover svg,
+  .layer-tree-row:hover svg {
+    color: var(--brand-text);
+  }
+}
+.variant-list-link:focus-visible svg,
+.layer-tree-item:focus-visible > .layer-tree-row svg {
+  color: var(--brand-text);
 }
 .variant-list-link[aria-current='page']:focus-visible,
 .layer-tree-item:focus-visible > .layer-tree-row.is-selected {
