@@ -450,52 +450,46 @@
 .layer-property-copy:active {
   translate: none;
 }
-.variant-list-link {
-  cursor: var(--cursor-default);
-}
-.variant-list-link[aria-current='page'] {
-  /* The current variant is tinted with the brand green, text and icon. */
-  background: color-mix(in oklch, var(--brand) 12%, transparent);
-  color: var(--brand-text);
-  font-weight: 500;
-}
-.variant-list-link[aria-current='page'] svg {
-  color: inherit;
-}
-.variant-list-link:focus-visible {
-  outline: none;
-  background: var(--muted);
-  font-weight: 500;
-}
-@media (hover: hover) {
-  .variant-list-link:hover {
-    background: var(--muted);
-  }
-  /* The current variant keeps its tint on hover, a shade stronger. */
-  .variant-list-link[aria-current='page']:hover {
-    background: color-mix(in oklch, var(--brand) 18%, transparent);
-  }
-}
-.variant-list-link[aria-current='page']:focus-visible {
-  background: color-mix(in oklch, var(--brand) 18%, transparent);
-}
-.layer-tree-row:hover {
-  background: var(--muted);
-}
 .layer-tree-row [data-slot='button'],
 .layer-panel-toggle {
   background: transparent;
 }
+/* The variant list and the layer tree share one set of row states: grey on
+   hover and keyboard focus; the current variant or selected layer tinted
+   green, a shade stronger on hover and focus. */
+.variant-list-link {
+  cursor: var(--cursor-default);
+}
+.variant-list-link[aria-current='page'],
 .layer-tree-row.is-selected {
-  background: color-mix(in oklch, var(--selection) 10%, var(--card));
-  font-weight: 500;
-}
-.layer-tree-row.is-selected .layer-tree-icon {
+  background: color-mix(in oklch, var(--brand) 12%, transparent);
   color: var(--brand-text);
-}
-.layer-tree-item:focus-visible > .layer-tree-row {
-  background: color-mix(in oklch, var(--selection) 10%, var(--card));
   font-weight: 500;
+}
+.variant-list-link[aria-current='page'] svg,
+.layer-tree-row.is-selected .layer-tree-icon {
+  color: inherit;
+}
+.variant-list-link:focus-visible,
+.layer-tree-item:focus-visible > .layer-tree-row {
+  outline: none;
+  background: var(--muted);
+}
+@media (hover: hover) {
+  .variant-list-link:hover,
+  .layer-tree-row:hover {
+    background: var(--muted);
+  }
+}
+.variant-list-link[aria-current='page']:focus-visible,
+.layer-tree-item:focus-visible > .layer-tree-row.is-selected {
+  background: color-mix(in oklch, var(--brand) 18%, transparent);
+}
+@media (hover: hover) {
+  .variant-list-link[aria-current='page']:hover,
+  .layer-tree-row.is-selected:hover {
+    background: color-mix(in oklch, var(--brand) 18%, transparent);
+  }
 }
 [data-slot='sheet-content'].layers-sheet {
   width: min(280px, 85vw);
