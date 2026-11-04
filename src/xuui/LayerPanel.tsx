@@ -279,7 +279,9 @@ export function LayerPanel({
             <MaskedMarquee text={node.name} />
           </div>
           {open && node.children.length > 0 && (
-            <ul role="group">{render(node.children, depth + 1)}</ul>
+            <ul role="group" className="mt-0.5 flex flex-col gap-0.5">
+              {render(node.children, depth + 1)}
+            </ul>
           )}
         </li>
       );

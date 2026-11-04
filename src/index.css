@@ -142,7 +142,8 @@
     0 1px 2px rgb(15 23 42 / 4%), 0 4px 12px rgb(15 23 42 / 6%);
   --canvas: var(--color-slate-50);
   --canvas-border: var(--color-slate-100);
-  --selection: #9747ff;
+  /* Selection uses the brand green, like the rest of xuui's accents. */
+  --selection: #00844a;
   --studio-background: #ffffff;
   --guide: oklch(0.55 0.21 255);
   --guide-foreground: var(--color-slate-50);
@@ -198,6 +199,7 @@
   --guide-foreground: var(--color-slate-950);
   --brand: #52cd86;
   --brand-foreground: #102006;
+  --selection: #52cd86;
   --brand-text: #61da92;
   --measurement: oklch(0.75 0.16 25);
   --background: var(--color-slate-950);
@@ -482,7 +484,7 @@
   font-weight: 500;
 }
 .layer-tree-row.is-selected .layer-tree-icon {
-  color: var(--selection);
+  color: var(--brand-text);
 }
 .layer-tree-item:focus-visible > .layer-tree-row {
   background: color-mix(in oklch, var(--selection) 10%, var(--card));
@@ -587,7 +589,7 @@
   position: absolute;
   width: 5px;
   height: 5px;
-  border: 1px solid var(--guide);
+  border: 1px solid var(--selection);
   background: var(--card);
 }
 .selection-outline > i:nth-of-type(1) {
@@ -654,7 +656,7 @@
 }
 .selection-label {
   background: var(--selection);
-  color: white;
+  color: var(--brand-foreground);
 }
 .measurement-witness {
   background: #f24822;
