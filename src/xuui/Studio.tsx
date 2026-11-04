@@ -20,6 +20,13 @@ function readVariant(studies: Study[]) {
 
 export function Studio({ studies }: { studies: Study[] }) {
   const [variantId, setVariantId] = useState(() => readVariant(studies));
+  // Null leaves selection to app interactions; arrays restore browser URLs.
+  const [layerSelectors, setLayerSelectors] = useState<string[] | null>(() => {
+    const selectors = new URLSearchParams(window.location.search).getAll(
+      'layer',
+    );
+    return selectors.length ? selectors : null;
+  });
   const study =
     studies.find((study) =>
       study.variants.some((variant) => variant.id === variantId),
@@ -44,10 +51,15 @@ export function Studio({ studies }: { studies: Study[] }) {
       variant: canonicalId,
     });
     if (current.get('view') === 'all') canonical.set('view', 'all');
+    for (const selector of current.getAll('layer'))
+      canonical.append('layer', selector);
     if (current.toString() !== canonical.toString())
       window.history.replaceState({}, '', `/?${canonical}`);
     const pop = () => {
       setVariantId(readVariant(studies));
+      setLayerSelectors(
+        new URLSearchParams(window.location.search).getAll('layer'),
+      );
       setAllVariants(
         new URLSearchParams(window.location.search).get('view') === 'all',
       );
@@ -64,6 +76,7 @@ export function Studio({ studies }: { studies: Study[] }) {
     if (allVariants && !focus) params.set('view', 'all');
     window.history.pushState({}, '', `/?${params}`);
     setVariantId(id);
+    setLayerSelectors(null);
     if (focus) setAllVariants(false);
   };
   const changeView = (all: boolean) => {
@@ -74,6 +87,7 @@ export function Studio({ studies }: { studies: Study[] }) {
     if (all) params.set('view', 'all');
     window.history.pushState({}, '', `/?${params}`);
     setAllVariants(all);
+    setLayerSelectors(null);
   };
   const switchStudy = (id: string) => {
     const targetStudy = studies.find((item) => item.id === id);
@@ -87,11 +101,13 @@ export function Studio({ studies }: { studies: Study[] }) {
     if (allVariants) params.set('view', 'all');
     window.history.pushState({}, '', `/?${params}`);
     setVariantId(variantId);
+    setLayerSelectors(null);
   };
   return (
     <Preview
       study={study}
       variantId={variantId}
+      layerSelectors={layerSelectors}
       onVariantChange={switchVariant}
       allVariants={allVariants}
       onAllVariantsChange={changeView}

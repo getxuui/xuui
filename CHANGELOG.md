@@ -2,6 +2,7 @@
 
 ## 0.1.0-alpha.3
 
+- ⌘L / Ctrl+L copies a deep link to the selected layers, falling back to the active variant when nothing is selected. Opening a layer link restores and fits the selection. Frame-title actions sit closer together.
 - Clicking a frame's title selects the variant's top layer and fits it to the canvas, like Shift+2. In All, the Open icon beside the title, or double-clicking the title, opens the variant on its own. Frame titles keep their on-screen size at any zoom, and Layers starts with one collapsed row per variant.
 - Copying an inspector value replaces it with a tick in place, so the row no longer shifts. Copy fields have no focus ring, pressed shift or copied border.
 - The comment field no longer clips text at its corners, and its Clear button is gone.

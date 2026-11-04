@@ -4,31 +4,33 @@ The left panel contains the study switcher, variant list, and layer tree. Drag t
 
 The canvas toolbar switches between selecting layers, interacting with a design, and commenting. Decorative lines and hatching remain visible in every mode. The title above each frame shows a copy-link action on hover or keyboard focus; copied links open that variant directly.
 
-| Shortcut            | Action                                                                   |
-| ------------------- | ------------------------------------------------------------------------ |
-| V / C               | Select layers / comment                                                  |
-| ⌘L / Ctrl+L         | Copy the active variant link                                             |
-| L                   | Open Layers and focus the selected layer; return to canvas from the tree |
-| ⌘\\ / Ctrl+\\       | Toggle the right sidebar                                                 |
-| D                   | Switch light/dark theme                                                  |
-| R                   | Toggle rulers, retaining guides                                          |
-| Home                | Center the active variant                                                |
-| ⌘0 / Ctrl+0         | Reset canvas zoom to 100%                                                |
-| Shift+0             | Zoom to 100%                                                             |
-| Shift+1             | Zoom to fit every variant on the canvas                                  |
-| Shift+2             | Zoom to the selected layers                                              |
-| ↑ / ↓               | Previous/next variant outside editable controls                          |
-| Tab / Shift+Tab     | Cycle sibling layers on canvas, or variants in the variant list          |
-| Enter / Shift+Enter | Select a group's children / its parent                                   |
-| Option / Alt        | Measure spacing from the selected layer, or inspect layout spacing       |
-| Space + drag        | Pan, temporarily leaving Select or Comment mode                          |
-| Escape              | Clear selection, leave the variant list, or cancel the current editor    |
+| Shortcut            | Action                                                                        |
+| ------------------- | ----------------------------------------------------------------------------- |
+| V / C               | Select layers / comment                                                       |
+| ⌘L / Ctrl+L         | Copy a link to the selected layers, or the active variant without a selection |
+| L                   | Open Layers and focus the selected layer; return to canvas from the tree      |
+| ⌘\\ / Ctrl+\\       | Toggle the right sidebar                                                      |
+| D                   | Switch light/dark theme                                                       |
+| R                   | Toggle rulers, retaining guides                                               |
+| Home                | Center the active variant                                                     |
+| ⌘0 / Ctrl+0         | Reset canvas zoom to 100%                                                     |
+| Shift+0             | Zoom to 100%                                                                  |
+| Shift+1             | Zoom to fit every variant on the canvas                                       |
+| Shift+2             | Zoom to the selected layers                                                   |
+| ↑ / ↓               | Previous/next variant outside editable controls                               |
+| Tab / Shift+Tab     | Cycle sibling layers on canvas, or variants in the variant list               |
+| Enter / Shift+Enter | Select a group's children / its parent                                        |
+| Option / Alt        | Measure spacing from the selected layer, or inspect layout spacing            |
+| Space + drag        | Pan, temporarily leaving Select or Comment mode                               |
+| Escape              | Clear selection, leave the variant list, or cancel the current editor         |
 
 Letter shortcuts leave text inputs alone. Pinch to zoom around the pointer; drag empty canvas, use the middle mouse button, or scroll to pan. Rulers and measurements retain component-pixel values through zooming.
 
 ## Layers and properties
 
 Selecting a layer replaces State, Props, and Comments with its inspector. Click a property to copy its value; a selectable fallback appears if clipboard access fails. Clearing selection restores the variant controls and comments.
+
+⌘L / Ctrl+L copies a deep link to the selected layers. Opening the link selects them, reveals them in Layers and fits them to the canvas. These links use the same DOM locators as comments, so they refer to the current component structure. The link button in a frame title always copies the whole variant.
 
 In Layers, arrows move through visible rows and expand or collapse groups. Home/End select the first/last visible layer. Tab cycles siblings; Escape returns focus to the canvas without clearing selection.
 

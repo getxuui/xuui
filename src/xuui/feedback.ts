@@ -3,7 +3,7 @@ import type { Annotation } from 'agentation';
 import type { Comment } from './model';
 
 /** Scope a locator to the stable variant, independently of the canvas camera. */
-function selectorFor(element: Element, variantId: string) {
+export function selectorFor(element: Element, variantId: string) {
   const parts: string[] = [];
   let current: Element | null = element;
   while (current && !current.hasAttribute('data-xuui-design')) {

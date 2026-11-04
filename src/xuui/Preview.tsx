@@ -38,6 +38,7 @@ import { VariantLabel } from './VariantLabel';
 export default function Preview({
   study,
   variantId,
+  layerSelectors,
   onVariantChange,
   allVariants,
   onAllVariantsChange,
@@ -46,6 +47,7 @@ export default function Preview({
 }: {
   study: Study;
   variantId: string;
+  layerSelectors: string[] | null;
   onVariantChange: (id: string, focus?: boolean) => void;
   allVariants: boolean;
   onAllVariantsChange: (all: boolean) => void;
@@ -141,31 +143,6 @@ export default function Preview({
     }
   });
   useStudioTheme();
-
-  useEffect(() => {
-    const copyLink = (event: KeyboardEvent) => {
-      if (
-        event.key.toLowerCase() !== 'l' ||
-        !(event.metaKey || event.ctrlKey) ||
-        event.altKey ||
-        event.repeat ||
-        (event.target instanceof HTMLElement &&
-          (event.target.isContentEditable ||
-            event.target.closest(
-              'input, textarea, select, [role="textbox"], [data-xuui-comment-editor]',
-            )))
-      )
-        return;
-      event.preventDefault();
-      canvas.current
-        ?.querySelector<HTMLButtonElement>(
-          `[data-copy-variant-link="${CSS.escape(variantId)}"]`,
-        )
-        ?.click();
-    };
-    window.addEventListener('keydown', copyLink, true);
-    return () => window.removeEventListener('keydown', copyLink, true);
-  }, [variantId]);
 
   const changeMode = (next: CanvasMode) => {
     setPendingComment(null);
@@ -322,6 +299,43 @@ export default function Preview({
     [visible],
   );
   const tree = useLayerTree(canvas, variantIds);
+  const restoredLink = useRef<string[] | null>(null);
+  useEffect(() => {
+    if (layerSelectors === null || restoredLink.current === layerSelectors)
+      return;
+    if (!layerSelectors.length) {
+      restoredLink.current = layerSelectors;
+      setSelection([]);
+      return;
+    }
+    const available = new Set<Element>();
+    const collect = (nodes: LayerNode[]) => {
+      for (const node of nodes) {
+        if (node.variantId === variantId)
+          node.elements.forEach((element) => available.add(element));
+        collect(node.children);
+      }
+    };
+    collect(tree);
+    const elements: Element[] = [];
+    for (const selector of layerSelectors) {
+      try {
+        const element = canvas.current?.querySelector(selector);
+        if (!element || !available.has(element)) return;
+        elements.push(element);
+      } catch {
+        return;
+      }
+    }
+    restoredLink.current = layerSelectors;
+    setMode('select');
+    setSelection(elements);
+    requestAnimationFrame(() =>
+      window.dispatchEvent(
+        new CustomEvent('xuui:zoom-to', { detail: elements }),
+      ),
+    );
+  }, [layerSelectors, tree, variantId]);
   const newVariantIds = useNewVariants(
     study.id,
     study.variants.map((item) => item.id),
@@ -363,6 +377,7 @@ export default function Preview({
         variant={variant}
         active={variant.id === variantId}
         comparison={allVariants}
+        selection={selection}
         onOpen={() => onVariantChange(variant.id, true)}
         onSelect={() => {
           // Like a frame name in a design tool, the title selects the
