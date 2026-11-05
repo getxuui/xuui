@@ -6,7 +6,7 @@ export function GridOverlay({ grids }: { grids: Grid[] }) {
     <div
       aria-hidden="true"
       data-grid-overlays
-      className="pointer-events-none absolute inset-[80px] z-20 overflow-hidden"
+      className="pointer-events-none absolute inset-0 z-20 overflow-hidden"
     >
       {grids
         .filter((grid) => grid.visible !== false)

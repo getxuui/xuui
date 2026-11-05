@@ -115,8 +115,6 @@ export function ViewSettings({
   declared,
   rulers,
   onRulersChange,
-  bufferZones,
-  onBufferZonesChange,
   onChange,
   onReset,
 }: {
@@ -125,8 +123,6 @@ export function ViewSettings({
   declared: Grid['type'][];
   rulers: boolean;
   onRulersChange: (visible: boolean) => void;
-  bufferZones: boolean;
-  onBufferZonesChange: (visible: boolean) => void;
   onChange: (grids: Grid[]) => void;
   onReset: () => void;
 }) {
@@ -172,18 +168,11 @@ export function ViewSettings({
             <RotateCcw data-icon="inline-start" />
           </Button>
         </header>
-        <div className="flex flex-col gap-px overflow-hidden rounded-[10px] [&_.parameter-field]:rounded-none!">
-          <SwitchRow
-            label="Rulers and guides"
-            checked={rulers}
-            onChange={onRulersChange}
-          />
-          <SwitchRow
-            label="Buffer zones"
-            checked={bufferZones}
-            onChange={onBufferZonesChange}
-          />
-        </div>
+        <SwitchRow
+          label="Rulers and guides"
+          checked={rulers}
+          onChange={onRulersChange}
+        />
         {shown.map((defaults) => {
           const grid =
             grids.find((item) => item.type === defaults.type) ?? defaults;

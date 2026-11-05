@@ -85,6 +85,7 @@ test('view settings edit grids the agent set up and persist them per variant', a
   const open = page.getByRole('button', { name: 'View settings', exact: true });
   await open.click();
   const settings = page.getByRole('dialog', { name: 'View', exact: true });
+  await expect(settings.getByRole('switch')).toHaveCount(2);
   // Without authored layout grids, only the pixel grid is offered.
   await expect(settings.getByRole('switch', { name: 'Columns' })).toHaveCount(
     0,
@@ -114,12 +115,9 @@ test('view settings edit grids the agent set up and persist them per variant', a
   await pixelSwitch.click();
   await expect(pixels).toHaveAttribute('data-grid-size', '12.5');
 
-  // Rulers and buffer zones are canvas-wide view preferences.
+  // Rulers are a canvas-wide view preference.
   await settings.getByRole('switch', { name: 'Rulers and guides' }).click();
   await expect(page.locator('[data-ruler-axis]')).toHaveCount(0);
-  const zones = page.locator('[data-canvas-decoration]').first();
-  await settings.getByRole('switch', { name: 'Buffer zones' }).click();
-  await expect(zones).toHaveCSS('opacity', '0');
   await page.screenshot({
     path: '.xuui-test/view-settings-light.png',
     animations: 'disabled',
@@ -143,10 +141,8 @@ test('view settings edit grids the agent set up and persist them per variant', a
   await nav.getByRole('link', { name: 'Without grids', exact: true }).click();
   await page.reload();
   await expect(pixels).toHaveAttribute('data-grid-size', '12.5');
-  await expect(zones).toHaveCSS('opacity', '0');
+  await expect(page.locator('[data-ruler-axis]')).toHaveCount(0);
   await open.click();
-  await settings.getByRole('switch', { name: 'Buffer zones' }).click();
-  await expect(zones).toHaveCSS('opacity', '1');
   await page.keyboard.press('d');
   await page.screenshot({
     path: '.xuui-test/view-settings-dark.png',

@@ -97,7 +97,7 @@ export function VariantLabel({
     <div
       data-workspace-control
       data-frame-title
-      className="group/frame-title absolute top-[52px] left-[80px] z-20 flex h-5 items-center gap-1.5 text-[11px] font-medium text-muted-foreground"
+      className="group/frame-title absolute -top-7 left-0 z-20 flex h-5 items-center gap-1.5 text-[11px] font-medium text-muted-foreground"
     >
       <Frame aria-hidden="true" size={12} strokeWidth={1.5} />
       <Button
