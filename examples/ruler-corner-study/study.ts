@@ -4,6 +4,7 @@ import {
   ArcCorners,
   CurrentCorners,
   StopCorners,
+  TextPathCorners,
   UprightCorners,
 } from './RulerCorners';
 
@@ -69,6 +70,31 @@ export const rulerCornerStudy = defineStudy({
       component: UprightCorners,
       from: ['ruler-corners-arc-v1'],
       controls: pan,
+    },
+    {
+      id: 'ruler-corners-text-path-v1',
+      name: 'Each digit follows the curve',
+      description:
+        'Every digit follows a concentric SVG path, bending the label around the corner.',
+      rationale:
+        'An SVG text path turns each digit along the same arc instead of rotating the label as a block. Spacing, the 10px edge offset and the fade match Follow the curve; pan to 30px to see a multi-digit label on the corner.',
+      color: '#e3e6e3',
+      component: TextPathCorners,
+      from: ['ruler-corners-arc-v1'],
+      controls: {
+        props: {
+          pan: {
+            type: 'number',
+            label: 'Pan',
+            // Show a multi-digit label on the curve immediately.
+            default: 30,
+            min: -64,
+            max: 64,
+            step: 1,
+            unit: 'px',
+          },
+        },
+      },
     },
   ],
 });

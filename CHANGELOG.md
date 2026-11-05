@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Ruler digits follow concentric text paths with even spacing through the corners. Labels fade out at 45° while the paths continue beyond them, keeping every digit intact near the ends.
+
 ## 0.1.0-alpha.5
 
 - Comments appear in one list, with read receipts beside them. The All and Unread filters are removed.
