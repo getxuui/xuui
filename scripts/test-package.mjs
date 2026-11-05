@@ -151,6 +151,7 @@ try {
     })
     .toBe('consumer-owned asset');
   assert.equal((await fetch(`${origin}/cursors/comment.svg`)).status, 200);
+  assert.equal((await fetch(`${origin}/cursors/comment-dark.svg`)).status, 200);
   await assert.rejects(
     run(process.execPath, [cli, 'dev', '--port', String(port)], {
       cwd: workspace,

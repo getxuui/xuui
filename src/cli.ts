@@ -201,6 +201,7 @@ async function dev(args: string[]) {
     '/xuui-dark.svg',
     '/cursors/default.svg',
     '/cursors/comment.svg',
+    '/cursors/comment-dark.svg',
   ]);
   const server = await createServer({
     root,

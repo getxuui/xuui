@@ -371,13 +371,16 @@ test('Tab cycles only the current group’s siblings, even when siblings contain
   await expect(selected).toHaveAttribute('aria-label', 'Card eyebrow');
 });
 
-test('comment mode uses the bubble cursor and Space temporarily restores panning', async ({
+test('comment mode uses the matching cursor in each theme and Space temporarily restores panning', async ({
   page,
 }) => {
+  await page.addInitScript(() => localStorage.setItem('xuui-theme', 'dark'));
   await page.goto('/?variant=paper-v1');
   const heading = page.locator('[data-xuui-design] h2');
   await expect(heading).toHaveCSS('cursor', /cursors\/default\.svg/);
   await page.getByRole('button', { name: 'Comment mode', exact: true }).click();
+  await expect(heading).toHaveCSS('cursor', /cursors\/comment-dark\.svg/);
+  await page.keyboard.press('d');
   await expect(heading).toHaveCSS('cursor', /cursors\/comment\.svg/);
   await page.getByRole('main', { name: 'Variant canvas', exact: true }).focus();
   await page.keyboard.down('Space');

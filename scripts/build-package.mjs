@@ -88,6 +88,7 @@ for (const asset of [
   'xuui-dark.svg',
   'cursors/default.svg',
   'cursors/comment.svg',
+  'cursors/comment-dark.svg',
 ])
   await cp(`public/${asset}`, `dist/public/${asset}`);
 await chmod('dist/cli.js', 0o755);

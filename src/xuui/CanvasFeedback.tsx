@@ -301,12 +301,20 @@ export function CanvasFeedback({
               {number !== undefined ? (
                 number
               ) : (
-                <img
-                  src="/cursors/comment.svg"
-                  alt=""
-                  draggable={false}
-                  className="pointer-events-none size-6"
-                />
+                <>
+                  <img
+                    src="/cursors/comment.svg"
+                    alt=""
+                    draggable={false}
+                    className="pointer-events-none size-6 dark:hidden"
+                  />
+                  <img
+                    src="/cursors/comment-dark.svg"
+                    alt=""
+                    draggable={false}
+                    className="pointer-events-none hidden size-6 dark:block"
+                  />
+                </>
               )}
             </Button>
             {focused?.id === pin.id && (
