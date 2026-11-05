@@ -40,7 +40,7 @@ export function WorkingGradient({
           type="translate"
           from={`${startX - pulseWidth} 0`}
           to={`${endX + pulseWidth} 0`}
-          dur="1.8s"
+          dur="3s"
           calcMode="linear"
           repeatCount="indefinite"
         />
