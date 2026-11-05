@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { z } from 'zod';
+import { useSessionState } from './sessionState';
 import type {
   Controls,
   ParameterValue,
@@ -13,11 +14,28 @@ type Snapshot = {
   machine?: string;
 };
 
+const valuesSchema = z.record(
+  z.string(),
+  z.union([z.string(), z.number(), z.boolean()]),
+);
+const snapshotsSchema = z.record(
+  z.string(),
+  z.object({
+    props: valuesSchema.optional(),
+    state: valuesSchema.optional(),
+    machine: z.string().optional(),
+  }),
+);
+
 export function useParameters(
   controls: Controls | undefined,
   variantId: string,
 ) {
-  const [snapshots, setSnapshots] = useState<Record<string, Snapshot>>({});
+  const [snapshots, setSnapshots] = useSessionState<Record<string, Snapshot>>(
+    'xuui:parameters:v1',
+    snapshotsSchema,
+    {},
+  );
   const sendFor = (
     id: string,
     definition: Controls | undefined,

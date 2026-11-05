@@ -66,12 +66,19 @@ test('a browser review reaches a waiting MCP agent and remains readable after di
         'xuui_acknowledge_review',
         'xuui_list_reviews',
         'xuui_read_review',
+        'xuui_report_variant_progress',
         'xuui_wait_for_review',
       ].sort(),
     );
     expect(
       tools.tools
-        .filter((tool) => tool.name !== 'xuui_acknowledge_review')
+        .filter(
+          (tool) =>
+            ![
+              'xuui_acknowledge_review',
+              'xuui_report_variant_progress',
+            ].includes(tool.name),
+        )
         .every((tool) => tool.annotations?.readOnlyHint === true),
     ).toBe(true);
     expect(

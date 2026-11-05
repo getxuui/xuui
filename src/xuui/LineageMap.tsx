@@ -1,6 +1,7 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { findCommentElement } from './feedback';
 import type { LineageEdge, PostedComment } from './lineage';
+import { WorkingGradient } from './WorkingGradient';
 
 type Box = { x: number; y: number; width: number; height: number };
 type Point = { x: number; y: number };
@@ -16,10 +17,13 @@ type Point = { x: number; y: number };
 export function LineageMap({
   edges,
   comments,
+  workingVariantIds,
 }: {
   edges: LineageEdge[];
   comments: PostedComment[];
+  workingVariantIds: ReadonlySet<string>;
 }) {
+  const gradientPrefix = useId();
   const root = useRef<HTMLDivElement>(null);
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
   const [pins, setPins] = useState<Record<string, Point>>({});
@@ -47,7 +51,8 @@ export function LineageMap({
           .querySelectorAll<HTMLElement>('[data-variant-id]')
           .forEach((variant) => {
             const design =
-              variant.querySelector('[data-xuui-design]') ?? variant;
+              variant.querySelector('[data-xuui-design], .variant-loading') ??
+              variant;
             nextBoxes[variant.dataset.variantId!] = local(
               design.getBoundingClientRect(),
             );
@@ -80,20 +85,34 @@ export function LineageMap({
   return (
     <div ref={root} data-lineage-map className="lineage-map">
       <svg aria-hidden="true" className="lineage-lines" width="1" height="1">
-        {edges.map((edge) => {
+        {edges.map((edge, index) => {
           const a = boxes[edge.from];
           const b = boxes[edge.to];
           if (!a || !b) return null;
           const start = { x: a.x + a.width, y: a.y + a.height / 2 };
           const end = { x: b.x, y: b.y + b.height / 2 };
           const bend = (end.x - start.x) / 2;
+          const working = workingVariantIds.has(edge.to);
+          const gradientId = `${gradientPrefix}-progress-${index}`;
           return (
-            <path
-              key={`${edge.from}:${edge.to}`}
-              data-lineage-line={`${edge.from}:${edge.to}`}
-              vectorEffect="non-scaling-stroke"
-              d={`M${start.x} ${start.y} C${start.x + bend} ${start.y}, ${end.x - bend} ${end.y}, ${end.x} ${end.y}`}
-            />
+            <g key={`${edge.from}:${edge.to}`}>
+              {working && (
+                <defs>
+                  <WorkingGradient
+                    id={gradientId}
+                    startX={start.x}
+                    endX={end.x}
+                  />
+                </defs>
+              )}
+              <path
+                data-lineage-line={`${edge.from}:${edge.to}`}
+                data-lineage-working={working || undefined}
+                style={working ? { stroke: `url(#${gradientId})` } : undefined}
+                vectorEffect="non-scaling-stroke"
+                d={`M${start.x} ${start.y} C${start.x + bend} ${start.y}, ${end.x - bend} ${end.y}, ${end.x} ${end.y}`}
+              />
+            </g>
           );
         })}
       </svg>
