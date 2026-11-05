@@ -3,17 +3,21 @@ import type { Variant } from './model';
 import type { StudioBindings } from './parameters';
 import { GridOverlay } from './GridOverlay';
 import type { Grid } from './grids';
+import type { VariantProgress } from './variantProgress';
+import { VariantLoading } from './VariantLoading';
 
 export function VariantSurface({
   variant,
   bindings,
   designRef,
   grids,
+  progress,
 }: {
   variant: Variant;
   bindings: StudioBindings;
   designRef?: Ref<HTMLDivElement>;
   grids: Grid[];
+  progress?: VariantProgress;
 }) {
   const Design = variant.component;
   return (
@@ -40,8 +44,12 @@ export function VariantSurface({
           className="hatch-projection-vertical absolute inset-y-0 right-[80px] w-px"
         />
       </div>
-      <div data-xuui-design ref={designRef} className="relative z-10">
-        <Design {...bindings} />
+      <div
+        data-xuui-design={progress ? undefined : ''}
+        ref={designRef}
+        className="relative z-10"
+      >
+        {progress ? <VariantLoading {...progress} /> : <Design {...bindings} />}
       </div>
       <GridOverlay grids={grids} />
       <svg

@@ -87,7 +87,20 @@ export function useReviews(studies: Study[], study: Study) {
   const [historyError, setHistoryError] = useState('');
   const [busy, setBusy] = useState<string[]>([]);
   const submitting = useRef(new Set<string>());
-  const draft = drafts[study.id];
+  const draft = drafts[study.id] ?? readDraft(study.id);
+  useEffect(() => {
+    setDrafts((previous) => {
+      const added = studies.filter((item) => !previous[item.id]);
+      return added.length
+        ? {
+            ...previous,
+            ...Object.fromEntries(
+              added.map((item) => [item.id, readDraft(item.id)]),
+            ),
+          }
+        : previous;
+    });
+  }, [studies]);
   // Comments on variants the registry no longer lists stay stored, but are neither shown nor submitted.
   const comments = draft.comments.filter((comment) =>
     study.variants.some((variant) => variant.id === comment.variantId),
@@ -127,21 +140,24 @@ export function useReviews(studies: Study[], study: Study) {
         signal,
       );
       if (signal?.aborted) return;
-      setDrafts((previous) =>
-        Object.fromEntries(
+      setDrafts((previous) => {
+        let changed = false;
+        const next = Object.fromEntries(
           Object.entries(previous).map(([id, draft]) => [
             id,
             {
               ...draft,
-              comments: draft.comments.map((comment) =>
-                numbers[comment.id]
-                  ? { ...comment, number: numbers[comment.id] }
-                  : comment,
-              ),
+              comments: draft.comments.map((comment) => {
+                const number = numbers[comment.id];
+                if (!number || comment.number === number) return comment;
+                changed = true;
+                return { ...comment, number };
+              }),
             },
           ]),
-        ),
-      );
+        );
+        return changed ? next : previous;
+      });
     } catch (error) {
       if (!signal?.aborted)
         setHistoryError(
@@ -217,7 +233,7 @@ export function useReviews(studies: Study[], study: Study) {
     }
     setErrors((previous) => ({ ...previous, [study.id]: '' }));
     setDrafts((previous) => {
-      const current = previous[study.id];
+      const current = previous[study.id] ?? draft;
       return {
         ...previous,
         [study.id]: {

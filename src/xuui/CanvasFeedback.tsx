@@ -335,6 +335,7 @@ export function CommentEditor({
   onCancel,
   onDismiss,
   onDelete,
+  onChange,
 }: {
   comment: Comment;
   canDelete: boolean;
@@ -342,6 +343,7 @@ export function CommentEditor({
   onCancel: () => void;
   onDismiss: (comment: Comment) => void;
   onDelete: () => void;
+  onChange: (comment: Comment) => void;
 }) {
   const popup = useRef<HTMLFormElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
@@ -524,6 +526,7 @@ export function CommentEditor({
           aria-describedby={error ? `${id}-error` : undefined}
           onChange={(event) => {
             setBody(event.target.value);
+            onChange({ ...comment, body: event.target.value });
             setError('');
           }}
         />

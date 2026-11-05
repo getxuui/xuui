@@ -1,11 +1,10 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import './index.css';
+import { mountStudio } from './studio';
 import { studies } from '#xuui-studies';
-import { Studio } from './xuui/Studio';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Studio studies={studies} />
-  </StrictMode>,
-);
+const studio = mountStudio(document.getElementById('root')!, studies);
+if (import.meta.hot) {
+  import.meta.hot.accept('#xuui-studies', (updated) => {
+    if (updated) studio.update(updated.studies);
+  });
+  import.meta.hot.dispose(() => studio.unmount());
+}

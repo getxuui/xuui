@@ -301,7 +301,10 @@ try {
     }),
   );
   const tools = await client.listTools();
-  assert.equal(tools.tools.length, 4);
+  assert.equal(tools.tools.length, 5);
+  assert.ok(
+    tools.tools.some((tool) => tool.name === 'xuui_report_variant_progress'),
+  );
   const result = await client.callTool({
     name: 'xuui_read_review',
     arguments: { reviewId: review.id },

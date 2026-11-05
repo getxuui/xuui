@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { findCommentElement } from './feedback';
 import type { LineageEdge, PostedComment } from './lineage';
 
@@ -16,14 +16,27 @@ type Point = { x: number; y: number };
 export function LineageMap({
   edges,
   comments,
+  workingVariantIds,
 }: {
   edges: LineageEdge[];
   comments: PostedComment[];
+  workingVariantIds: ReadonlySet<string>;
 }) {
+  const gradientPrefix = useId();
   const root = useRef<HTMLDivElement>(null);
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
   const [pins, setPins] = useState<Record<string, Point>>({});
   const [scale, setScale] = useState(1);
+  const [motionAllowed, setMotionAllowed] = useState(
+    () => !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
+  useEffect(() => {
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setMotionAllowed(!preference.matches);
+    update();
+    preference.addEventListener('change', update);
+    return () => preference.removeEventListener('change', update);
+  }, []);
   const commentsRef = useRef(comments);
   commentsRef.current = comments;
   useLayoutEffect(() => {
@@ -47,7 +60,8 @@ export function LineageMap({
           .querySelectorAll<HTMLElement>('[data-variant-id]')
           .forEach((variant) => {
             const design =
-              variant.querySelector('[data-xuui-design]') ?? variant;
+              variant.querySelector('[data-xuui-design], .variant-loading') ??
+              variant;
             nextBoxes[variant.dataset.variantId!] = local(
               design.getBoundingClientRect(),
             );
@@ -80,20 +94,69 @@ export function LineageMap({
   return (
     <div ref={root} data-lineage-map className="lineage-map">
       <svg aria-hidden="true" className="lineage-lines" width="1" height="1">
-        {edges.map((edge) => {
+        {edges.map((edge, index) => {
           const a = boxes[edge.from];
           const b = boxes[edge.to];
           if (!a || !b) return null;
           const start = { x: a.x + a.width, y: a.y + a.height / 2 };
           const end = { x: b.x, y: b.y + b.height / 2 };
           const bend = (end.x - start.x) / 2;
+          const working = workingVariantIds.has(edge.to);
+          const gradientId = `${gradientPrefix}-progress-${index}`;
+          const pulseWidth = Math.max(
+            24,
+            Math.min(80, Math.abs(end.x - start.x) * 0.2),
+          );
           return (
-            <path
-              key={`${edge.from}:${edge.to}`}
-              data-lineage-line={`${edge.from}:${edge.to}`}
-              vectorEffect="non-scaling-stroke"
-              d={`M${start.x} ${start.y} C${start.x + bend} ${start.y}, ${end.x - bend} ${end.y}, ${end.x} ${end.y}`}
-            />
+            <g key={`${edge.from}:${edge.to}`}>
+              {working && (
+                <defs>
+                  <linearGradient
+                    id={gradientId}
+                    gradientUnits="userSpaceOnUse"
+                    x1={-pulseWidth}
+                    y1={0}
+                    x2={pulseWidth}
+                    y2={0}
+                    gradientTransform={`translate(${(start.x + end.x) / 2} 0)`}
+                  >
+                    <stop
+                      offset="0"
+                      stopColor="var(--brand)"
+                      stopOpacity="0.2"
+                    />
+                    <stop
+                      offset="0.5"
+                      stopColor="var(--brand)"
+                      stopOpacity="1"
+                    />
+                    <stop
+                      offset="1"
+                      stopColor="var(--brand)"
+                      stopOpacity="0.2"
+                    />
+                    {motionAllowed && (
+                      <animateTransform
+                        attributeName="gradientTransform"
+                        type="translate"
+                        from={`${start.x - pulseWidth} 0`}
+                        to={`${end.x + pulseWidth} 0`}
+                        dur="1.8s"
+                        calcMode="linear"
+                        repeatCount="indefinite"
+                      />
+                    )}
+                  </linearGradient>
+                </defs>
+              )}
+              <path
+                data-lineage-line={`${edge.from}:${edge.to}`}
+                data-lineage-working={working || undefined}
+                style={working ? { stroke: `url(#${gradientId})` } : undefined}
+                vectorEffect="non-scaling-stroke"
+                d={`M${start.x} ${start.y} C${start.x + bend} ${start.y}, ${end.x - bend} ${end.y}, ${end.x} ${end.y}`}
+              />
+            </g>
           );
         })}
       </svg>

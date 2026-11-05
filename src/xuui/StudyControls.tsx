@@ -15,6 +15,7 @@ export function StudyControls({
   onStudyChange,
   onCollapse,
   newVariantIds,
+  workingVariantIds,
 }: {
   studyId: string;
   variantId: string | undefined;
@@ -26,6 +27,7 @@ export function StudyControls({
   onStudyChange: (id: string) => void;
   onCollapse: () => void;
   newVariantIds: ReadonlySet<string>;
+  workingVariantIds: ReadonlySet<string>;
 }) {
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-2">
@@ -52,6 +54,7 @@ export function StudyControls({
         onVariantChange={onVariantChange}
         onAllVariantsChange={onAllVariantsChange}
         newVariantIds={newVariantIds}
+        workingVariantIds={workingVariantIds}
       />
     </div>
   );
