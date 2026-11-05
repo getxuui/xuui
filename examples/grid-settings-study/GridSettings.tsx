@@ -799,9 +799,13 @@ function FramedDesign({ zones }: { zones: boolean }) {
       <div
         aria-hidden="true"
         className={cn(
-          'bg-canvas-hatch pointer-events-none absolute inset-0 rounded-[12px] border border-dashed border-foreground/15 transition-opacity duration-200 motion-reduce:transition-none',
+          'pointer-events-none absolute inset-0 rounded-[12px] border border-dashed border-foreground/15 transition-opacity duration-200 motion-reduce:transition-none',
           zones ? 'opacity-100' : 'opacity-0',
         )}
+        style={{
+          backgroundImage:
+            'repeating-linear-gradient(45deg, color-mix(in oklab, var(--foreground) 5%, transparent) 0 1px, transparent 1px 17px)',
+        }}
       />
       <div className="relative flex h-16 w-40 items-center justify-center rounded-md bg-card text-[11px] text-muted-foreground shadow-sm">
         Design
