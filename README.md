@@ -67,4 +67,6 @@ Run `npm run check` for the package build, browser tests, and installed-package 
 
 </details>
 
+Use [Conventional Commits](CONTRIBUTING.md) for commits and pull request titles. `npm ci` enables local commit message validation.
+
 [MIT](LICENSE) · Robin Humphreys
