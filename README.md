@@ -1,12 +1,49 @@
-# xuui
+<p align="center">
+  <img src="docs/assets/xuui-mark.svg" width="32" height="32" alt="" />
+</p>
 
-Review the UIs your agents build.
+<p align="center">
+  xuui is a local canvas for reviewing the UIs your agents build.<br />
+  Try real React components, compare alternatives, and point at what to change.
+</p>
 
-Your agent puts its React components on a local canvas. You compare the variants, point at what to change, and send your comments back to the agent.
+<p align="center">
+  <a href="https://www.npmjs.com/package/@getxuui/xuui"><img src="https://img.shields.io/npm/v/%40getxuui%2Fxuui/alpha?label=version" alt="npm alpha version" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/npm/l/%40getxuui%2Fxuui" alt="License: MIT" /></a>
+  <a href="#give-your-next-design-a-canvas"><img src="https://img.shields.io/node/v/%40getxuui%2Fxuui/alpha" alt="Node 22.12 or newer" /></a>
+</p>
 
-**Experimental alpha. Breaking changes expected. Requires Node 22.12 or newer.**
+<p align="center">
+  <a href="https://xuui.com">Website</a> ·
+  <a href="docs/authoring.md">Documentation</a> ·
+  <a href="https://xuui.com/agents.md">Agent guide</a>
+</p>
 
-## Start
+<p align="center">
+  <a href="docs/assets/studio.jpg"><img src="docs/assets/studio.jpg" width="640" alt="Two React design variants on the xuui canvas, with feedback attached to a heading." /></a>
+</p>
+
+## Try the UI, then point at the detail
+
+A useful design review means trying the interactions, comparing the details, and showing exactly what should change. Your agent puts working React components on the canvas so you can do all three.
+
+Use **Play** to try a design, **Select** to inspect its layers, or **C** to pin a comment to an element. **Submit review** collects your feedback for the agent. Copy it into chat, or connect [MCP](docs/mcp.md) to let the agent read it directly.
+
+## Keep the thinking behind each direction
+
+A **study** explores one design question through several **variants**, each with a description and rationale. Compare them on one canvas, then have your agent develop the next direction from your review.
+
+Keep earlier component implementations so the alternatives stay runnable. Submitted feedback stays with the designs it refers to, giving the next round its context.
+
+## Give your next design a canvas
+
+Install the companion [`/present` skill](https://github.com/getxuui/skills), then ask your agent to present the UI you are working on:
+
+```sh
+npx skills add getxuui/skills
+```
+
+The [agent guide](https://xuui.com/agents.md) covers setup and the optional MCP connection. To create a study yourself:
 
 ```sh
 npx --package @getxuui/xuui@alpha xuui init my-study
@@ -14,36 +51,20 @@ cd my-study
 npx xuui dev
 ```
 
-Open the printed local URL. `init` creates a small starter and installs a pinned xuui version. Your components and `xuui.studies.ts` belong to the workspace; the studio stays in the dependency. Use `--no-install` to scaffold without installing packages.
+Open the printed local URL. The alpha supports standalone React study workspaces, with their own components, styles, data, and dependencies. Requires Node 22.12 or newer. **Experimental alpha; breaking changes expected.**
 
-## Present, review, continue
+[Authoring](docs/authoring.md) · [Canvas controls](docs/controls.md) · [Changelog](CHANGELOG.md)
 
-1. Register a design or a few alternatives in `xuui.studies.ts`.
-2. Share the focused variant link or compare them with **All**. Use Play to try the design, and Select to inspect its layers.
-3. Press **C**, point at an element, and comment. **Submit review** hands the collected feedback back to the agent.
-4. Advance a direction with a new variant ID. Keep earlier implementations when they should remain reviewable.
-
-Submitted feedback is stored as readable files in `.xuui/reviews/`. Copy a review into chat or let an agent read it through the optional MCP connection. No account, deployment, or database is needed to review locally.
-
-The companion [`/present` skill](https://github.com/getxuui/skills) guides registration, meaningful comparisons, and the feedback handoff.
-
-## Learn more
-
-- [Authoring studies and controls](docs/authoring.md)
-- [Canvas controls and shortcuts](docs/controls.md)
-- [Reviews and MCP](docs/mcp.md)
-
-The alpha supports standalone React study workspaces. Supply the providers, data, styles, and dependencies your design needs. Automatic imports from arbitrary applications are outside this release.
-
-## Develop xuui
+<details>
+<summary>Work on xuui itself</summary>
 
 ```sh
 npm ci
 npm run dev
 ```
 
-The source demo contains two cards. Demo designs and test fixtures are excluded from the npm package; only a small generated starter accompanies `init`.
+Run `npm run check` for the package build, browser tests, and installed-package checks. Use [issues](https://github.com/getxuui/xuui/issues) to report bugs or discuss changes.
 
-Run `npm run check` for the build, browser tests, and installed-package checks. Use `npm run build:demo` for a static build of the demo.
+</details>
 
 [MIT](LICENSE) · Robin Humphreys
