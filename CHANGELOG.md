@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Agents can announce named variants in progress through MCP or `xuui progress`. Loading artboards show spinners, animated dot grids, and traveling gradients on their connectors and outlines.
+- Study updates preserve the reviewer's position, selection, controls, and unfinished comments. Full reloads recover studio state and comment drafts.
 - Removed buffer zones, including the hatching, dashed outlines, frame padding, and View settings toggle.
 - Ruler digits follow concentric text paths with even spacing through the corners. Labels fade out at 45° while the paths continue beyond them, keeping every digit intact near the ends.
 
