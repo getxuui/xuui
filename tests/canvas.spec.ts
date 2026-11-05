@@ -390,7 +390,7 @@ test('comment mode uses the bubble cursor and Space temporarily restores panning
   await expect(heading).toHaveCSS('cursor', /cursors\/default\.svg/);
 });
 
-test('Shift+1 fits every variant, Shift+2 zooms to the selection and Shift+0 returns to 100%', async ({
+test('zoom shortcuts fit all variants or the selection and return to 100%', async ({
   page,
 }) => {
   await page.goto('/?variant=paper-v1&view=all');
@@ -411,6 +411,10 @@ test('Shift+1 fits every variant, Shift+2 zooms to the selection and Shift+0 ret
         box.bottom <= area.y + area.height + 1,
     );
   };
+  // With no selection in All view, Shift+2 fits all variants.
+  await page.keyboard.press('Shift+2');
+  await expect.poll(() => inside('[data-variant-id]')).toBe(true);
+
   await page.keyboard.press('Shift+1');
   await expect.poll(() => inside('[data-variant-id]')).toBe(true);
 
