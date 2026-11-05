@@ -669,7 +669,7 @@ export default function Preview({
               groupResizeBehavior="preserve-pixel-size"
             >
               <ParameterPanel
-                variant={variant}
+                variant={allVariants ? undefined : variant}
                 studyId={study.id}
                 selectedLayer={
                   mode === 'select' && selectedLayer?.variantId === variantId
