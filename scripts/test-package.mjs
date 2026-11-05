@@ -165,9 +165,10 @@ try {
     permissions: ['clipboard-read', 'clipboard-write'],
   });
   const page = await context.newPage();
+  let hmrSocket;
   const waitForHmrConnection = async () => {
-    const socket = await page.waitForEvent('websocket', { timeout: 15000 });
-    await socket.waitForEvent('framereceived', {
+    hmrSocket = await page.waitForEvent('websocket', { timeout: 15000 });
+    await hmrSocket.waitForEvent('framereceived', {
       predicate: ({ payload }) =>
         JSON.parse(payload.toString()).type === 'connected',
       timeout: 15000,
@@ -256,10 +257,17 @@ try {
     assert.deepEqual(current, savedDraft);
   };
   const registry = join(workspace, 'xuui.studies.ts');
-  // Rendering can finish before Vite reconnects after a full reload. Wait for
-  // its handshake so the next registry edit cannot lose its HMR notification.
+  // Registry edits keep the current page and HMR connection. Wait for the
+  // update on that connection rather than expecting a reload and reconnect.
   const updateRegistry = async (contents) => {
-    await Promise.all([waitForHmrConnection(), writeFile(registry, contents)]);
+    await Promise.all([
+      hmrSocket.waitForEvent('framereceived', {
+        predicate: ({ payload }) =>
+          JSON.parse(payload.toString()).type === 'update',
+        timeout: 15000,
+      }),
+      writeFile(registry, contents),
+    ]);
   };
   const updated = original.replace(
     'Make room to explore.',
