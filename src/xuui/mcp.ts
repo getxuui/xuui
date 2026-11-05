@@ -5,6 +5,8 @@ import { McpServer } from '@modelcontextprotocol/server';
 import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { z } from 'zod';
 import { version } from '../version.ts';
+import { reportVariantProgressSchema } from './variantProgress.ts';
+import { reportVariantProgress } from './variantProgressStore.ts';
 import { formatReview, reviewSchema, reviewReceiptSchema } from './model.ts';
 import type { Review } from './model.ts';
 import {
@@ -72,7 +74,7 @@ if (values.help) {
         { name: 'xuui', version },
         {
           instructions:
-            'xuui presents studies containing variants. Browser drafts are never delivered. List unread reviews, read the full package, then call xuui_acknowledge_review once you have received it. Acknowledgement records Read by agent and clears the unread queue; it does not mean the feedback is implemented. History is retained. After handing off a review link, keep calling xuui_wait_for_review for that study, passing the returned knownReviewIds, until a review arrives or the person asks you to stop; this server cannot wake an idle agent, so waiting is how feedback reaches you without being asked for. Acknowledge each received package, make changes as new variants with new IDs, hand off the new link, and wait again. Give each variant a stable ID, a one-line description and a rationale of one or two sentences (at most 280 characters) saying what it tries and what it trades off. Reviewers read both from the frame label. This server does not edit designs.',
+            'xuui presents studies containing variants. Before building a new variant, call xuui_report_variant_progress with status working, its studyId, stable variantId, name and optional from parent IDs. Register the finished component under the same ID; after verifying it, report done. Clear abandoned work with done as well. Browser drafts are never delivered. List unread reviews, read the full package, then call xuui_acknowledge_review once you have received it. Acknowledgement records Read by agent and clears the unread queue; it does not mean the feedback is implemented. History is retained. After handing off a review link, keep calling xuui_wait_for_review for that study, passing the returned knownReviewIds, until a review arrives or the person asks you to stop; this server cannot wake an idle agent, so waiting is how feedback reaches you without being asked for. Acknowledge each received package, make changes as new variants with new IDs, hand off the new link, and wait again. Give each variant a stable ID, a one-line description and a rationale of one or two sentences (at most 280 characters) saying what it tries and what it trades off. Reviewers read both from the frame label. This server does not edit designs.',
         },
       );
       const matching = async ({
@@ -90,6 +92,29 @@ if (values.help) {
                 (comment) => comment.variantId === variantId,
               )),
         );
+
+      server.registerTool(
+        'xuui_report_variant_progress',
+        {
+          title: 'Report work on a xuui variant',
+          description:
+            'Before building a new variant, report working with its studyId, stable variantId, name and optional parent IDs (from) and artboard width/height. All shows a loading artboard while the reviewer keeps their place. Register the finished component under the same ID; it replaces the placeholder automatically. Report done after verifying it, or when abandoning the variant, to clear the progress record.',
+          inputSchema: reportVariantProgressSchema,
+          outputSchema: z.object({
+            studyId: z.string(),
+            variantId: z.string(),
+            status: z.enum(['working', 'done']),
+          }),
+          annotations: { ...annotations, readOnlyHint: false },
+        },
+        async (input) => {
+          const result = await reportVariantProgress(directory, input);
+          return {
+            content: [{ type: 'text', text: JSON.stringify(result) }],
+            structuredContent: result,
+          };
+        },
+      );
 
       server.registerTool(
         'xuui_list_reviews',

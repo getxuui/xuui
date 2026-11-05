@@ -41,9 +41,21 @@ import { LineageMap } from './LineageMap';
 import type { LayerNode } from './useLayerTree';
 import { StudyControls } from './StudyControls';
 import { VariantLabel } from './VariantLabel';
+import { z } from 'zod';
+import { commentSchema } from './model';
+import { selectorFor } from './feedback';
+import { readSession, writeSession, useSessionState } from './sessionState';
+import type { VariantProgress } from './variantProgress';
+import { VariantSpinner } from './VariantSpinner';
+
+const editorCommentSchema = commentSchema.extend({
+  body: z.string().max(4000),
+});
+const emptyDesign = () => null;
 
 export default function Preview({
   study,
+  progress,
   variantId,
   layerSelectors,
   onVariantChange,
@@ -53,6 +65,7 @@ export default function Preview({
   onStudyChange,
 }: {
   study: Study;
+  progress: VariantProgress[];
   variantId: string;
   layerSelectors: string[] | null;
   onVariantChange: (id: string, focus?: boolean) => void;
@@ -61,7 +74,38 @@ export default function Preview({
   studies: Study[];
   onStudyChange: (id: string) => void;
 }) {
-  const variant = study.variants.find((item) => item.id === variantId);
+  const pendingVariants = useMemo(
+    () =>
+      progress.filter(
+        (item) =>
+          item.studyId === study.id &&
+          !study.variants.some((variant) => variant.id === item.variantId),
+      ),
+    [progress, study],
+  );
+  const canvasVariants = useMemo<Variant[]>(
+    () => [
+      ...study.variants,
+      ...pendingVariants.map((item) => ({
+        id: item.variantId,
+        name: item.name,
+        from: item.from.filter((id) =>
+          study.variants.some((variant) => variant.id === id),
+        ),
+        description: 'The agent is working on this variant.',
+        rationale: 'This artboard will update when the variant is ready.',
+        component: emptyDesign,
+        color: '',
+      })),
+    ],
+    [study.variants, pendingVariants],
+  );
+  const workingVariantIds = useMemo(
+    () => new Set(pendingVariants.map((item) => item.variantId)),
+    [pendingVariants],
+  );
+  const variant = canvasVariants.find((item) => item.id === variantId);
+  const isWorking = workingVariantIds.has(variantId);
   const design = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLElement>(null);
   const focusCanvas = useCallback(
@@ -71,18 +115,40 @@ export default function Preview({
   const returnLayersToCanvas = useRef(false);
   const layerFocusReturn = useRef(0);
   const layersTrigger = useRef<HTMLButtonElement>(null);
-  const [mode, setMode] = useState<CanvasMode>('select');
+  const [mode, setMode] = useSessionState<CanvasMode>(
+    'xuui:canvas-mode:v1',
+    z.enum(['select', 'interact', 'comment']),
+    'select',
+  );
   const [selection, setSelection] = useState<Element[]>([]);
   const [selectedLayer, setSelectedLayer] = useState<LayerProperties | null>(
     null,
   );
-  const [pendingComment, setPendingComment] = useState<Comment | null>(null);
+  const [storedPendingComment, setPendingComment] =
+    useSessionState<Comment | null>(
+      'xuui:comment-editor:v1',
+      editorCommentSchema.nullable(),
+      null,
+    );
+  const pendingComment =
+    storedPendingComment &&
+    study.variants.some((item) => item.id === storedPendingComment.variantId)
+      ? storedPendingComment
+      : null;
   const [requestedComment, setFocusedComment] = useState<Comment | null>(null);
   const selectCanvasLayers = useCallback((elements: Element[]) => {
     setFocusedComment(null);
     setSelection(elements);
   }, []);
-  const commentEditorDrafts = useRef(new Map<string, string>());
+  const [commentEditorDrafts, setCommentEditorDrafts] = useSessionState<
+    Record<string, string>
+  >('xuui:comment-editor-drafts:v1', z.record(z.string(), z.string()), {});
+  const clearEditorDraft = (comment: Comment) =>
+    setCommentEditorDrafts((previous) => {
+      const next = { ...previous };
+      delete next[commentDraftKey(comment)];
+      return next;
+    });
   const review = useReviews(studies, study);
   const focusedComment =
     requestedComment &&
@@ -96,7 +162,11 @@ export default function Preview({
   const [compactLayout, setCompactLayout] = useState(
     () => window.matchMedia('(max-width: 767px)').matches,
   );
-  const [layersOpen, setLayersOpen] = useState(true);
+  const [layersOpen, setLayersOpen] = useSessionState(
+    'xuui:layers-open:v1',
+    z.boolean(),
+    true,
+  );
   const [layersSheetOpen, setLayersSheetOpen] = useState(false);
   const [layerFocusRequest, setLayerFocusRequest] = useState(0);
   const openLayers = useCallback(() => {
@@ -177,16 +247,19 @@ export default function Preview({
     setMode('comment');
     setPendingComment({
       ...comment,
-      body:
-        commentEditorDrafts.current.get(commentDraftKey(comment)) ??
-        comment.body,
+      body: commentEditorDrafts[commentDraftKey(comment)] ?? comment.body,
     });
   };
   const closeComment = () => {
     setPendingComment(null);
     canvas.current?.querySelector('main')?.focus({ preventScroll: true });
   };
-  useEffect(() => setPendingComment(null), [study.id, variantId]);
+  const editorContext = useRef(`${study.id}:${variantId}`);
+  useEffect(() => {
+    const context = `${study.id}:${variantId}`;
+    if (editorContext.current !== context) setPendingComment(null);
+    editorContext.current = context;
+  }, [study.id, variantId]);
   useEffect(
     () =>
       setFocusedComment((comment) =>
@@ -239,15 +312,15 @@ export default function Preview({
             )))
       )
         return;
-      const index = study.variants.findIndex((item) => item.id === variantId);
-      const next = study.variants[index + (event.key === 'ArrowDown' ? 1 : -1)];
+      const index = canvasVariants.findIndex((item) => item.id === variantId);
+      const next = canvasVariants[index + (event.key === 'ArrowDown' ? 1 : -1)];
       if (index < 0 || !next) return;
       event.preventDefault();
       onVariantChange(next.id);
     };
     window.addEventListener('keydown', navigate);
     return () => window.removeEventListener('keydown', navigate);
-  }, [study.variants, variantId, onVariantChange]);
+  }, [canvasVariants, variantId, onVariantChange]);
 
   useEffect(() => {
     document.title = `${variant?.name ?? 'Unknown variant'} · xuui`;
@@ -321,8 +394,8 @@ export default function Preview({
     });
   }, [mode, variantId, study.id]);
   const visible = useMemo(
-    () => (allVariants ? study.variants : variant ? [variant] : []),
-    [allVariants, study.variants, variant],
+    () => (allVariants ? canvasVariants : variant ? [variant] : []),
+    [allVariants, canvasVariants, variant],
   );
   const variantIds = useMemo(
     () => visible.map((variant) => variant.id),
@@ -330,12 +403,24 @@ export default function Preview({
   );
   const tree = useLayerTree(canvas, variantIds);
   const restoredLink = useRef<string[] | null>(null);
+  const [reloadSelection] = useState(() =>
+    (
+      performance.getEntriesByType('navigation')[0] as
+        PerformanceNavigationTiming | undefined
+    )?.type === 'reload'
+      ? readSession(
+          `xuui:${study.id}:${variantId}:selection:v1`,
+          z.array(z.string()),
+          [],
+        )
+      : [],
+  );
+  const restoreSelectors = layerSelectors ?? reloadSelection;
   useEffect(() => {
-    if (layerSelectors === null || restoredLink.current === layerSelectors)
-      return;
-    if (!layerSelectors.length) {
-      restoredLink.current = layerSelectors;
-      setSelection([]);
+    if (restoredLink.current === restoreSelectors) return;
+    if (!restoreSelectors.length) {
+      restoredLink.current = restoreSelectors;
+      if (layerSelectors !== null) setSelection([]);
       return;
     }
     const available = new Set<Element>();
@@ -348,7 +433,7 @@ export default function Preview({
     };
     collect(tree);
     const elements: Element[] = [];
-    for (const selector of layerSelectors) {
+    for (const selector of restoreSelectors) {
       try {
         const element = canvas.current?.querySelector(selector);
         if (!element || !available.has(element)) return;
@@ -357,15 +442,25 @@ export default function Preview({
         return;
       }
     }
-    restoredLink.current = layerSelectors;
-    setMode('select');
+    restoredLink.current = restoreSelectors;
+    if (layerSelectors !== null) setMode('select');
     setSelection(elements);
-    requestAnimationFrame(() =>
-      window.dispatchEvent(
-        new CustomEvent('xuui:zoom-to', { detail: elements }),
-      ),
+    if (layerSelectors !== null)
+      requestAnimationFrame(() =>
+        window.dispatchEvent(
+          new CustomEvent('xuui:zoom-to', { detail: elements }),
+        ),
+      );
+  }, [restoreSelectors, layerSelectors, tree, variantId]);
+  useEffect(() => {
+    if (restoredLink.current !== restoreSelectors) return;
+    writeSession(
+      `xuui:${study.id}:${variantId}:selection:v1`,
+      selection
+        .filter((element) => element.isConnected)
+        .map((element) => selectorFor(element, variantId)),
     );
-  }, [layerSelectors, tree, variantId]);
+  }, [selection, study.id, variantId, restoreSelectors]);
   const newVariantIds = useNewVariants(
     study.id,
     study.variants.map((item) => item.id),
@@ -374,21 +469,22 @@ export default function Preview({
   // columns, joined by the review comments that led from one to the next.
   const lineage = useMemo(() => {
     if (!allVariants) return null;
-    const columns = lineageColumns(study.variants);
+    const columns = lineageColumns(canvasVariants);
     if (!columns) return null;
     return {
       columns,
-      placements: lineagePlacements(columns, study.variants),
-      edges: lineageEdges(study.variants),
+      placements: lineagePlacements(columns, canvasVariants),
+      edges: lineageEdges(canvasVariants),
       comments: postedComments(review.reviews),
     };
-  }, [allVariants, study.variants, review.reviews]);
+  }, [allVariants, canvasVariants, review.reviews]);
   const renderFrame = (variant: Variant) => (
     <div
       key={variant.id}
       data-variant-id={variant.id}
       data-variant-name={variant.name}
       data-new-variant={newVariantIds.has(variant.id) || undefined}
+      data-variant-loading={workingVariantIds.has(variant.id) || undefined}
       className="relative shrink-0"
       style={lineage?.placements.get(variant.id)}
       onPointerDownCapture={(event) => {
@@ -404,38 +500,49 @@ export default function Preview({
           onVariantChange(variant.id);
       }}
     >
-      <VariantLabel
-        studyId={study.id}
-        variant={variant}
-        active={variant.id === variantId}
-        comparison={allVariants}
-        selection={selection}
-        onOpen={() => onVariantChange(variant.id, true)}
-        onSelect={() => {
-          // Like a frame name in a design tool, the title selects the
-          // variant's top layer and fits it to the canvas, as Shift+2 does.
-          const root = tree.find((node) => node.variantId === variant.id);
-          if (root) selectLayer(root);
-          else onVariantChange(variant.id);
-          // Fit once a variant switch has settled, so recentring can't undo it.
-          requestAnimationFrame(() =>
-            window.dispatchEvent(
-              new CustomEvent('xuui:zoom-to', {
-                detail: root?.elements ?? [
-                  ...document.querySelectorAll(
-                    `[data-variant-id="${CSS.escape(variant.id)}"] [data-xuui-design]`,
-                  ),
-                ],
-              }),
-            ),
-          );
-        }}
-      />
+      {workingVariantIds.has(variant.id) ? (
+        <div
+          data-frame-title
+          className="absolute -top-7 left-0 flex h-5 items-center gap-1.5 text-[11px] font-medium text-muted-foreground"
+        >
+          <span>{variant.name}</span>
+          <VariantSpinner />
+        </div>
+      ) : (
+        <VariantLabel
+          studyId={study.id}
+          variant={variant}
+          active={variant.id === variantId}
+          comparison={allVariants}
+          selection={selection}
+          onOpen={() => onVariantChange(variant.id, true)}
+          onSelect={() => {
+            // Like a frame name in a design tool, the title selects the
+            // variant's top layer and fits it to the canvas, as Shift+2 does.
+            const root = tree.find((node) => node.variantId === variant.id);
+            if (root) selectLayer(root);
+            else onVariantChange(variant.id);
+            // Fit once a variant switch has settled, so recentring can't undo it.
+            requestAnimationFrame(() =>
+              window.dispatchEvent(
+                new CustomEvent('xuui:zoom-to', {
+                  detail: root?.elements ?? [
+                    ...document.querySelectorAll(
+                      `[data-variant-id="${CSS.escape(variant.id)}"] [data-xuui-design]`,
+                    ),
+                  ],
+                }),
+              ),
+            );
+          }}
+        />
+      )}
       <VariantSurface
         variant={variant}
         grids={grids.forVariant(variant)}
         bindings={parameters.bindingsFor(variant.id, variant.controls)}
-        designRef={variant.id === variantId ? design : undefined}
+        designRef={variant.id === variantId && !isWorking ? design : undefined}
+        progress={pendingVariants.find((item) => item.variantId === variant.id)}
       />
     </div>
   );
@@ -472,13 +579,14 @@ export default function Preview({
         <StudyControls
           studyId={study.id}
           variantId={variant?.id}
-          variants={study.variants}
+          variants={canvasVariants}
           onVariantChange={onVariantChange}
           studies={studies}
           onStudyChange={onStudyChange}
           allVariants={allVariants}
           onAllVariantsChange={onAllVariantsChange}
           newVariantIds={newVariantIds}
+          workingVariantIds={workingVariantIds}
           onCollapse={() => {
             if (compactLayout) setLayersSheetOpen(false);
             else {
@@ -537,37 +645,32 @@ export default function Preview({
               selection={selection}
               mode={allVariants ? 'all' : 'focused'}
             >
-              {lineage ? (
-                <div data-lineage className="lineage-layout">
-                  {lineage.columns.map((column, index) => (
-                    <div key={index} className="lineage-column">
-                      {column.map((id) => {
-                        const item = study.variants.find(
-                          (candidate) => candidate.id === id,
-                        );
-                        return item ? renderFrame(item) : null;
-                      })}
-                    </div>
-                  ))}
+              <div
+                data-lineage={lineage ? '' : undefined}
+                className={
+                  lineage ? 'lineage-layout' : 'flex items-start gap-20'
+                }
+              >
+                {visible.map(renderFrame)}
+                {lineage && (
                   <LineageMap
                     edges={lineage.edges}
+                    workingVariantIds={workingVariantIds}
                     comments={lineage.comments.filter(
                       (comment) => comment.id !== focusedComment?.id,
                     )}
                   />
-                </div>
-              ) : (
-                visible.map(renderFrame)
-              )}
+                )}
+              </div>
             </CanvasViewport>
             <WorkspaceRulers
-              key={variantId}
+              key={`${variantId}:${isWorking}`}
               designRef={design}
               studyId={study.id}
               variantId={variantId}
-              visible={rulersVisible && !allVariants}
-              guidesVisible={!allVariants}
-              selectionEnabled={mode === 'select'}
+              visible={rulersVisible && !allVariants && !isWorking}
+              guidesVisible={!allVariants && !isWorking}
+              selectionEnabled={mode === 'select' && !isWorking}
               selection={selection}
               onSelect={selectCanvasLayers}
               onInspect={setSelectedLayer}
@@ -576,7 +679,8 @@ export default function Preview({
               mode={mode}
               onChange={changeMode}
               grids={
-                variant && (
+                variant &&
+                !isWorking && (
                   <ViewSettings
                     key={variant.id}
                     grids={grids.forVariant(variant)}
@@ -709,25 +813,31 @@ export default function Preview({
           )}
           onSave={async (comment) => {
             const saved = await review.save(comment);
-            if (saved)
-              commentEditorDrafts.current.delete(commentDraftKey(comment));
+            if (saved) clearEditorDraft(comment);
             return saved;
           }}
           onCancel={() => {
-            commentEditorDrafts.current.delete(commentDraftKey(pendingComment));
+            clearEditorDraft(pendingComment);
             closeComment();
           }}
           onDismiss={(comment) => {
-            commentEditorDrafts.current.set(
-              commentDraftKey(comment),
-              comment.body,
-            );
+            setCommentEditorDrafts((previous) => ({
+              ...previous,
+              [commentDraftKey(comment)]: comment.body,
+            }));
             setPendingComment(null);
           }}
           onDelete={() => {
-            commentEditorDrafts.current.delete(commentDraftKey(pendingComment));
+            clearEditorDraft(pendingComment);
             review.remove(pendingComment.id);
             closeComment();
+          }}
+          onChange={(comment) => {
+            setPendingComment(comment);
+            setCommentEditorDrafts((previous) => ({
+              ...previous,
+              [commentDraftKey(comment)]: comment.body,
+            }));
           }}
         />
       )}
