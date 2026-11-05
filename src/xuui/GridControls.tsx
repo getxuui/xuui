@@ -192,10 +192,13 @@ export function ViewSettings({
                   <Measure
                     label="Size"
                     value={grid.size}
-                    min={0.5}
-                    max={64}
+                    min={1}
+                    max={Math.max(64, Math.ceil(grid.size))}
+                    step={1}
                     unit="px"
-                    onChange={(size) => update({ ...grid, size })}
+                    onChange={(size) =>
+                      update({ ...grid, size: Math.max(1, Math.round(size)) })
+                    }
                   />
                 ) : (
                   <>

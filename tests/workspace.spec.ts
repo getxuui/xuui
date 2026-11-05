@@ -248,6 +248,36 @@ test('the external right sidebar controls the design, copies parameters, and col
   const canvas = page.getByRole('region', { name: 'Canvas' });
   await expect(sidebar).toBeVisible();
   await expect(sidebar.locator('[data-parameter-fill]').first()).toBeVisible();
+  const weightSlider = sidebar.locator('.parameter-slider').filter({
+    has: page.getByRole('slider', { name: 'Font weight' }),
+  });
+  const radiusSlider = sidebar.locator('.parameter-slider').filter({
+    has: page.getByRole('slider', { name: 'Border radius' }),
+  });
+  await expect(weightSlider.locator('[data-parameter-tick]')).toHaveCount(9);
+  await expect(radiusSlider.locator('[data-parameter-tick]')).toHaveCount(0);
+  const thumb = weightSlider.getByRole('slider', { name: 'Font weight' });
+  for (const [key, index] of [
+    ['Home', 0],
+    ['ArrowRight', 1],
+    ['End', 8],
+  ] as const) {
+    await thumb.press(key);
+    const thumbBounds = (await thumb.boundingBox())!;
+    const tickBounds = (await weightSlider
+      .locator('[data-parameter-tick]')
+      .nth(index)
+      .boundingBox())!;
+    expect(
+      Math.abs(
+        thumbBounds.x +
+          thumbBounds.width / 2 -
+          tickBounds.x -
+          tickBounds.width / 2,
+      ),
+    ).toBeLessThan(2);
+  }
+
   const sideBounds = (await sidebar.boundingBox())!;
   const canvasBounds = (await canvas.boundingBox())!;
   expect(sideBounds.x).toBeGreaterThanOrEqual(

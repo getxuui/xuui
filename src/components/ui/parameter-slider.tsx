@@ -19,6 +19,8 @@ export function ParameterSlider({
   unit?: string;
   onChange: (value: number) => void;
 }) {
+  const steps = (max - min) / step;
+  const showTicks = Number.isInteger(steps) && steps >= 2 && steps <= 12;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
   const input = useRef<HTMLInputElement>(null);
@@ -66,10 +68,21 @@ export function ParameterSlider({
                 width: `${((value - min) / (max - min)) * 100}%`,
               }}
             />
-            <span
-              aria-hidden="true"
-              className="parameter-slider-ticks absolute inset-y-2.5 right-16 left-3"
-            />
+            {showTicks &&
+              Array.from({ length: steps + 1 }, (_, index) => {
+                const fraction = index / steps;
+                return (
+                  <span
+                    key={index}
+                    aria-hidden="true"
+                    data-parameter-tick
+                    className="pointer-events-none absolute inset-y-2.5 w-px bg-foreground/12"
+                    style={{
+                      left: `calc(${fraction * 100}% + ${1.5 - fraction * 3}px)`,
+                    }}
+                  />
+                );
+              })}
           </SliderPrimitive.Track>
           <span
             aria-hidden="true"
