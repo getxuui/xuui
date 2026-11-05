@@ -84,6 +84,10 @@ export function CanvasViewport({
   }, []);
   const gesture = useRef<PanGesture | null>(null);
   const space = useRef(false);
+  const lastCameraKey = useRef<string | null>(null);
+  const layoutAnchor = useRef<{ key: string; x: number; y: number } | null>(
+    null,
+  );
 
   useEffect(() => () => clearTimeout(zoomDismissTimer.current), []);
 
@@ -99,7 +103,11 @@ export function CanvasViewport({
     // Each focused variant keeps its own camera. All variants recentres on
     // the selected one instead, so navigating there stays predictable.
     const storageKey =
-      mode === 'focused' ? `xuui:${studyId}:${activeId}:camera:v1` : null;
+      mode === 'focused'
+        ? `xuui:${studyId}:${activeId}:camera:v1`
+        : `xuui:${studyId}:all:camera:v1`;
+    const restore = mode === 'focused' || lastCameraKey.current !== storageKey;
+    lastCameraKey.current = storageKey;
     let saveTimer = 0;
     const save = () => {
       if (storageKey)
@@ -528,7 +536,7 @@ export function CanvasViewport({
     window.addEventListener('xuui:center-canvas', center);
     window.addEventListener('xuui:reset-zoom', resetZoom);
     window.addEventListener('xuui:zoom-to', zoomTo);
-    const stored = storageKey ? readCamera(storageKey) : null;
+    const stored = restore ? readCamera(storageKey) : null;
     if (stored) {
       pan.current = { x: stored.x, y: stored.y };
       scale.current = stored.scale;
@@ -559,18 +567,54 @@ export function CanvasViewport({
     };
   }, [studyId, activeId, mode, scheduleZoomDismiss]);
 
+  useLayoutEffect(() => {
+    const world = scene.current;
+    const active = world?.querySelector<HTMLElement>(
+      `[data-variant-id="${CSS.escape(activeId)}"]`,
+    );
+    if (!world || !active) return;
+    const key = `${studyId}:${activeId}:${mode}`;
+    const bounds = active.getBoundingClientRect();
+    const origin = world.getBoundingClientRect();
+    const next = {
+      key,
+      x: (bounds.x - origin.x) / scale.current,
+      y: (bounds.y - origin.y) / scale.current,
+    };
+    const previous = layoutAnchor.current;
+    if (
+      previous?.key === key &&
+      (Math.abs(previous.x - next.x) > 0.00001 ||
+        Math.abs(previous.y - next.y) > 0.00001)
+    ) {
+      // A new lineage column or a wider sibling can move this frame in the
+      // layout. Keep its screen position, including the reviewer's own pan.
+      pan.current.x += (previous.x - next.x) * scale.current;
+      pan.current.y += (previous.y - next.y) * scale.current;
+      world.style.transform = `translate(${pan.current.x}px, ${pan.current.y}px) scale(${scale.current})`;
+      writeCamera(
+        mode === 'all'
+          ? `xuui:${studyId}:all:camera:v1`
+          : `xuui:${studyId}:${activeId}:camera:v1`,
+        { ...pan.current, scale: scale.current },
+      );
+      window.dispatchEvent(new Event('xuui:camera-change'));
+    }
+    layoutAnchor.current = next;
+  });
+
   return (
     <>
       <main
         ref={viewport}
         aria-label="Variant canvas"
         tabIndex={-1}
-        className="flex h-full min-h-0 min-w-0 touch-none items-center justify-center overflow-hidden rounded-xl p-6 outline-none sm:p-8"
+        className="relative flex h-full min-h-0 min-w-0 touch-none items-center justify-center overflow-hidden rounded-xl p-6 outline-none sm:p-8"
       >
         <div
           ref={scene}
           data-canvas-scene
-          className="relative flex w-max origin-top-left shrink-0 items-start gap-20"
+          className="absolute top-1/2 left-1/2 flex w-max origin-top-left shrink-0 items-start gap-20"
         >
           {children}
         </div>

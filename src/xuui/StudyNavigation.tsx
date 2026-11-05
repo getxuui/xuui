@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import type { Study, Variant } from './model';
 import { MaskedMarquee } from './MaskedMarquee';
+import { VariantSpinner } from './VariantSpinner';
 
 export function StudyNavigation({
   studies,
@@ -23,6 +24,7 @@ export function StudyNavigation({
   onVariantChange,
   onAllVariantsChange,
   newVariantIds,
+  workingVariantIds,
 }: {
   studies: Pick<Study, 'id' | 'name'>[];
   studyId: string;
@@ -33,6 +35,7 @@ export function StudyNavigation({
   onVariantChange: (id: string, focus?: boolean) => void;
   onAllVariantsChange: (all: boolean) => void;
   newVariantIds: ReadonlySet<string>;
+  workingVariantIds: ReadonlySet<string>;
 }) {
   const navigation = useRef<HTMLElement>(null);
   useLayoutEffect(() => {
@@ -171,33 +174,56 @@ export function StudyNavigation({
                 className="shrink-0 text-muted-foreground"
               />
               <span className="min-w-0 flex-1">All</span>
+              <span
+                role="status"
+                aria-label="Variant progress"
+                className="text-[10px] text-muted-foreground"
+              >
+                {workingVariantIds.size > 0 && (
+                  <>
+                    <span className="sr-only">
+                      {workingVariantIds.size} working
+                    </span>
+                    <VariantSpinner />
+                  </>
+                )}
+              </span>
             </a>
           </li>
-          {variants.map((variant) => (
-            <li key={variant.id} className="min-w-0">
-              <a
-                href={variantUrl(variant.id)}
-                data-variant-link={variant.id}
-                aria-current={
-                  !allVariants && variant.id === variantId ? 'page' : undefined
-                }
-                data-marquee-host
-                data-new-variant={newVariantIds.has(variant.id) || undefined}
-                className="variant-list-link flex min-h-7 min-w-0 items-center gap-2 rounded-md px-2 text-xs"
-                onClick={(event) =>
-                  navigate(event, () => onVariantChange(variant.id, true))
-                }
-              >
-                <Diamond
-                  aria-hidden="true"
-                  size={14}
-                  strokeWidth={1.6}
-                  className="shrink-0 text-muted-foreground"
-                />
-                <MaskedMarquee text={variant.name} />
-              </a>
-            </li>
-          ))}
+          {variants.map((variant) => {
+            const working = workingVariantIds.has(variant.id);
+            return (
+              <li key={variant.id} className="min-w-0">
+                <a
+                  href={variantUrl(variant.id)}
+                  aria-label={
+                    working ? `${variant.name} (in progress)` : undefined
+                  }
+                  data-variant-link={variant.id}
+                  aria-current={
+                    !allVariants && variant.id === variantId
+                      ? 'page'
+                      : undefined
+                  }
+                  data-marquee-host
+                  data-new-variant={newVariantIds.has(variant.id) || undefined}
+                  className="variant-list-link flex min-h-7 min-w-0 items-center gap-2 rounded-md px-2 text-xs"
+                  onClick={(event) =>
+                    navigate(event, () => onVariantChange(variant.id, true))
+                  }
+                >
+                  <Diamond
+                    aria-hidden="true"
+                    size={14}
+                    strokeWidth={1.6}
+                    className="shrink-0 text-muted-foreground"
+                  />
+                  <MaskedMarquee text={variant.name} />
+                  {working && <VariantSpinner />}
+                </a>
+              </li>
+            );
+          })}
         </ul>
       </nav>
     </div>

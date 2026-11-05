@@ -29,12 +29,17 @@ test('All lays a study with lineage out as its history, labelled with review com
   );
   const layout = page.locator('[data-lineage]');
   await expect(layout).toBeVisible();
-  const columns = layout.locator(':scope > .lineage-column');
-  await expect(columns).toHaveCount(3);
-  await expect(columns.nth(0).locator('[data-variant-id]')).toHaveCount(2);
-  await expect(columns.nth(2).locator('[data-variant-id]')).toHaveAttribute(
-    'data-variant-id',
-    'history-morning-v2',
+  await expect(layout.locator('[data-variant-id]')).toHaveCount(4);
+  const left = async (id: string) =>
+    (await layout.locator(`[data-variant-id="${id}"]`).boundingBox())!.x;
+  expect(await left('history-night-v1')).toBeCloseTo(
+    await left('history-botanical-v1'),
+  );
+  expect(await left('history-morning-v1')).toBeGreaterThan(
+    await left('history-botanical-v1'),
+  );
+  expect(await left('history-morning-v2')).toBeGreaterThan(
+    await left('history-morning-v1'),
   );
   const top = async (id: string) =>
     (await layout.locator(`[data-variant-id="${id}"]`).boundingBox())!.y;

@@ -20,12 +20,56 @@ Usage:
   xuui init [directory] [--no-install]  Create a standalone React study workspace
   xuui dev [--port 4400]               Start the local studio
   xuui mcp [--project-dir directory]   Run the optional stdio review server
+  xuui progress --study ID --variant ID --name NAME [--from ID]
+                                     Show a variant being built in All
+  xuui progress --study ID --variant ID --done
+                                     Clear a finished or abandoned variant
 
 Options:
   --project-dir directory   Workspace to serve or read (default: current directory)
   --help                   Show command help
   --version                Print the installed version
 `;
+
+async function progress(args: string[]) {
+  const { values } = parseArgs({
+    args,
+    options: {
+      'project-dir': { type: 'string', default: process.cwd() },
+      'review-dir': { type: 'string' },
+      study: { type: 'string' },
+      variant: { type: 'string' },
+      name: { type: 'string' },
+      from: { type: 'string', multiple: true },
+      width: { type: 'string' },
+      height: { type: 'string' },
+      done: { type: 'boolean', default: false },
+      help: { type: 'boolean', short: 'h' },
+    },
+  });
+  if (values.help) {
+    console.log(usage);
+    return;
+  }
+  const { reportVariantProgress } =
+    await import('./xuui/variantProgressStore.ts');
+  const result = await reportVariantProgress(
+    resolve(
+      values['project-dir'],
+      values['review-dir'] ?? process.env.XUUI_REVIEW_DIR ?? '.xuui/reviews',
+    ),
+    {
+      studyId: values.study,
+      variantId: values.variant,
+      name: values.name,
+      from: values.from,
+      width: values.width === undefined ? undefined : Number(values.width),
+      height: values.height === undefined ? undefined : Number(values.height),
+      status: values.done ? 'done' : 'working',
+    },
+  );
+  console.log(JSON.stringify(result));
+}
 
 async function init(args: string[]) {
   const { values, positionals } = parseArgs({
@@ -175,8 +219,10 @@ async function dev(args: string[]) {
           return `import { mountStudio } from ${JSON.stringify(fileUrl(join(packageRoot, 'dist/studio/studio.js')))};
 import { studies } from ${JSON.stringify(registryUrl)};
 import ${JSON.stringify(fileUrl(join(packageRoot, 'dist/studio/studio.css')))};
-mountStudio(document.getElementById('root'), studies);
-if (import.meta.hot) import.meta.hot.accept(${JSON.stringify(registryUrl)}, () => location.reload());`;
+const studio = mountStudio(document.getElementById('root'), studies);
+if (import.meta.hot) import.meta.hot.accept(${JSON.stringify(registryUrl)}, (updated) => {
+  if (updated) studio.update(updated.studies);
+});`;
         },
         configureServer(vite) {
           vite.middlewares.use((request, response, next) => {
@@ -260,6 +306,7 @@ async function main() {
   }
   if (command === 'init') return init(args);
   if (command === 'dev') return dev(args);
+  if (command === 'progress') return progress(args);
   if (command === 'mcp') {
     process.argv = [
       process.execPath,

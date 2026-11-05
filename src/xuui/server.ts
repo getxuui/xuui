@@ -5,6 +5,7 @@ import type { Plugin } from 'vite';
 import { submissionSchema } from './model.ts';
 import { readReviews, saveReview, readReviewReceipts } from './reviewStore.ts';
 import { commentNumber } from './commentNumbers.ts';
+import { readVariantProgress } from './variantProgressStore.ts';
 
 const endpoint = '/__xuui/reviews';
 const maxBodyBytes = 512 * 1024;
@@ -43,6 +44,31 @@ export function xuuiReviewServer(options: {
     configureServer(server) {
       server.middlewares.use((request, response, next) => {
         const pathname = request.url?.split('?')[0];
+        if (pathname === '/__xuui/variant-progress') {
+          if (request.method !== 'GET') {
+            reply(response, 405, {
+              error: 'Report progress through the CLI or MCP.',
+            });
+            return;
+          }
+          void readVariantProgress(directory)
+            .then((records) =>
+              reply(
+                response,
+                200,
+                records.filter(
+                  (record) =>
+                    !options.studyId || record.studyId === options.studyId,
+                ),
+              ),
+            )
+            .catch(() =>
+              reply(response, 500, {
+                error: 'Could not read variant progress.',
+              }),
+            );
+          return;
+        }
         if (
           pathname !== endpoint &&
           pathname !== `${endpoint}/receipts` &&

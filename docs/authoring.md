@@ -28,6 +28,8 @@ export const studies = [
 
 A study contains variants. Register it with `defineStudy({ ..., variants: [...] })` and give every variant a stable ID unique across the workspace. Each variant includes a description and a rationale. The description is a one-line subtitle of at most 100 characters. The rationale explains the design choice in one or two sentences: one paragraph of at most 280 characters. Reviewers read both from the ⓘ beside the variant's frame title. Add a new ID and implementation when a new alternative should remain reviewable alongside the existing variants.
 
+Before building a new variant in an existing study, [report its progress](mcp.md#report-a-variant-in-progress) through MCP or `xuui progress`. All displays a loading artboard until that ID appears in the registry. Registry updates apply in place, preserving the reviewer's current variant, camera, controls, selection, and unfinished comment. Keep existing component identities and variant IDs stable when adding registrations. Full reloads also recover the camera, control values, selected layers, canvas mode, and open comment text from browser storage; component-local React state survives in-place registry updates but resets on a full reload.
+
 Supply the providers, styles, data, and dependencies the design needs. Use scoped CSS so a study does not restyle studio controls or another variant. Give the design meaningful dimensions; a percentage width without a sized parent can collapse on the canvas. Add `data-xuui-layer-name` when an element needs a clearer name in Layers.
 
 Each variant can expose its own `controls.props`, `controls.state`, and optional finite state machine. The studio renders only the controls the registration declares. For example:
