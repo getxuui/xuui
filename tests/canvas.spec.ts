@@ -347,7 +347,7 @@ test('Tab cycles only the current group’s siblings, even when siblings contain
   await page.keyboard.press('Tab');
   await expect(selected).toHaveAttribute(
     'aria-label',
-    'A slow walk. A fresh perspective.A little room for the everyday.',
+    'A slow walk. A fresh perspective. A little room for the everyday.',
   );
   await page.keyboard.press('Tab');
   await expect(selected).toHaveAttribute('aria-label', 'Event details');
