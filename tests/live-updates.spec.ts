@@ -279,11 +279,12 @@ test('loading and completed variants keep the active frame, camera, selection, a
   page,
   workspace,
 }) => {
-  await page.goto(
-    `${workspace.url}/?study=live-study&variant=second-v1&view=all`,
-  );
+  await page.goto(`${workspace.url}/?study=live-study&variant=second-v1`);
   const frame = page.locator('[data-variant-id="second-v1"]');
   await page.getByRole('switch', { name: 'Favourited?' }).check();
+  await page.getByRole('link', { name: 'All variants', exact: true }).click();
+  await expect(page.getByRole('switch', { name: 'Favourited?' })).toHaveCount(0);
+  await expect(frame.locator('p')).toHaveText('Favourited');
   await frame.locator('h2').click();
   await moveCamera(page);
   const before = (await frame.locator('h2').boundingBox())!;
