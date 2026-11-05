@@ -66,31 +66,34 @@ export const studies = [defineStudy({ id: 'live-study', name: 'Live study', desc
         '--port',
         String(address.port),
       ],
-      { stdio: ['ignore', 'pipe', 'pipe'] },
+      {
+        // Exercise the colored output used in CI without depending on its format.
+        env: { ...process.env, NO_COLOR: undefined, FORCE_COLOR: '1' },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
     );
     const client = new Client({ name: 'live-update-test', version: '1.0.0' });
     try {
-      await new Promise<void>((done, reject) => {
-        let output = '';
-        const timer = setTimeout(
-          () => reject(new Error(`Studio did not start: ${output}`)),
-          15000,
-        );
-        child.stdout.on('data', (chunk) => {
-          output += chunk;
-          if (output.includes(`127.0.0.1:${address.port}`)) {
-            clearTimeout(timer);
-            done();
-          }
-        });
-        child.stderr.on('data', (chunk) => {
-          output += chunk;
-        });
-        child.once('exit', () => {
-          clearTimeout(timer);
-          reject(new Error(output));
-        });
+      let output = '';
+      child.stdout.on('data', (chunk) => {
+        output += chunk;
       });
+      child.stderr.on('data', (chunk) => {
+        output += chunk;
+      });
+      await expect
+        .poll(
+          async () => {
+            if (child.exitCode !== null) throw new Error(output);
+            try {
+              return (await fetch(`http://127.0.0.1:${address.port}`)).status;
+            } catch {
+              return 0;
+            }
+          },
+          { timeout: 15000 },
+        )
+        .toBe(200);
       await client.connect(
         new StdioClientTransport({
           command: process.execPath,
