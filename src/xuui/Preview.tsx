@@ -24,7 +24,7 @@ import { ViewSettings } from './GridControls';
 import { useGrids } from './useGrids';
 import { CanvasFeedback, CanvasTools, CommentEditor } from './CanvasFeedback';
 import type { CanvasMode } from './CanvasFeedback';
-import { ReviewPanel } from './ReviewPanel';
+import { ReviewPanel, ReviewSubmit } from './ReviewPanel';
 import { findCommentElement } from './feedback';
 import { useReviews } from './useReviews';
 import type { LayerProperties } from './layerProperties';
@@ -752,6 +752,11 @@ export default function Preview({
                 }
                 {...parameters}
                 onCollapse={() => setSidebarOpen(false)}
+                feedbackAction={
+                  review.comments.length > 0 ? (
+                    <ReviewSubmit state={review} />
+                  ) : null
+                }
                 feedbackPanel={
                   <ReviewPanel
                     key={study.id}

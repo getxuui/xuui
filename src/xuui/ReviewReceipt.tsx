@@ -6,9 +6,14 @@ export function ReviewReceipt({ readAt }: { readAt?: string | null }) {
     <span
       className="inline-flex items-center gap-1 text-[11px] leading-4 text-muted-foreground"
       data-review-read={Boolean(readAt)}
+      title={readAt ? undefined : 'Awaiting agent'}
     >
       <Icon className="size-3 shrink-0" aria-hidden="true" />
-      {readAt ? 'Read by agent' : 'Awaiting agent'}
+      {readAt ? (
+        'Read by agent'
+      ) : (
+        <span className="sr-only">Awaiting agent</span>
+      )}
     </span>
   );
 }

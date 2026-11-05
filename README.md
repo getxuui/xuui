@@ -27,7 +27,7 @@
 
 A useful design review means trying the interactions, comparing the details, and showing exactly what should change. Your agent puts working React components on the canvas so you can do all three.
 
-Use **Play** to try a design, **Select** to inspect its layers, or **C** to pin a comment to an element. **Submit review** collects your feedback for the agent. Copy it into chat, or connect [MCP](docs/mcp.md) to let the agent read it directly.
+Use **Play** to try a design, **Select** to inspect its layers, or **C** to pin a comment to an element. **Submit review** collects your feedback for the agent. Ask the agent to read the saved review, or connect [MCP](docs/mcp.md) to deliver it directly.
 
 ## Keep the thinking behind each direction
 

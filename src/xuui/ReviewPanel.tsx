@@ -1,10 +1,6 @@
-import { useState } from 'react';
-import { Check, Copy, Pencil, Send, Trash2 } from 'lucide-react';
+import { Pencil, Send, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Field, FieldLabel } from '@/components/ui/field';
-import { Textarea } from '@/components/ui/textarea';
-import { formatReview } from './model';
-import type { Comment, Study, Review } from './model';
+import type { Comment, Study } from './model';
 import type { ReviewState } from './useReviews';
 import { ReviewReceipt } from './ReviewReceipt';
 import { CommentThread } from './CommentThread';
@@ -21,8 +17,6 @@ export function ReviewPanel({
   /** Show a submitted comment's element on the canvas. */
   onOpen: (comment: Comment) => void;
 }) {
-  const [copied, setCopied] = useState<string | null>(null);
-  const [fallback, setFallback] = useState('');
   const variantName = (id: string) =>
     study.variants.find((item) => item.id === id)?.name ?? id;
   const targetName = (comment: Comment) =>
@@ -31,16 +25,6 @@ export function ReviewPanel({
     comment.target.tagName;
   const context = (variant: string, comment: Comment) =>
     `${variant} / ${targetName(comment)}`;
-  const copy = async (review: Review, copyKey: string) => {
-    const text = formatReview(review);
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(copyKey);
-      setFallback('');
-    } catch {
-      setFallback(text);
-    }
-  };
   return (
     <section
       aria-labelledby="comments-heading"
@@ -93,16 +77,6 @@ export function ReviewPanel({
           ))}
         </ol>
       )}
-      {state.comments.length > 0 && (
-        <Button
-          size="sm"
-          disabled={state.busy}
-          onClick={() => void state.submit()}
-        >
-          <Send data-icon="inline-start" />
-          {state.busy ? 'Submitting…' : 'Submit review'}
-        </Button>
-      )}
       {state.error && (
         <p role="alert" className="text-xs text-destructive">
           {state.error}
@@ -152,24 +126,6 @@ export function ReviewPanel({
                           minute: '2-digit',
                         })}
                       </time>
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        aria-label={
-                          copied === `${review.id}:${comment.id}`
-                            ? 'Copied review'
-                            : 'Copy submitted review'
-                        }
-                        onClick={() =>
-                          void copy(review, `${review.id}:${comment.id}`)
-                        }
-                      >
-                        {copied === `${review.id}:${comment.id}` ? (
-                          <Check data-icon="inline-start" />
-                        ) : (
-                          <Copy data-icon="inline-start" />
-                        )}
-                      </Button>
                     </>
                   }
                 />
@@ -178,18 +134,20 @@ export function ReviewPanel({
           </ol>
         </>
       )}
-      {fallback && (
-        <Field>
-          <FieldLabel htmlFor="review-copy">Select and copy review</FieldLabel>
-          <Textarea
-            id="review-copy"
-            readOnly
-            value={fallback}
-            rows={6}
-            onFocus={(event) => event.target.select()}
-          />
-        </Field>
-      )}
     </section>
+  );
+}
+
+/** Keep the draft action available independently of the scrolling comments. */
+export function ReviewSubmit({ state }: { state: ReviewState }) {
+  return (
+    <Button
+      className="w-full"
+      disabled={state.busy}
+      onClick={() => void state.submit()}
+    >
+      <Send data-icon="inline-start" />
+      {state.busy ? 'Submitting…' : 'Submit review'}
+    </Button>
   );
 }
