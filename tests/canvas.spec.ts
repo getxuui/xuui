@@ -111,7 +111,10 @@ test('trackpad pinch anchors the canvas and keeps guides and measurements in com
   const sixtyFour = (await page
     .locator('[data-ruler-axis="x"][data-ruler-value="64"]')
     .boundingBox())!;
-  expect(sixtyFour.x + sixtyFour.width / 2).toBeCloseTo(after.x + 64 * 1.5, 0);
+  // Text bounds can differ by subpixels between browser platforms.
+  expect(
+    Math.abs(sixtyFour.x + sixtyFour.width / 2 - (after.x + 64 * 1.5)),
+  ).toBeLessThan(1);
   await page.keyboard.down('Alt');
   await button.hover();
   await expect(
