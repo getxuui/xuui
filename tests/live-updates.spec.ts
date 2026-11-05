@@ -1,5 +1,5 @@
 import { expect, test as base } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
@@ -182,15 +182,17 @@ test('a working menu item opens its named variant and stays selected through rel
   await workspace.report('done');
 });
 
-test('a working connector shoots its gradient from left to right and stays static for reduced motion', async ({
+test('working connectors and artboard outlines shoot gradients left to right and stay static for reduced motion', async ({
   page,
   workspace,
 }) => {
   await workspace.report('working');
   await page.goto(`${workspace.url}/?variant=original-v1&view=all`);
-  const gradient = page.locator('.lineage-lines linearGradient');
-  await expect(gradient).toHaveCount(1);
-  const positions = () =>
+  const gradients = [
+    page.locator('.lineage-lines linearGradient'),
+    page.locator('.variant-loading-outline linearGradient'),
+  ];
+  const positions = (gradient: Locator) =>
     gradient.evaluate(async (element: SVGLinearGradientElement) => {
       const svg = element.ownerSVGElement!;
       const previousTime = svg.getCurrentTime();
@@ -208,16 +210,66 @@ test('a working connector shoots its gradient from left to right and stays stati
         svg.unpauseAnimations();
       }
     });
-  const [earlier, later] = await positions();
-  expect(later).toBeGreaterThan(earlier);
+  for (const gradient of gradients) {
+    await expect(gradient).toHaveCount(1);
+    const [earlier, later] = await positions(gradient);
+    expect(later).toBeGreaterThan(earlier);
+  }
+  await expect(page.locator('[data-variant-loading-outline]')).toHaveCSS(
+    'stroke',
+    /url\(/,
+  );
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(gradient.locator('animateTransform')).toHaveCount(0);
-  const [stillEarlier, stillLater] = await positions();
-  expect(stillLater).toBe(stillEarlier);
+  for (const gradient of gradients) {
+    await expect(gradient.locator('animateTransform')).toHaveCount(0);
+    const [stillEarlier, stillLater] = await positions(gradient);
+    expect(stillLater).toBe(stillEarlier);
+  }
   await workspace.register(true);
   await expect(page.locator('[data-variant-id="new-v2"] h2')).toBeAttached();
-  await expect(gradient).toHaveCount(0);
+  for (const gradient of gradients) await expect(gradient).toHaveCount(0);
   await workspace.report('done');
+});
+
+test('three named working variants branch from one parent with distinct connector and outline gradients', async ({
+  page,
+  workspace,
+}) => {
+  const directions = [
+    { variantId: 'spacing-v2', name: 'Refined spacing' },
+    { variantId: 'compact-v2', name: 'Compact layout' },
+    { variantId: 'type-v2', name: 'Editorial type' },
+  ];
+  for (const direction of directions)
+    await workspace.report('working', direction);
+  await page.goto(`${workspace.url}/?variant=original-v1&view=all`);
+  await expect(page.locator('[data-variant-loading]')).toHaveCount(3);
+  await expect(page.locator('[data-lineage-line^="original-v1:"]')).toHaveCount(
+    3,
+  );
+  await expect(
+    page.locator('[data-lineage-line][data-lineage-working]'),
+  ).toHaveCount(3);
+  await expect(page.locator('[data-variant-loading-outline]')).toHaveCount(3);
+  for (const direction of directions) {
+    await expect(
+      page.getByRole('link', {
+        name: `${direction.name} (in progress)`,
+        exact: true,
+      }),
+    ).toBeVisible();
+  }
+  const gradients = page.locator(
+    '.lineage-lines linearGradient, .variant-loading-outline linearGradient',
+  );
+  await expect(gradients).toHaveCount(6);
+  const ids = await gradients.evaluateAll((elements) =>
+    elements.map((element) => element.id),
+  );
+  expect(new Set(ids).size).toBe(6);
+  await page.keyboard.press('Shift+Digit1');
+  await page.screenshot({ path: '.xuui-test/three-working-variants.png' });
+  for (const direction of directions) await workspace.report('done', direction);
 });
 
 test('loading and completed variants keep the active frame, camera, selection, and controls in place', async ({

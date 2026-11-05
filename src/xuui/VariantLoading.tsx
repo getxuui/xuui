@@ -1,4 +1,6 @@
 import type { CSSProperties } from 'react';
+import { useId } from 'react';
+import { WorkingGradient } from './WorkingGradient';
 
 /** A quiet travelling wave through an artboard's dot grid. */
 export function VariantLoading({
@@ -10,6 +12,7 @@ export function VariantLoading({
   width: number;
   height: number;
 }) {
+  const gradientId = `working-outline-${useId()}`;
   return (
     <div
       className="variant-loading"
@@ -36,6 +39,27 @@ export function VariantLoading({
             />
           )),
         )}
+      </svg>
+      <svg
+        aria-hidden="true"
+        className="variant-loading-outline"
+        width={width}
+        height={height}
+      >
+        <defs>
+          <WorkingGradient id={gradientId} startX={0} endX={width} />
+        </defs>
+        <rect
+          data-variant-loading-outline
+          x="0.75"
+          y="0.75"
+          width={width - 1.5}
+          height={height - 1.5}
+          rx="11.25"
+          fill="none"
+          stroke={`url(#${gradientId})`}
+          strokeWidth="1.5"
+        />
       </svg>
     </div>
   );

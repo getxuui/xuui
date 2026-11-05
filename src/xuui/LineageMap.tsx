@@ -1,6 +1,7 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { findCommentElement } from './feedback';
 import type { LineageEdge, PostedComment } from './lineage';
+import { WorkingGradient } from './WorkingGradient';
 
 type Box = { x: number; y: number; width: number; height: number };
 type Point = { x: number; y: number };
@@ -27,16 +28,6 @@ export function LineageMap({
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
   const [pins, setPins] = useState<Record<string, Point>>({});
   const [scale, setScale] = useState(1);
-  const [motionAllowed, setMotionAllowed] = useState(
-    () => !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  );
-  useEffect(() => {
-    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setMotionAllowed(!preference.matches);
-    update();
-    preference.addEventListener('change', update);
-    return () => preference.removeEventListener('change', update);
-  }, []);
   const commentsRef = useRef(comments);
   commentsRef.current = comments;
   useLayoutEffect(() => {
@@ -103,50 +94,15 @@ export function LineageMap({
           const bend = (end.x - start.x) / 2;
           const working = workingVariantIds.has(edge.to);
           const gradientId = `${gradientPrefix}-progress-${index}`;
-          const pulseWidth = Math.max(
-            24,
-            Math.min(80, Math.abs(end.x - start.x) * 0.2),
-          );
           return (
             <g key={`${edge.from}:${edge.to}`}>
               {working && (
                 <defs>
-                  <linearGradient
+                  <WorkingGradient
                     id={gradientId}
-                    gradientUnits="userSpaceOnUse"
-                    x1={-pulseWidth}
-                    y1={0}
-                    x2={pulseWidth}
-                    y2={0}
-                    gradientTransform={`translate(${(start.x + end.x) / 2} 0)`}
-                  >
-                    <stop
-                      offset="0"
-                      stopColor="var(--brand)"
-                      stopOpacity="0.2"
-                    />
-                    <stop
-                      offset="0.5"
-                      stopColor="var(--brand)"
-                      stopOpacity="1"
-                    />
-                    <stop
-                      offset="1"
-                      stopColor="var(--brand)"
-                      stopOpacity="0.2"
-                    />
-                    {motionAllowed && (
-                      <animateTransform
-                        attributeName="gradientTransform"
-                        type="translate"
-                        from={`${start.x - pulseWidth} 0`}
-                        to={`${end.x + pulseWidth} 0`}
-                        dur="1.8s"
-                        calcMode="linear"
-                        repeatCount="indefinite"
-                      />
-                    )}
-                  </linearGradient>
+                    startX={start.x}
+                    endX={end.x}
+                  />
                 </defs>
               )}
               <path
