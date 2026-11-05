@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Removed buffer zones, including the hatching, dashed outlines, frame padding, and View settings toggle.
 - Ruler digits follow concentric text paths with even spacing through the corners. Labels fade out at 45° while the paths continue beyond them, keeping every digit intact near the ends.
 
 ## 0.1.0-alpha.5
