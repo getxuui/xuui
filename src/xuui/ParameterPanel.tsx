@@ -254,25 +254,27 @@ export function ParameterPanel({
   };
   const actions = (
     <div className="flex shrink-0 items-center gap-1">
-      <Button
-        variant="ghost"
-        size="icon-xs"
-        aria-label={
-          copied
-            ? 'Copied properties'
-            : selectedLayer
-              ? 'Copy layer properties'
-              : 'Copy parameters'
-        }
-        title={selectedLayer ? 'Copy layer properties' : 'Copy parameters'}
-        onClick={() => void copy()}
-      >
-        {copied ? (
-          <Check data-icon="inline-start" />
-        ) : (
-          <Copy data-icon="inline-start" />
-        )}
-      </Button>
+      {(selectedLayer || variant) && (
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          aria-label={
+            copied
+              ? 'Copied properties'
+              : selectedLayer
+                ? 'Copy layer properties'
+                : 'Copy parameters'
+          }
+          title={selectedLayer ? 'Copy layer properties' : 'Copy parameters'}
+          onClick={() => void copy()}
+        >
+          {copied ? (
+            <Check data-icon="inline-start" />
+          ) : (
+            <Copy data-icon="inline-start" />
+          )}
+        </Button>
+      )}
       <Button
         variant="ghost"
         size="icon-xs"
