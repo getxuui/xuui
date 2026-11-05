@@ -266,10 +266,7 @@ test('the external right sidebar controls the design, copies parameters, and col
   await expect(
     page.getByRole('button', { name: /^(Right|Bottom) ruler:/ }),
   ).toHaveCount(0);
-  await expect(page.locator('.component-surround')).toHaveCSS(
-    'padding',
-    '80px',
-  );
+  await expect(page.locator('.component-surround')).toHaveCSS('padding', '0px');
 
   await sidebar.getByRole('switch', { name: 'Favourited?' }).check();
   await sidebar.getByRole('switch', { name: 'Logged in?' }).check();
