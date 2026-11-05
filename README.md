@@ -46,4 +46,6 @@ The source demo contains two cards. Demo designs and test fixtures are excluded 
 
 Run `npm run check` for the build, browser tests, and installed-package checks. Use `npm run build:demo` for a static build of the demo.
 
+Use [Conventional Commits](CONTRIBUTING.md) for commits and pull request titles. `npm ci` enables local commit message validation.
+
 [MIT](LICENSE) · Robin Humphreys
