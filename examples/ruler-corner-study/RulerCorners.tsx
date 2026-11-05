@@ -1,10 +1,10 @@
-import type { CSSProperties } from 'react';
+import { useId, type CSSProperties } from 'react';
 import type { StudioBindings } from '../../src/xuui/parameters';
 
 /* The top-left of the studio canvas with its rulers, drawn with the studio's
    ruler classes. Only how labels behave at the rounded corners changes. */
 
-type Corner = 'current' | 'stop' | 'arc' | 'upright';
+type Corner = 'current' | 'stop' | 'arc' | 'upright' | 'text-path';
 
 const width = 480;
 const height = 300;
@@ -86,6 +86,52 @@ function labels(
   }).filter((label): label is Placed => label !== null);
 }
 
+function TextPathLabels({ pan }: { pan: number }) {
+  const id = useId();
+  const origin = { x: 40 + pan, y: 44 + pan };
+  // Continue the paths beyond the 45° fade so whole labels fit near the ends.
+  const paths = {
+    x: `M${radius - arc} ${radius}A${arc} ${arc} 0 0 1 ${radius} ${-offset}H${width - radius}A${arc} ${arc} 0 0 1 ${width + offset} ${radius}`,
+    y: `M${radius} ${radius - arc}A${arc} ${arc} 0 0 0 ${-offset} ${radius}V${height - radius}A${arc} ${arc} 0 0 0 ${radius} ${height + offset}`,
+  };
+  return (
+    <svg
+      aria-label="Ruler labels following concentric paths"
+      className="pointer-events-none absolute inset-0 size-full overflow-visible fill-current font-mono text-[8px] tabular-nums"
+      data-xuui-layer-name="Curved ruler labels"
+    >
+      <defs>
+        {(['x', 'y'] as const).map((axis) => (
+          <path key={axis} id={`${id}-${axis}`} d={paths[axis]} />
+        ))}
+      </defs>
+      {(['x', 'y'] as const).map((axis) =>
+        labels('arc', axis === 'x' ? width : height, origin[axis], axis).map(
+          (label) => (
+            <text
+              key={`${axis}${label.value}`}
+              data-ruler-axis={axis}
+              data-ruler-value={label.value}
+              opacity={label.opacity}
+            >
+              <textPath
+                href={`#${id}-${axis}`}
+                startOffset={
+                  arc * (Math.PI / 2) + origin[axis] + label.value - radius
+                }
+                textAnchor="middle"
+                dominantBaseline="central"
+              >
+                {label.value}
+              </textPath>
+            </text>
+          ),
+        ),
+      )}
+    </svg>
+  );
+}
+
 function Rulers({ corner, pan }: { corner: Corner; pan: number }) {
   const origin = { x: 40 + pan, y: 44 + pan };
   return (
@@ -100,6 +146,8 @@ function Rulers({ corner, pan }: { corner: Corner; pan: number }) {
           {
             '--ruler-minor-step': `${step / 8}px`,
             '--ruler-major-step': `${step}px`,
+            // Match the new text paths to the canvas's actual corner centres.
+            borderRadius: corner === 'text-path' ? radius : undefined,
           } as CSSProperties
         }
       >
@@ -112,36 +160,39 @@ function Rulers({ corner, pan }: { corner: Corner; pan: number }) {
           style={{ backgroundPosition: `left ${origin.y - 24}px` }}
         />
       </div>
-      {labels(corner, width, origin.x, 'x').map((label) => (
-        <span
-          key={`x${label.value}`}
-          data-ruler-axis="x"
-          className="ruler-label absolute flex h-3 items-center justify-center rounded-sm px-0.5 font-mono text-[8px] leading-none tabular-nums"
-          style={{
-            left: label.x,
-            top: label.y,
-            opacity: label.opacity,
-            transform: `translate(-50%, -50%) rotate(${label.rotate}deg)`,
-          }}
-        >
-          {label.value}
-        </span>
-      ))}
-      {labels(corner, height, origin.y, 'y').map((label) => (
-        <span
-          key={`y${label.value}`}
-          data-ruler-axis="y"
-          className="ruler-label absolute flex w-3 items-center justify-center rounded-sm py-0.5 font-mono text-[8px] leading-none tabular-nums [writing-mode:vertical-rl]"
-          style={{
-            left: label.x,
-            top: label.y,
-            opacity: label.opacity,
-            transform: `translate(-50%, -50%) rotate(${label.rotate}deg)`,
-          }}
-        >
-          {label.value}
-        </span>
-      ))}
+      {corner === 'text-path' && <TextPathLabels pan={pan} />}
+      {corner !== 'text-path' &&
+        labels(corner, width, origin.x, 'x').map((label) => (
+          <span
+            key={`x${label.value}`}
+            data-ruler-axis="x"
+            className="ruler-label absolute flex h-3 items-center justify-center rounded-sm px-0.5 font-mono text-[8px] leading-none tabular-nums"
+            style={{
+              left: label.x,
+              top: label.y,
+              opacity: label.opacity,
+              transform: `translate(-50%, -50%) rotate(${label.rotate}deg)`,
+            }}
+          >
+            {label.value}
+          </span>
+        ))}
+      {corner !== 'text-path' &&
+        labels(corner, height, origin.y, 'y').map((label) => (
+          <span
+            key={`y${label.value}`}
+            data-ruler-axis="y"
+            className="ruler-label absolute flex w-3 items-center justify-center rounded-sm py-0.5 font-mono text-[8px] leading-none tabular-nums [writing-mode:vertical-rl]"
+            style={{
+              left: label.x,
+              top: label.y,
+              opacity: label.opacity,
+              transform: `translate(-50%, -50%) rotate(${label.rotate}deg)`,
+            }}
+          >
+            {label.value}
+          </span>
+        ))}
     </div>
   );
 }
@@ -173,4 +224,7 @@ export function ArcCorners(bindings: StudioBindings) {
 }
 export function UprightCorners(bindings: StudioBindings) {
   return <Page corner="upright" bindings={bindings} />;
+}
+export function TextPathCorners(bindings: StudioBindings) {
+  return <Page corner="text-path" bindings={bindings} />;
 }

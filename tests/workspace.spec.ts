@@ -649,3 +649,62 @@ test('ruler labels follow the canvas corner and rulers fade in and out', async (
   await page.keyboard.press('r');
   await expect(rulers).toHaveClass(/opacity-100/);
 });
+
+test('every ruler digit follows the curve without clipping at either end', async ({
+  page,
+}) => {
+  await page.goto('/?variant=paper-v1');
+  const canvas = page.getByRole('region', { name: 'Canvas', exact: true });
+  const rulers = page.locator('[data-rulers]');
+  const design = page.locator('[data-xuui-design]');
+  const area = (await canvas.boundingBox())!;
+  await page.mouse.move(area.x + area.width / 2, area.y + area.height / 2);
+
+  for (const end of ['start', 'end'] as const) {
+    for (const axis of ['x', 'y'] as const) {
+      const frame = (await rulers.boundingBox())!;
+      const component = (await design.boundingBox())!;
+      const scale = Number(
+        await page
+          .locator('[data-canvas-scene]')
+          .getAttribute('data-canvas-scale'),
+      );
+      const length = axis === 'x' ? frame.width : frame.height;
+      const position = component[axis] - frame[axis] + 128 * scale;
+      // Near the 45° fade, the outer digit extends past the label's centre.
+      const target = end === 'start' ? -3 : length + 3;
+      await page.mouse.wheel(
+        axis === 'x' ? position - target : 0,
+        axis === 'y' ? position - target : 0,
+      );
+      const label = rulers.locator(
+        `[data-ruler-axis="${axis}"][data-ruler-value="128"]`,
+      );
+      await expect(label).toBeVisible();
+      await expect
+        .poll(async () => Number(await label.getAttribute('opacity')))
+        .toBeLessThan(0.25);
+      const digits = await label.locator('textPath').evaluate((element) => {
+        if (!(element instanceof SVGTextContentElement))
+          throw new Error('The ruler label must use SVG text.');
+        return Array.from(
+          { length: element.getNumberOfChars() },
+          (_, index) => ({
+            rotation: element.getRotationOfChar(index),
+            width: element.getExtentOfChar(index).width,
+            height: element.getExtentOfChar(index).height,
+          }),
+        );
+      });
+      expect(digits).toHaveLength(3);
+      for (const digit of digits) {
+        expect(digit.width).toBeGreaterThan(0);
+        expect(digit.height).toBeGreaterThan(0);
+      }
+      const rotations = digits.map((digit) => digit.rotation);
+      expect(Math.max(...rotations) - Math.min(...rotations)).toBeGreaterThan(
+        10,
+      );
+    }
+  }
+});

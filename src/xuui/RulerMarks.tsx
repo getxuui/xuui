@@ -47,30 +47,25 @@ function tick(
   return `M${x} ${y}l${dx * size} ${dy * size}`;
 }
 
-/* The path labels follow: outside the edge, around each corner to 45°. */
+/* Each digit follows the concentric arc. Extend past the 45° fade boundary
+   so the ends of a label aren't clipped as its centre reaches the corner. */
 function labelPath(axis: Axis, length: number) {
   const offset = radius - labelRadius;
-  const corner = labelRadius * Math.sin(quarter);
-  const inset = radius - labelRadius * Math.cos(quarter);
   const arc = `A${labelRadius} ${labelRadius} 0 0`;
   return axis === 'x'
-    ? `M${radius - corner} ${inset}${arc} 1 ${radius} ${offset}H${length - radius}${arc} 1 ${length - radius + corner} ${inset}`
-    : `M${inset} ${radius - corner}${arc} 0 ${offset} ${radius}V${length - radius}${arc} 0 ${inset} ${length - radius + corner}`;
+    ? `M${offset} ${radius}${arc} 1 ${radius} ${offset}H${length - radius}${arc} 1 ${length - offset} ${radius}`
+    : `M${radius} ${offset}${arc} 0 ${offset} ${radius}V${length - radius}${arc} 0 ${radius} ${length - offset}`;
 }
 
-/* How far along that path a position's label sits. */
+/* Keep label spacing constant along their path, including on the corners. */
 function labelOffset(position: number, length: number) {
-  const place = locate(position, length);
-  if (!place) return null;
-  const into = labelRadius * quarter;
-  if (!place.corner) return { at: into + position - radius, opacity: 1 };
-  const opacity = 1 - place.angle / quarter;
-  return place.corner === 'start'
-    ? { at: labelRadius * (quarter - place.angle), opacity }
-    : {
-        at: into + length - 2 * radius + labelRadius * place.angle,
-        opacity,
-      };
+  const edge = Math.min(position, length - position);
+  const angle = Math.max(0, (radius - edge) / labelRadius);
+  if (angle >= quarter) return null;
+  return {
+    at: labelRadius * (Math.PI / 2) + position - radius,
+    opacity: 1 - angle / quarter,
+  };
 }
 
 export function RulerMarks({
