@@ -165,9 +165,17 @@ try {
     permissions: ['clipboard-read', 'clipboard-write'],
   });
   const page = await context.newPage();
+  const waitForHmrConnection = async () => {
+    const socket = await page.waitForEvent('websocket', { timeout: 15000 });
+    await socket.waitForEvent('framereceived', {
+      predicate: ({ payload }) =>
+        JSON.parse(payload.toString()).type === 'connected',
+      timeout: 15000,
+    });
+  };
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto(origin);
+  await Promise.all([waitForHmrConnection(), page.goto(origin)]);
   const heading = page.locator('[data-xuui-design] h2');
   await expect(heading).toHaveText('Make room to explore.');
   await page
@@ -248,19 +256,23 @@ try {
     assert.deepEqual(current, savedDraft);
   };
   const registry = join(workspace, 'xuui.studies.ts');
+  // Rendering can finish before Vite reconnects after a full reload. Wait for
+  // its handshake so the next registry edit cannot lose its HMR notification.
+  const updateRegistry = async (contents) => {
+    await Promise.all([waitForHmrConnection(), writeFile(registry, contents)]);
+  };
   const updated = original.replace(
     'Make room to explore.',
     'Updated in the workspace.',
   );
-  await writeFile(registry, updated);
+  await updateRegistry(updated);
   await expect(heading).toHaveText('Updated in the workspace.', {
     timeout: 15000,
   });
   await expect(drafts).toContainText(savedDraft.comments[0].body);
   await assertDraftStored();
   // An agent can temporarily remove a variant while changing the registry.
-  await writeFile(
-    registry,
+  await updateRegistry(
     updated.replace("id: 'starter-v1'", "id: 'replacement-v1'"),
   );
   await expect(page.locator('[data-variant-id="replacement-v1"]')).toBeVisible({
@@ -268,7 +280,7 @@ try {
   });
   await expect(drafts).toHaveCount(0);
   await assertDraftStored();
-  await writeFile(registry, updated);
+  await updateRegistry(updated);
   await expect(page.locator('[data-variant-id="starter-v1"]')).toBeVisible({
     timeout: 15000,
   });
@@ -279,7 +291,7 @@ try {
   server.kill('SIGTERM');
   await stopped;
   await start();
-  await page.reload();
+  await Promise.all([waitForHmrConnection(), page.reload()]);
   await expect(heading).toHaveText('Updated in the workspace.');
   await expect(drafts).toContainText(savedDraft.comments[0].body);
   await expect(drafts.locator('[data-comment-number]')).toHaveText(draftNumber);
