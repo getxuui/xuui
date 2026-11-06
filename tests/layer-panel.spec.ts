@@ -3,6 +3,32 @@ import type { Locator } from '@playwright/test';
 
 const row = (item: Locator) => item.locator(':scope > .layer-tree-row');
 
+test('text layer names separate lines with spaces', async ({ page }) => {
+  await page.goto('/?variant=paper-v1');
+  const heading = page.locator('[data-xuui-design] h2');
+  await heading.evaluate((element) => {
+    const inline = document.createElement('span');
+    inline.append('Sec', document.createElement('br'), 'ond');
+    element.replaceChildren(
+      'First',
+      document.createElement('br'),
+      inline,
+      '\nThird',
+    );
+  });
+  await heading.click();
+  const selected = page
+    .getByRole('tree', { name: 'Component layers' })
+    .getByRole('treeitem', { selected: true });
+  await expect(selected).toHaveAttribute('aria-label', 'First Sec ond Third');
+  await expect(row(selected)).toHaveText('First Sec ond Third');
+  await heading.evaluate((element) => {
+    element.replaceChildren('Updated', document.createElement('br'), 'name');
+  });
+  await expect(selected).toHaveAttribute('aria-label', 'Updated name');
+  await expect(row(selected)).toHaveText('Updated name');
+});
+
 // Reopening Layers lays the panels out against the old group height for a
 // frame, so the divider flickers before it settles. Measure it only once it
 // has held still for several frames; a drag from a stale point misses it.
