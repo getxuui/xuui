@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -55,12 +55,14 @@ export function CanvasViewport({
   children,
   studyId,
   activeId,
+  preserveCameraForVariant,
   mode,
   selection,
 }: {
   children: ReactNode;
   studyId: string;
   activeId: string;
+  preserveCameraForVariant: RefObject<string | null>;
   mode: 'focused' | 'all';
   /** The selected layers, for zooming to the selection. */
   selection: Element[];
@@ -322,11 +324,13 @@ export function CanvasViewport({
           zoomToFit(
             selected.current.length
               ? selected.current
-              : [
-                  ...world.querySelectorAll(
-                    `[data-variant-id="${CSS.escape(activeId)}"] [data-xuui-design]`,
-                  ),
-                ],
+              : mode === 'all'
+                ? [...world.querySelectorAll('[data-variant-id]')]
+                : [
+                    ...world.querySelectorAll(
+                      `[data-variant-id="${CSS.escape(activeId)}"] [data-xuui-design]`,
+                    ),
+                  ],
           );
         return;
       }
@@ -536,8 +540,13 @@ export function CanvasViewport({
     window.addEventListener('xuui:center-canvas', center);
     window.addEventListener('xuui:reset-zoom', resetZoom);
     window.addEventListener('xuui:zoom-to', zoomTo);
+    const preserveCamera =
+      mode === 'all' && preserveCameraForVariant.current === activeId;
+    preserveCameraForVariant.current = null;
     const stored = restore ? readCamera(storageKey) : null;
-    if (stored) {
+    if (preserveCamera) {
+      apply();
+    } else if (stored) {
       pan.current = { x: stored.x, y: stored.y };
       scale.current = stored.scale;
       apply();
@@ -565,7 +574,7 @@ export function CanvasViewport({
       window.removeEventListener('xuui:reset-zoom', resetZoom);
       window.removeEventListener('xuui:zoom-to', zoomTo);
     };
-  }, [studyId, activeId, mode, scheduleZoomDismiss]);
+  }, [studyId, activeId, mode, preserveCameraForVariant, scheduleZoomDismiss]);
 
   useLayoutEffect(() => {
     const world = scene.current;

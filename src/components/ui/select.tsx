@@ -132,7 +132,10 @@ function SelectItem({
       >
         <CircleCheckIcon
           className="pointer-events-none [&_circle]:stroke-none [&_path]:fill-none [&_path]:stroke-brand-foreground"
-          style={{ fill: 'var(--brand)', color: 'var(--brand-foreground)' }}
+          style={{
+            fill: 'var(--canvas-selection)',
+            color: 'var(--brand-foreground)',
+          }}
         />
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>

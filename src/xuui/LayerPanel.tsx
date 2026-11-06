@@ -322,7 +322,7 @@ export function LayerPanel({
         </ResizablePanel>
         <ResizableHandle
           aria-label="Resize pages and layers"
-          className="after:h-2"
+          className="bg-transparent before:absolute before:inset-x-4 before:top-0 before:h-px before:bg-border after:h-2"
         />
         <ResizablePanel
           id="layer-tree"

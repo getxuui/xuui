@@ -8,11 +8,36 @@ test('D changes the page, sidebar, and canvas theme together', async ({
   const canvas = page.getByRole('region', { name: 'Canvas' });
   const sidebar = page.getByRole('complementary', { name: 'Sidebar' });
   const pageBackground = page.locator('.h-dvh.bg-studio-background');
+  const layers = page.getByRole('complementary', {
+    name: 'Layers',
+    exact: true,
+  });
+  const studyPicker = layers.getByRole('combobox', { name: 'Study' });
+  const activeVariant = layers.getByRole('link', {
+    name: 'Paper',
+    exact: true,
+  });
+  const control = sidebar.locator('.parameter-field').first();
+  const expectMatchingControls = async () => {
+    const background = await control.evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    );
+    await expect(studyPicker).toHaveCSS('background-color', background);
+    await expect(activeVariant).toHaveCSS('background-color', background);
+    const otherVariant = layers.getByRole('link', {
+      name: 'After hours',
+      exact: true,
+    });
+    await otherVariant.hover();
+    await expect(otherVariant).toHaveCSS('background-color', background);
+  };
+  await expectMatchingControls();
   const light = await sidebar.evaluate(
     (element) => getComputedStyle(element).color,
   );
   await page.keyboard.press('d');
   await expect(page.locator('html')).toHaveClass(/dark/);
+  await expectMatchingControls();
   await expect(sidebar).not.toHaveCSS('color', light);
   await expect(
     sidebar.getByRole('button', { name: 'Collapse sidebar' }),
@@ -21,8 +46,13 @@ test('D changes the page, sidebar, and canvas theme together', async ({
     'background-color',
     'rgb(255, 255, 255)',
   );
-  await expect(canvas).toHaveCSS('background-color', 'oklch(0.208 0.03 150)');
-  // Panels sit on the page background in both themes; only the canvas is inset.
+  await expect(canvas).toHaveCSS(
+    'background-color',
+    await pageBackground.evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    ),
+  );
+  // Panels and the canvas share the page background in both themes.
   await expect(sidebar).toHaveCSS(
     'background-color',
     await pageBackground.evaluate(
@@ -45,7 +75,7 @@ test('D changes the page, sidebar, and canvas theme together', async ({
     'background-color',
     'rgb(255, 255, 255)',
   );
-  await expect(canvas).toHaveCSS('background-color', 'oklch(0.984 0.004 150)');
+  await expect(canvas).toHaveCSS('background-color', 'rgb(255, 255, 255)');
   await expect(canvas).toHaveCSS('border-top-width', '1px');
   await page.screenshot({
     path: '.xuui-test/studio-light.png',

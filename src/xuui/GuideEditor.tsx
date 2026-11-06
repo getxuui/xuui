@@ -63,7 +63,7 @@ export function GuideEditor({
     >
       <label
         htmlFor="guide-position"
-        className="font-mono text-[10px] text-muted-foreground"
+        className="font-mono text-[10px] font-medium text-muted-foreground"
       >
         {axis.toUpperCase()}
       </label>
@@ -115,7 +115,9 @@ export function GuideEditor({
           }
         }}
       />
-      <span className="font-mono text-[10px] text-muted-foreground">px</span>
+      <span className="font-mono text-[10px] font-medium text-muted-foreground">
+        px
+      </span>
     </div>
   );
 }

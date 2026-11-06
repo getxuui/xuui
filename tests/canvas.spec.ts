@@ -111,7 +111,10 @@ test('trackpad pinch anchors the canvas and keeps guides and measurements in com
   const sixtyFour = (await page
     .locator('[data-ruler-axis="x"][data-ruler-value="64"]')
     .boundingBox())!;
-  expect(sixtyFour.x + sixtyFour.width / 2).toBeCloseTo(after.x + 64 * 1.5, 0);
+  // Text bounds can differ by subpixels between browser platforms.
+  expect(
+    Math.abs(sixtyFour.x + sixtyFour.width / 2 - (after.x + 64 * 1.5)),
+  ).toBeLessThan(1);
   await page.keyboard.down('Alt');
   await button.hover();
   await expect(
@@ -371,13 +374,16 @@ test('Tab cycles only the current group’s siblings, even when siblings contain
   await expect(selected).toHaveAttribute('aria-label', 'Card eyebrow');
 });
 
-test('comment mode uses the bubble cursor and Space temporarily restores panning', async ({
+test('comment mode uses the matching cursor in each theme and Space temporarily restores panning', async ({
   page,
 }) => {
+  await page.addInitScript(() => localStorage.setItem('xuui-theme', 'dark'));
   await page.goto('/?variant=paper-v1');
   const heading = page.locator('[data-xuui-design] h2');
   await expect(heading).toHaveCSS('cursor', /cursors\/default\.svg/);
   await page.getByRole('button', { name: 'Comment mode', exact: true }).click();
+  await expect(heading).toHaveCSS('cursor', /cursors\/comment-dark\.svg/);
+  await page.keyboard.press('d');
   await expect(heading).toHaveCSS('cursor', /cursors\/comment\.svg/);
   await page.getByRole('main', { name: 'Variant canvas', exact: true }).focus();
   await page.keyboard.down('Space');
@@ -390,7 +396,7 @@ test('comment mode uses the bubble cursor and Space temporarily restores panning
   await expect(heading).toHaveCSS('cursor', /cursors\/default\.svg/);
 });
 
-test('Shift+1 fits every variant, Shift+2 zooms to the selection and Shift+0 returns to 100%', async ({
+test('zoom shortcuts fit all variants or the selection and return to 100%', async ({
   page,
 }) => {
   await page.goto('/?variant=paper-v1&view=all');
@@ -411,6 +417,10 @@ test('Shift+1 fits every variant, Shift+2 zooms to the selection and Shift+0 ret
         box.bottom <= area.y + area.height + 1,
     );
   };
+  // With no selection in All view, Shift+2 fits all variants.
+  await page.keyboard.press('Shift+2');
+  await expect.poll(() => inside('[data-variant-id]')).toBe(true);
+
   await page.keyboard.press('Shift+1');
   await expect.poll(() => inside('[data-variant-id]')).toBe(true);
 

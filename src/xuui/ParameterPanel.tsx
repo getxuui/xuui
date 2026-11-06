@@ -192,6 +192,7 @@ export function ParameterPanel({
   setMachineState,
   onCollapse,
   feedbackPanel,
+  feedbackAction,
 }: {
   variant: Variant | undefined;
   studyId: string;
@@ -207,6 +208,7 @@ export function ParameterPanel({
   send: (event: string) => void;
   onCollapse: () => void;
   feedbackPanel?: ReactNode;
+  feedbackAction?: ReactNode;
 }) {
   const controls = variant?.controls;
   const machine = controls?.machine;
@@ -290,103 +292,113 @@ export function ParameterPanel({
     <aside
       data-workspace-control
       aria-label="Sidebar"
-      className="studio-chrome sidebar-scroll-mask flex h-full min-h-0 flex-col gap-6 overflow-y-auto overscroll-contain bg-studio-background px-4 pt-2 pb-6"
+      className="studio-chrome flex h-full min-h-0 flex-col bg-studio-background"
     >
-      {selectedLayer ? (
-        <LayerInspector layer={selectedLayer} action={actions} />
-      ) : (
-        <>
-          <header className="flex items-start justify-between gap-2">
-            <h2 className="text-sm font-medium">Properties</h2>
-            {actions}
-          </header>
-          {Boolean(Object.keys(controls?.state ?? {}).length || machine) && (
-            <section
-              aria-labelledby="state-heading"
-              className="flex flex-col gap-3"
-            >
-              <h2 id="state-heading" className="text-xs font-semibold">
-                State
-              </h2>
-              <FieldGroup>
-                <ParameterControls
-                  controls={controls?.state}
-                  values={bindings.state}
-                  onChange={(key, value) => setValue('state', key, value)}
-                />
-                {machine && machineState && (
-                  <Field orientation="horizontal" className="parameter-field">
-                    <FieldLabel htmlFor="machine-state">
-                      {machine.label}
-                    </FieldLabel>
-                    <Select
-                      value={machineState}
-                      onValueChange={(value) => {
-                        if (value) setMachineState(value);
-                      }}
-                      items={Object.entries(machine.states).map(
-                        ([value, state]) => ({
-                          value,
-                          label: state.label,
-                        }),
-                      )}
-                    >
-                      <SelectTrigger
-                        id="machine-state"
-                        className="ml-auto w-auto"
+      <div
+        data-sidebar-scroll
+        className="sidebar-scroll-mask flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overscroll-contain px-4 pt-10 pb-6"
+      >
+        {selectedLayer ? (
+          <LayerInspector layer={selectedLayer} action={actions} />
+        ) : (
+          <>
+            <header className="flex min-h-7 items-center justify-between gap-2">
+              <h2 className="text-sm font-medium">Properties</h2>
+              {actions}
+            </header>
+            {Boolean(Object.keys(controls?.state ?? {}).length || machine) && (
+              <section
+                aria-labelledby="state-heading"
+                className="flex flex-col gap-3"
+              >
+                <h2 id="state-heading" className="text-xs font-semibold">
+                  State
+                </h2>
+                <FieldGroup>
+                  <ParameterControls
+                    controls={controls?.state}
+                    values={bindings.state}
+                    onChange={(key, value) => setValue('state', key, value)}
+                  />
+                  {machine && machineState && (
+                    <Field orientation="horizontal" className="parameter-field">
+                      <FieldLabel htmlFor="machine-state">
+                        {machine.label}
+                      </FieldLabel>
+                      <Select
+                        value={machineState}
+                        onValueChange={(value) => {
+                          if (value) setMachineState(value);
+                        }}
+                        items={Object.entries(machine.states).map(
+                          ([value, state]) => ({
+                            value,
+                            label: state.label,
+                          }),
+                        )}
                       >
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {Object.entries(machine.states).map(
-                            ([value, state]) => (
-                              <SelectItem key={value} value={value}>
-                                {state.label}
-                              </SelectItem>
-                            ),
-                          )}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                )}
-              </FieldGroup>
-            </section>
-          )}
-          {Object.keys(controls?.props ?? {}).length > 0 && (
-            <section
-              aria-labelledby="props-heading"
-              className="flex flex-col gap-3"
-            >
-              <h2 id="props-heading" className="text-xs font-semibold">
-                Props
-              </h2>
-              <FieldGroup>
-                <ParameterControls
-                  controls={controls?.props}
-                  values={bindings.props}
-                  onChange={(key, value) => setValue('props', key, value)}
-                />
-              </FieldGroup>
-            </section>
-          )}
-          {feedbackPanel}
-        </>
-      )}
-      {fallback && (
-        <Field>
-          <FieldLabel htmlFor="copy-properties">
-            Select and copy properties
-          </FieldLabel>
-          <Textarea
-            id="copy-properties"
-            readOnly
-            value={fallback}
-            rows={7}
-            onFocus={(event) => event.target.select()}
-          />
-        </Field>
+                        <SelectTrigger
+                          id="machine-state"
+                          className="ml-auto w-auto"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {Object.entries(machine.states).map(
+                              ([value, state]) => (
+                                <SelectItem key={value} value={value}>
+                                  {state.label}
+                                </SelectItem>
+                              ),
+                            )}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  )}
+                </FieldGroup>
+              </section>
+            )}
+            {Object.keys(controls?.props ?? {}).length > 0 && (
+              <section
+                aria-labelledby="props-heading"
+                className="flex flex-col gap-3"
+              >
+                <h2 id="props-heading" className="text-xs font-semibold">
+                  Props
+                </h2>
+                <FieldGroup>
+                  <ParameterControls
+                    controls={controls?.props}
+                    values={bindings.props}
+                    onChange={(key, value) => setValue('props', key, value)}
+                  />
+                </FieldGroup>
+              </section>
+            )}
+            {feedbackPanel}
+          </>
+        )}
+        {fallback && (
+          <Field>
+            <FieldLabel htmlFor="copy-properties">
+              Select and copy properties
+            </FieldLabel>
+            <Textarea
+              id="copy-properties"
+              readOnly
+              value={fallback}
+              rows={7}
+              onFocus={(event) => event.target.select()}
+            />
+          </Field>
+        )}
+      </div>
+      {feedbackAction && (
+        <div className="flex shrink-0 justify-end px-4 pt-2 pb-4">
+          {feedbackAction}
+        </div>
       )}
     </aside>
   );

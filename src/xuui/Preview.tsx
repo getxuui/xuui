@@ -24,7 +24,7 @@ import { ViewSettings } from './GridControls';
 import { useGrids } from './useGrids';
 import { CanvasFeedback, CanvasTools, CommentEditor } from './CanvasFeedback';
 import type { CanvasMode } from './CanvasFeedback';
-import { ReviewPanel } from './ReviewPanel';
+import { ReviewPanel, ReviewSubmit } from './ReviewPanel';
 import { findCommentElement } from './feedback';
 import { useReviews } from './useReviews';
 import type { LayerProperties } from './layerProperties';
@@ -108,6 +108,7 @@ export default function Preview({
   const isWorking = workingVariantIds.has(variantId);
   const design = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLElement>(null);
+  const preserveCameraForVariant = useRef<string | null>(null);
   const focusCanvas = useCallback(
     () => canvas.current?.querySelector('main')?.focus({ preventScroll: true }),
     [],
@@ -517,23 +518,11 @@ export default function Preview({
           selection={selection}
           onOpen={() => onVariantChange(variant.id, true)}
           onSelect={() => {
-            // Like a frame name in a design tool, the title selects the
-            // variant's top layer and fits it to the canvas, as Shift+2 does.
+            if (allVariants && variant.id !== variantId)
+              preserveCameraForVariant.current = variant.id;
             const root = tree.find((node) => node.variantId === variant.id);
             if (root) selectLayer(root);
             else onVariantChange(variant.id);
-            // Fit once a variant switch has settled, so recentring can't undo it.
-            requestAnimationFrame(() =>
-              window.dispatchEvent(
-                new CustomEvent('xuui:zoom-to', {
-                  detail: root?.elements ?? [
-                    ...document.querySelectorAll(
-                      `[data-variant-id="${CSS.escape(variant.id)}"] [data-xuui-design]`,
-                    ),
-                  ],
-                }),
-              ),
-            );
           }}
         />
       )}
@@ -642,6 +631,7 @@ export default function Preview({
             <CanvasViewport
               studyId={study.id}
               activeId={variantId}
+              preserveCameraForVariant={preserveCameraForVariant}
               selection={selection}
               mode={allVariants ? 'all' : 'focused'}
             >
@@ -762,6 +752,11 @@ export default function Preview({
                 }
                 {...parameters}
                 onCollapse={() => setSidebarOpen(false)}
+                feedbackAction={
+                  review.comments.length > 0 ? (
+                    <ReviewSubmit state={review} />
+                  ) : null
+                }
                 feedbackPanel={
                   <ReviewPanel
                     key={study.id}
