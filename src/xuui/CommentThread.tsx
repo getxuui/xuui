@@ -24,7 +24,7 @@ export function CommentThread({
     <li
       data-comment-id={commentId}
       data-review-id={reviewId}
-      className="relative min-w-0 rounded-[10px] bg-muted p-3 text-start"
+      className="comment-card relative min-w-0 rounded-[10px] p-3 text-start"
     >
       <div className="flex min-w-0 items-start gap-1">
         {/* The number matches the comment's pin and opens the comment. Its

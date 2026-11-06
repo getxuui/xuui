@@ -1,6 +1,6 @@
 # Reviews and MCP
 
-Submitted comments are stored in `.xuui/reviews/` in the study workspace. Browser drafts are not submitted feedback. Copy a submitted review into chat, or connect the optional MCP server.
+Submitted comments are stored in `.xuui/reviews/` in the study workspace. Browser drafts are not submitted feedback. Ask the agent to read the saved review file, or connect the optional MCP server.
 
 ## Installed workspace
 
@@ -29,7 +29,7 @@ Run the explicit setup from this repository:
 npm run mcp:setup
 ```
 
-This registers the local `xuui` stdio server through the Codex CLI, pointing to this workspace's review files. It preserves unrelated configuration, can be rerun, and refuses to replace an existing `xuui` entry configured differently. Use `--name another-name` for a separate connection, or `--project-dir /absolute/path/to/consumer` to read another workspace's reviews. To opt out during setup, run `npm run mcp:setup -- --skip`; the studio and copyable feedback work independently.
+This registers the local `xuui` stdio server through the Codex CLI, pointing to this workspace's review files. It preserves unrelated configuration, can be rerun, and refuses to replace an existing `xuui` entry configured differently. Use `--name another-name` for a separate connection, or `--project-dir /absolute/path/to/consumer` to read another workspace's reviews. To opt out during setup, run `npm run mcp:setup -- --skip`; the studio and saved feedback work independently.
 
 In the desktop app, open **Settings → MCP servers → xuui** and select **Restart** to load the tools. For the CLI, restart the Codex session. MCP configuration is shared by Codex's desktop app, CLI, and IDE extension; see the [official OpenAI MCP documentation](https://learn.chatgpt.com/docs/extend/mcp).
 

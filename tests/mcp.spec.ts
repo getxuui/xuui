@@ -146,7 +146,13 @@ test('a browser review reaches a waiting MCP agent and remains readable after di
     ).toEqual(saved);
     known = delivered.knownReviewIds;
     const row = page.locator(`[data-review-id="${saved.id}"]`);
-    await expect(row).toContainText('Awaiting agent');
+    await expect(row.locator('[data-review-read="false"]')).toHaveAttribute(
+      'title',
+      'Awaiting agent',
+    );
+    await expect(row.locator('[data-review-read="false"] .sr-only')).toHaveText(
+      'Awaiting agent',
+    );
     const acknowledged = await client.callTool({
       name: 'xuui_acknowledge_review',
       arguments: { reviewId: saved.id },

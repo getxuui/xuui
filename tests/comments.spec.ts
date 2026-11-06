@@ -15,6 +15,48 @@ async function commentOnHeading(page: Page, body: string) {
   await expect(editor).toHaveCount(0);
 }
 
+test('submit review stays at the bottom of the sidebar while it scrolls', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 500 });
+  await page.goto('/?variant=paper-v1');
+  await commentOnHeading(page, 'Keep this comment.');
+  const sidebar = page.getByRole('complementary', { name: 'Sidebar' });
+  const scroll = sidebar.locator('[data-sidebar-scroll]');
+  const submit = sidebar.getByRole('button', {
+    name: 'Submit review',
+    exact: true,
+  });
+  await expect(submit).toBeVisible();
+  const initial = (await submit.boundingBox())!;
+  const panel = (await sidebar.boundingBox())!;
+  expect(initial.height).toBe(32);
+  expect(Math.abs(initial.x - (panel.x + 16))).toBeLessThan(1);
+  expect(
+    Math.abs(initial.x + initial.width - (panel.x + panel.width - 16)),
+  ).toBeLessThan(1);
+  expect(
+    Math.abs(initial.y + initial.height - (panel.y + panel.height - 16)),
+  ).toBeLessThan(1);
+  await scroll.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  expect(await scroll.evaluate((element) => element.scrollTop)).toBeGreaterThan(
+    0,
+  );
+  const after = (await submit.boundingBox())!;
+  expect(after.y).toBe(initial.y);
+  await page
+    .getByRole('button', { name: 'Select layers', exact: true })
+    .click();
+  await page.locator('[data-xuui-design] h2').click();
+  await expect(
+    sidebar.getByRole('region', { name: 'Selected layer' }),
+  ).toBeVisible();
+  await expect(submit).toBeVisible();
+  expect((await submit.boundingBox())!.y).toBe(initial.y);
+});
+
 test('saved alpha drafts become variant comments and stay empty after submission', async ({
   page,
 }) => {
@@ -70,7 +112,7 @@ test('saved alpha drafts become variant comments and stay empty after submission
   await expect(drafts.getByRole('listitem')).toHaveCount(0);
 });
 
-test('comment editor validates empty comments and saves with the keyboard', async ({
+test('comment editor disables empty comments and saves with the keyboard', async ({
   page,
 }) => {
   await page.goto('/?variant=paper-v1');
@@ -79,13 +121,18 @@ test('comment editor validates empty comments and saves with the keyboard', asyn
   const editor = page.getByRole('dialog', { name: 'Element comment' });
   const input = editor.getByRole('textbox', { name: 'Comment', exact: true });
   await expect(input).toBeFocused();
+  const add = editor.getByRole('button', { name: 'Add comment', exact: true });
+  await expect(
+    editor.getByRole('button', { name: 'Close comment' }),
+  ).toHaveCount(0);
+  await expect(add).toBeDisabled();
+  await input.fill('   ');
+  await expect(add).toBeDisabled();
   await input.press('Control+Enter');
-  await expect(editor.getByRole('alert')).toHaveText(
-    'Write a comment before adding it.',
-  );
+  await expect(editor.getByRole('alert')).toHaveCount(0);
   await expect(input).toBeFocused();
   await input.fill('Make the title easier to scan.');
-  await expect(editor.getByRole('alert')).toHaveCount(0);
+  await expect(add).toBeEnabled();
   await input.press('Control+Enter');
   await expect(editor).toHaveCount(0);
   await expect(
@@ -151,12 +198,10 @@ test('dismissing an edit keeps its text without changing the saved comment, and 
   await expect(input).toHaveValue('Original comment.');
 });
 
-test('Agentation comments collect across variants, edit, persist, and submit as the same copyable file record', async ({
+test('Agentation comments collect across variants, edit, persist, and submit as a file record', async ({
   page,
-  context,
   request,
 }) => {
-  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.goto('/?variant=paper-v1');
   await commentOnHeading(page, 'Give this heading more room.');
   const drafts = page.getByRole('list', { name: 'Draft comments' });
@@ -226,13 +271,9 @@ test('Agentation comments collect across variants, edit, persist, and submit as 
   await expect(submittedCards.last()).toContainText(
     'Keep this darker direction.',
   );
-  const reviewCopy = page
-    .getByRole('button', { name: 'Copy submitted review', exact: true })
-    .first();
-  await reviewCopy.click();
-  const copied = await page.evaluate(() => navigator.clipboard.readText());
-  expect(copied).toContain(saved.id);
-  expect(JSON.parse(copied.split('Full record:\n')[1])).toEqual(saved);
+  await expect(
+    submittedCards.getByRole('button', { name: 'Copy submitted review' }),
+  ).toHaveCount(0);
   expect(await (await request.get('/__xuui/reviews')).json()).toContainEqual(
     saved,
   );

@@ -285,39 +285,42 @@ test('frame-title selection keeps Enter hierarchy shortcuts available', async ({
   ).toHaveAttribute('data-selected-tag', 'article');
 });
 
-test('clicking a frame title fits its variant to the canvas, like Shift+2', async ({
+test('clicking a frame title selects its variant without moving the canvas', async ({
   page,
 }) => {
-  const canvas = page.getByRole('main', { name: 'Variant canvas' });
-  const fitted = async (variantId: string) => {
-    const area = (await canvas.boundingBox())!;
-    const box = (await page
-      .locator(`[data-variant-id="${variantId}"] [data-xuui-design]`)
-      .boundingBox())!;
-    const fills = Math.max(
-      box.width / (area.width - 96),
-      box.height / (area.height - 96),
+  for (const { url, name, id } of [
+    {
+      url: '/?variant=paper-v1&view=all',
+      name: 'After hours',
+      id: 'after-hours-v1',
+    },
+    { url: '/?variant=paper-v1', name: 'Paper', id: 'paper-v1' },
+  ]) {
+    await page.goto(url);
+    const scene = page.locator('[data-canvas-scene]');
+    const transform = await scene.evaluate(
+      (element) => element.style.transform,
     );
-    const centred =
-      Math.abs(box.x + box.width / 2 - (area.x + area.width / 2)) < 3 &&
-      Math.abs(box.y + box.height / 2 - (area.y + area.height / 2)) < 3;
-    return fills > 0.97 && fills < 1.03 && centred;
-  };
-
-  await page.goto('/?variant=paper-v1&view=all');
-  await page
-    .locator('[data-frame-title]')
-    .getByRole('button', { name: 'After hours', exact: true })
-    .click();
-  await expect(page).toHaveURL(/variant=after-hours-v1/);
-  await expect.poll(() => fitted('after-hours-v1')).toBe(true);
-
-  await page.goto('/?variant=paper-v1');
-  await page
-    .locator('[data-frame-title]')
-    .getByRole('button', { name: 'Paper', exact: true })
-    .click();
-  await expect.poll(() => fitted('paper-v1')).toBe(true);
+    await page
+      .locator('[data-frame-title]')
+      .getByRole('button', { name, exact: true })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`variant=${id}`));
+    await expect(
+      page
+        .getByRole('complementary', { name: 'Layers', exact: true })
+        .locator('[role="treeitem"][aria-selected="true"]'),
+    ).toHaveCount(1);
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ),
+    );
+    expect(await scene.evaluate((element) => element.style.transform)).toBe(
+      transform,
+    );
+  }
 });
 
 test('the frame title explains why a variant exists', async ({ page }) => {

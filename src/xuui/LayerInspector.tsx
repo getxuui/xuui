@@ -51,7 +51,7 @@ function Readout({
         >
           <span
             aria-hidden="true"
-            className="shrink-0 text-xs font-normal text-muted-foreground"
+            className="shrink-0 text-xs font-medium text-muted-foreground"
           >
             {abbreviation ?? label}
           </span>
@@ -170,12 +170,12 @@ export function LayerInspector({
       aria-label={layer.count === 1 ? 'Selected layer' : 'Selected layers'}
       className="layer-inspector flex min-w-0 flex-col gap-5"
     >
-      <header className="flex min-w-0 items-start gap-2">
+      <header className="flex min-h-7 min-w-0 items-center gap-2">
         <Icon
           aria-hidden="true"
           size={15}
           strokeWidth={1.6}
-          className="mt-0.5 shrink-0 text-muted-foreground"
+          className="shrink-0 text-muted-foreground"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h2
@@ -184,11 +184,6 @@ export function LayerInspector({
           >
             {layer.name}
           </h2>
-          {layer.tag && (
-            <span className="text-[11px] text-muted-foreground">
-              {layer.tag}
-            </span>
-          )}
         </div>
         {action}
       </header>

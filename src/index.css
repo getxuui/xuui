@@ -8,8 +8,8 @@
 
 .feedback-highlight {
   position: absolute;
-  border: 1px solid var(--brand);
-  background: color-mix(in oklch, var(--brand) 6%, transparent);
+  border: 1px solid var(--canvas-selection);
+  background: color-mix(in oklch, var(--canvas-selection) 6%, transparent);
 }
 
 .feedback-pin {
@@ -20,7 +20,7 @@
      transparent border keeps an edge in forced-colors mode. */
   border-radius: 3px 999px 999px 999px;
   border: 1px solid transparent;
-  background: var(--brand);
+  background: var(--canvas-selection);
   color: var(--brand-foreground);
   font-family: var(--font-sans);
   font-size: 11px;
@@ -31,7 +31,11 @@
 }
 
 .feedback-pin:hover {
-  background: var(--brand);
+  background: var(--canvas-selection);
+}
+.comment-card {
+  background: var(--studio-background);
+  box-shadow: var(--comment-card-shadow);
 }
 .comment-number {
   transform: none;
@@ -42,7 +46,7 @@
   outline: none;
 }
 .comment-number:focus-visible::after {
-  outline: 2px solid var(--brand);
+  outline: 2px solid var(--canvas-selection);
   outline-offset: 2px;
 }
 .feedback-pin[data-comment-marker] {
@@ -79,22 +83,6 @@
 #xuui-comment-editor textarea:focus-visible {
   outline: none;
   box-shadow: none;
-}
-
-/* Matcha neutrals: Tailwind slate's lightness steps with xuui's green hue,
-   so the studio's greys sit with the brand instead of against it. */
-@theme {
-  --color-matcha-50: oklch(0.984 0.004 150);
-  --color-matcha-100: oklch(0.968 0.008 150);
-  --color-matcha-200: oklch(0.929 0.012 150);
-  --color-matcha-300: oklch(0.869 0.018 150);
-  --color-matcha-400: oklch(0.704 0.03 150);
-  --color-matcha-500: oklch(0.554 0.034 150);
-  --color-matcha-600: oklch(0.446 0.032 150);
-  --color-matcha-700: oklch(0.372 0.032 150);
-  --color-matcha-800: oklch(0.279 0.03 150);
-  --color-matcha-900: oklch(0.208 0.03 150);
-  --color-matcha-950: oklch(0.129 0.03 150);
 }
 
 @theme inline {
@@ -153,103 +141,108 @@
 
 :root {
   --cursor-default: url('/cursors/default.svg') 6 4, default;
+  --cursor-comment: url('/cursors/comment.svg') 3 3, crosshair;
   --studio-control-height: 28px;
-  --slider-fill: var(--color-matcha-200);
+  --slider-fill: var(--color-slate-200);
   --studio-floating-shadow:
-    0 1px 2px rgb(14 32 20 / 4%), 0 4px 12px rgb(14 32 20 / 6%);
-  --canvas: var(--color-matcha-50);
-  --canvas-border: var(--color-matcha-100);
-  /* Selection uses the brand green, like the rest of xuui's accents. */
-  --selection: #00844a;
+    0 1px 2px rgb(15 23 42 / 4%), 0 4px 12px rgb(15 23 42 / 6%);
+  --comment-card-shadow:
+    0 0 0 1px rgb(15 23 42 / 4%), 0 2px 10px rgb(15 23 42 / 7%);
+  --canvas: #ffffff;
+  --canvas-inner-shadow: inset 0 2px 32px rgb(15 23 42 / 1.75%);
+  --canvas-border: var(--color-slate-100);
+  --canvas-selection: #00844a;
   --studio-background: #ffffff;
-  --guide: oklch(0.55 0.21 255);
-  --guide-foreground: var(--color-matcha-50);
-  /* xuui.com's Matcha green: the mark and comment moments, used sparingly
-     so it never competes with the designs under review. */
-  --brand: #00844a;
+  --guide: #00844a;
+  --guide-foreground: #ffffff;
+  /* Slate accents keep annotations visible without competing with the work. */
+  --brand: var(--color-slate-600);
   --brand-foreground: #ffffff;
-  /* Green text on a light brand tint, darker for small text contrast. */
-  --brand-text: #006d3d;
+  --brand-text: var(--color-slate-700);
   --measurement: oklch(0.55 0.2 25);
   --background: #ffffff;
-  --foreground: var(--color-matcha-950);
+  --foreground: var(--color-slate-950);
   --card: #ffffff;
-  --card-foreground: var(--color-matcha-950);
+  --card-foreground: var(--color-slate-950);
   --popover: #ffffff;
-  --popover-foreground: var(--color-matcha-950);
-  --primary: var(--color-matcha-900);
-  --primary-foreground: var(--color-matcha-50);
-  --secondary: var(--color-matcha-100);
-  --secondary-foreground: var(--color-matcha-900);
-  --muted: var(--color-matcha-100);
-  --muted-foreground: var(--color-matcha-600);
-  --accent: var(--color-matcha-100);
-  --accent-foreground: var(--color-matcha-900);
+  --popover-foreground: var(--color-slate-950);
+  --primary: var(--color-slate-900);
+  --primary-foreground: var(--color-slate-50);
+  --secondary: var(--color-slate-100);
+  --secondary-foreground: var(--color-slate-900);
+  --muted: var(--color-slate-100);
+  --muted-foreground: var(--color-slate-600);
+  --accent: var(--color-slate-100);
+  --accent-foreground: var(--color-slate-900);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: var(--color-matcha-200);
-  --input: var(--color-matcha-200);
-  --ring: var(--color-matcha-400);
-  --chart-1: var(--color-matcha-300);
-  --chart-2: var(--color-matcha-500);
-  --chart-3: var(--color-matcha-600);
-  --chart-4: var(--color-matcha-700);
-  --chart-5: var(--color-matcha-800);
+  --border: var(--color-slate-200);
+  --input: var(--color-slate-200);
+  --ring: var(--color-slate-400);
+  --chart-1: var(--color-slate-300);
+  --chart-2: var(--color-slate-500);
+  --chart-3: var(--color-slate-600);
+  --chart-4: var(--color-slate-700);
+  --chart-5: var(--color-slate-800);
   --radius: 0.625rem;
-  --sidebar: var(--color-matcha-50);
-  --sidebar-foreground: var(--color-matcha-950);
-  --sidebar-primary: var(--color-matcha-900);
-  --sidebar-primary-foreground: var(--color-matcha-50);
-  --sidebar-accent: var(--color-matcha-100);
-  --sidebar-accent-foreground: var(--color-matcha-900);
-  --sidebar-border: var(--color-matcha-200);
-  --sidebar-ring: var(--color-matcha-400);
+  --sidebar: var(--color-slate-50);
+  --sidebar-foreground: var(--color-slate-950);
+  --sidebar-primary: var(--color-slate-900);
+  --sidebar-primary-foreground: var(--color-slate-50);
+  --sidebar-accent: var(--color-slate-100);
+  --sidebar-accent-foreground: var(--color-slate-900);
+  --sidebar-border: var(--color-slate-200);
+  --sidebar-ring: var(--color-slate-400);
 }
 
 .dark {
-  --slider-fill: var(--color-matcha-700);
+  --cursor-comment: url('/cursors/comment-dark.svg') 3 3, crosshair;
+  --slider-fill: var(--color-slate-700);
   --studio-floating-shadow:
-    0 1px 2px rgb(2 16 7 / 18%), 0 4px 12px rgb(2 16 7 / 24%);
-  --canvas: var(--color-matcha-900);
-  --canvas-border: var(--color-matcha-800);
-  --studio-background: var(--color-matcha-950);
-  --guide: oklch(0.72 0.15 250);
-  --guide-foreground: var(--color-matcha-950);
-  --brand: #52cd86;
-  --brand-foreground: #102006;
-  --selection: #52cd86;
-  --brand-text: #61da92;
+    0 1px 2px rgb(2 6 23 / 18%), 0 4px 12px rgb(2 6 23 / 24%);
+  --comment-card-shadow:
+    0 0 0 1px rgb(203 213 225 / 8%), 0 2px 10px rgb(2 6 23 / 30%);
+  --canvas: var(--color-slate-950);
+  --canvas-inner-shadow: inset 0 2px 32px rgb(2 6 23 / 7.5%);
+  --canvas-border: var(--color-slate-800);
+  --studio-background: var(--color-slate-950);
+  --guide: #52cd86;
+  --guide-foreground: var(--color-slate-950);
+  --brand: var(--color-slate-300);
+  --brand-foreground: var(--color-slate-950);
+  --canvas-selection: #52cd86;
+  --brand-text: var(--color-slate-200);
   --measurement: oklch(0.75 0.16 25);
-  --background: var(--color-matcha-950);
-  --foreground: var(--color-matcha-50);
-  --card: var(--color-matcha-900);
-  --card-foreground: var(--color-matcha-50);
-  --popover: var(--color-matcha-900);
-  --popover-foreground: var(--color-matcha-50);
-  --primary: var(--color-matcha-100);
-  --primary-foreground: var(--color-matcha-950);
-  --secondary: var(--color-matcha-800);
-  --secondary-foreground: var(--color-matcha-50);
-  --muted: var(--color-matcha-800);
-  --muted-foreground: var(--color-matcha-400);
-  --accent: var(--color-matcha-800);
-  --accent-foreground: var(--color-matcha-50);
+  --background: var(--color-slate-950);
+  --foreground: var(--color-slate-50);
+  --card: var(--color-slate-900);
+  --card-foreground: var(--color-slate-50);
+  --popover: var(--color-slate-900);
+  --popover-foreground: var(--color-slate-50);
+  --primary: var(--color-slate-100);
+  --primary-foreground: var(--color-slate-950);
+  --secondary: var(--color-slate-800);
+  --secondary-foreground: var(--color-slate-50);
+  --muted: var(--color-slate-800);
+  --muted-foreground: var(--color-slate-400);
+  --accent: var(--color-slate-800);
+  --accent-foreground: var(--color-slate-50);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: var(--color-matcha-800);
-  --input: var(--color-matcha-700);
-  --ring: var(--color-matcha-500);
-  --chart-1: var(--color-matcha-300);
-  --chart-2: var(--color-matcha-400);
-  --chart-3: var(--color-matcha-500);
-  --chart-4: var(--color-matcha-600);
-  --chart-5: var(--color-matcha-700);
-  --sidebar: var(--color-matcha-900);
-  --sidebar-foreground: var(--color-matcha-50);
-  --sidebar-primary: var(--color-matcha-100);
-  --sidebar-primary-foreground: var(--color-matcha-950);
-  --sidebar-accent: var(--color-matcha-800);
-  --sidebar-accent-foreground: var(--color-matcha-50);
-  --sidebar-border: var(--color-matcha-800);
-  --sidebar-ring: var(--color-matcha-500);
+  --border: var(--color-slate-800);
+  --input: var(--color-slate-700);
+  --ring: var(--color-slate-500);
+  --chart-1: var(--color-slate-300);
+  --chart-2: var(--color-slate-400);
+  --chart-3: var(--color-slate-500);
+  --chart-4: var(--color-slate-600);
+  --chart-5: var(--color-slate-700);
+  --sidebar: var(--color-slate-900);
+  --sidebar-foreground: var(--color-slate-50);
+  --sidebar-primary: var(--color-slate-100);
+  --sidebar-primary-foreground: var(--color-slate-950);
+  --sidebar-accent: var(--color-slate-800);
+  --sidebar-accent-foreground: var(--color-slate-50);
+  --sidebar-border: var(--color-slate-800);
+  --sidebar-ring: var(--color-slate-500);
 }
 
 @layer base {
@@ -310,9 +303,7 @@
   )
   [data-xuui-design]
   * {
-  cursor:
-    url('/cursors/comment.svg') 3 3,
-    crosshair !important;
+  cursor: var(--cursor-comment) !important;
 }
 [data-canvas-mode='comment'] main [data-workspace-control],
 [data-canvas-mode='comment'] main [data-workspace-control] * {
@@ -335,6 +326,11 @@
   cursor: ns-resize !important;
 }
 
+[aria-label='Canvas'] {
+  --selection: var(--canvas-selection);
+  box-shadow: var(--canvas-inner-shadow);
+}
+
 .workspace-rulers {
   --ruler-tick: color-mix(in oklab, var(--foreground) 14%, transparent);
   --ruler-major: color-mix(in oklab, var(--foreground) 22%, transparent);
@@ -352,11 +348,15 @@
 .ruler-marks .ruler-label {
   fill: var(--muted-foreground);
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 9px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   stroke: var(--studio-background);
   stroke-width: 3px;
   paint-order: stroke;
+}
+.ruler-marks .ruler-label[data-ruler-axis='x'] {
+  translate: 0 -0.5px;
 }
 .masked-marquee,
 [data-ruler-axis] {
@@ -385,6 +385,7 @@
 
 .studio-chrome {
   color: var(--foreground);
+  font-weight: 500;
 }
 .frame-title-name,
 .frame-title-name:hover {
@@ -424,16 +425,14 @@
 .layer-panel-toggle {
   background: transparent;
 }
-/* The variant list and the layer tree share one set of row states: a light
-   green on hover and keyboard focus; the current variant or selected layer
-   stays tinted green on hover, with a stronger tint for keyboard focus. */
+/* The variant list and layer tree share hover and selection states. */
 .variant-list-link {
   cursor: var(--cursor-default);
 }
 .variant-list-link[aria-current='page'],
 .layer-tree-row.is-selected {
-  background: color-mix(in oklch, var(--brand) 12%, transparent);
-  color: var(--brand-text);
+  background: var(--muted);
+  color: var(--secondary-foreground);
 }
 .variant-list-link[aria-current='page'] svg,
 .layer-tree-row.is-selected .layer-tree-icon {
@@ -442,26 +441,34 @@
 .variant-list-link:focus-visible,
 .layer-tree-item:focus-visible > .layer-tree-row {
   outline: none;
-  background: color-mix(in oklch, var(--brand) 6%, transparent);
+  background: var(--muted);
+  color: var(--secondary-foreground);
 }
 @media (hover: hover) {
   .variant-list-link:not([aria-current='page']):hover,
   .layer-tree-row:not(.is-selected):hover {
-    background: color-mix(in oklch, var(--brand) 6%, transparent);
+    background: var(--muted);
+    color: var(--secondary-foreground);
   }
-  /* Icons take the green with the row, so they don't clash with the tint. */
+  /* Icons follow the row tint. */
   .variant-list-link:hover svg,
   .layer-tree-row:hover svg {
-    color: var(--brand-text);
+    color: var(--secondary-foreground);
   }
 }
-.variant-list-link:focus-visible svg,
-.layer-tree-item:focus-visible > .layer-tree-row svg {
-  color: var(--brand-text);
+.variant-list-link:not([aria-current='page']):focus-visible svg,
+.layer-tree-item:focus-visible > .layer-tree-row:not(.is-selected) svg {
+  color: var(--secondary-foreground);
 }
 .variant-list-link[aria-current='page']:focus-visible,
 .layer-tree-item:focus-visible > .layer-tree-row.is-selected {
-  background: color-mix(in oklch, var(--brand) 18%, transparent);
+  background: var(--muted);
+  box-shadow: inset 0 0 0 2px var(--color-slate-400);
+}
+.variant-list-link[aria-current='page'] svg,
+.layer-tree-row.is-selected svg,
+.layer-tree-row.is-selected [data-slot='button'] {
+  color: var(--secondary-foreground);
 }
 [data-slot='sheet-content'].layers-sheet {
   width: min(280px, 85vw);
@@ -517,8 +524,8 @@
   padding-block: 4px;
 }
 .studio-chrome #study-picker {
-  background: color-mix(in oklch, var(--brand) 12%, transparent);
-  color: var(--brand-text);
+  background: var(--muted);
+  color: var(--secondary-foreground);
 }
 .studio-chrome #study-picker svg {
   color: inherit;
@@ -535,14 +542,6 @@
   border-color: var(--guide);
   background: color-mix(in oklab, var(--guide) 5%, transparent);
 }
-.parameter-slider-ticks {
-  background-image: repeating-linear-gradient(
-    90deg,
-    color-mix(in oklab, var(--foreground) 12%, transparent) 0 1px,
-    transparent 1px 24px
-  );
-}
-
 .guide-stroke {
   background: var(--guide);
   opacity: 0.7;
@@ -556,6 +555,7 @@
 }
 .guide-coordinate,
 .selection-label {
+  font-weight: 500;
   background: var(--guide);
   color: var(--guide-foreground);
 }
@@ -631,6 +631,7 @@
   bottom: 0;
 }
 .measurement-label {
+  font-weight: 500;
   background: #f24822;
   color: white;
 }

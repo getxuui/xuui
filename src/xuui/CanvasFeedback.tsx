@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode, RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { MessageSquare, MousePointer2, Play, Trash2, X } from 'lucide-react';
+import { MessageSquare, MousePointer2, Play, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Field, FieldLabel } from '@/components/ui/field';
@@ -301,12 +301,20 @@ export function CanvasFeedback({
               {number !== undefined ? (
                 number
               ) : (
-                <img
-                  src="/cursors/comment.svg"
-                  alt=""
-                  draggable={false}
-                  className="pointer-events-none size-6"
-                />
+                <>
+                  <img
+                    src="/cursors/comment.svg"
+                    alt=""
+                    draggable={false}
+                    className="pointer-events-none size-6 dark:hidden"
+                  />
+                  <img
+                    src="/cursors/comment-dark.svg"
+                    alt=""
+                    draggable={false}
+                    className="pointer-events-none hidden size-6 dark:block"
+                  />
+                </>
               )}
             </Button>
             {focused?.id === pin.id && (
@@ -357,12 +365,7 @@ export function CommentEditor({
     availableHeight: window.innerHeight - 24,
   });
   const save = async () => {
-    if (saving) return;
-    if (!body.trim()) {
-      setError('Write a comment before adding it.');
-      input.current?.focus();
-      return;
-    }
+    if (saving || !body.trim()) return;
     if (body.length > 4000) {
       setError('Keep the comment under 4,000 characters.');
       return;
@@ -498,17 +501,6 @@ export function CommentEditor({
         }
       }}
     >
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-xs"
-        className="absolute top-3 right-3"
-        aria-label="Close comment"
-        disabled={saving}
-        onClick={onCancel}
-      >
-        <X data-icon="inline-start" />
-      </Button>
       <Field data-invalid={Boolean(error)}>
         <FieldLabel htmlFor={`${id}-body`} className="sr-only">
           Comment
@@ -521,7 +513,7 @@ export function CommentEditor({
           rows={4}
           maxLength={4000}
           placeholder="Add a comment"
-          className="h-24 min-h-24 max-h-48 resize-y rounded-none px-0 pt-0 pe-7 pb-0"
+          className="h-24 min-h-24 max-h-48 resize-y rounded-none px-0 pt-0 pb-0"
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
           onChange={(event) => {
@@ -545,13 +537,14 @@ export function CommentEditor({
           <Button
             type="button"
             variant="destructive"
-            size="icon-xs"
+            size="sm"
             className="me-auto"
             aria-label="Delete annotation"
             disabled={saving}
             onClick={onDelete}
           >
             <Trash2 data-icon="inline-start" />
+            Delete
           </Button>
         )}
         <Button
@@ -563,7 +556,7 @@ export function CommentEditor({
         >
           Cancel
         </Button>
-        <Button type="submit" size="sm" disabled={saving}>
+        <Button type="submit" size="sm" disabled={saving || !body.trim()}>
           {canDelete ? 'Save' : 'Add comment'}
         </Button>
       </footer>

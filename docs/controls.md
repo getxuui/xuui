@@ -16,7 +16,7 @@ The canvas toolbar switches between selecting layers, interacting with a design,
 | ⌘0 / Ctrl+0         | Reset canvas zoom to 100%                                                     |
 | Shift+0             | Zoom to 100%                                                                  |
 | Shift+1             | Zoom to fit every variant on the canvas                                       |
-| Shift+2             | Zoom to the selected layers                                                   |
+| Shift+2             | Zoom to selected layers, or fit the current view when nothing is selected     |
 | ↑ / ↓               | Previous/next variant outside editable controls                               |
 | Tab / Shift+Tab     | Cycle sibling layers on canvas, or variants in the variant list               |
 | Enter / Shift+Enter | Select a group's children / its parent                                        |

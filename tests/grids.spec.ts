@@ -102,18 +102,20 @@ test('view settings edit grids the agent set up and persist them per variant', a
   await expect(size).toBeVisible();
   const pixels = page.locator('[data-grid-type="pixels"]');
   await expect(pixels).toHaveAttribute('data-grid-size', '8');
+  await size.press('ArrowRight');
+  await expect(pixels).toHaveAttribute('data-grid-size', '9');
+  await size.press('ArrowLeft');
+  await expect(pixels).toHaveAttribute('data-grid-size', '8');
   await pixelGrid.getByRole('button', { name: 'Edit Size' }).click();
   const sizeValue = pixelGrid.getByRole('textbox', { name: 'Size value' });
   await sizeValue.fill('12.5');
+  await expect(pixels).toHaveAttribute('data-grid-size', '13');
   await sizeValue.press('Enter');
-  await expect(pixels).toHaveCSS(
-    'background-size',
-    '12.5px 12.5px, 12.5px 12.5px',
-  );
+  await expect(pixels).toHaveCSS('background-size', '13px 13px, 13px 13px');
   await pixelSwitch.click();
   await expect(pixels).toHaveCount(0);
   await pixelSwitch.click();
-  await expect(pixels).toHaveAttribute('data-grid-size', '12.5');
+  await expect(pixels).toHaveAttribute('data-grid-size', '13');
 
   // Rulers are a canvas-wide view preference.
   await settings.getByRole('switch', { name: 'Rulers and guides' }).click();
@@ -140,7 +142,7 @@ test('view settings edit grids the agent set up and persist them per variant', a
 
   await nav.getByRole('link', { name: 'Without grids', exact: true }).click();
   await page.reload();
-  await expect(pixels).toHaveAttribute('data-grid-size', '12.5');
+  await expect(pixels).toHaveAttribute('data-grid-size', '13');
   await expect(page.locator('[data-ruler-axis]')).toHaveCount(0);
   await open.click();
   await page.keyboard.press('d');
