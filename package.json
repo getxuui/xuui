@@ -1,6 +1,6 @@
 {
   "name": "@getxuui/xuui",
-  "version": "0.1.0-alpha.5",
+  "version": "0.1.0-alpha.6",
   "description": "Review the UIs your agents build: compare variants on a local canvas and send comments back to the agent. Experimental alpha.",
   "scripts": {
     "prepare": "husky",

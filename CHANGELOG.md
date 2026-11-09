@@ -2,8 +2,14 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.6
+
 - Agents can announce named variants in progress through MCP or `xuui progress`. Loading artboards show spinners, animated dot grids, and traveling gradients on their connectors and outlines.
 - Study updates preserve the reviewer's position, selection, controls, and unfinished comments. Full reloads recover studio state and comment drafts.
+- The studio uses a slate palette, with matcha retained for canvas annotations and comment markers. Comment cursors adapt to light and dark mode.
+- Submit review stays at the bottom of the sidebar while comments scroll. Empty comments cannot be added or saved, and existing annotations have a labeled Delete action. Submitted reviews are available through saved files or MCP; the copy-review action is removed.
+- Clicking a variant title preserves the canvas view. Shift+2 fits the current view when no layers are selected, including every variant in All view.
+- State and Props controls are hidden in All view. Slider marks and pixel-grid steps align with their values.
 - Removed buffer zones, including the hatching, dashed outlines, frame padding, and View settings toggle.
 - Ruler digits follow concentric text paths with even spacing through the corners. Labels fade out at 45° while the paths continue beyond them, keeping every digit intact near the ends.
 
