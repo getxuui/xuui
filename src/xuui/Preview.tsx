@@ -19,6 +19,7 @@ import { WorkspaceRulers } from './WorkspaceRulers';
 import { useParameters } from './useParameters';
 import { ParameterPanel } from './ParameterPanel';
 import { CanvasViewport } from './CanvasViewport';
+import { WebGLCanvas } from './WebGLCanvas';
 import { VariantSurface } from './VariantSurface';
 import { ViewSettings } from './GridControls';
 import { useGrids } from './useGrids';
@@ -653,6 +654,7 @@ export default function Preview({
                 )}
               </div>
             </CanvasViewport>
+            <WebGLCanvas />
             <WorkspaceRulers
               key={`${variantId}:${isWorking}`}
               designRef={design}
