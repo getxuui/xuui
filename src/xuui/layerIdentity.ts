@@ -42,6 +42,12 @@ export const layerIcons = {
   button: MousePointer2,
 };
 
+function layerText(node: Node): string {
+  if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? '';
+  if (node instanceof Element && node.matches('br')) return ' ';
+  return [...node.childNodes].map(layerText).join('');
+}
+
 export function layerName(element: Element): string {
   const explicit =
     element.getAttribute('data-xuui-layer-name') ||
@@ -57,8 +63,10 @@ export function layerName(element: Element): string {
     if (variant) return variant;
   }
   const kind = layerKind(element);
-  const text = element.textContent?.trim().replace(/\s+/g, ' ');
-  if (kind !== 'group' && kind !== 'vector' && text) return text;
+  if (kind !== 'group' && kind !== 'vector') {
+    const text = layerText(element).trim().replace(/\s+/g, ' ');
+    if (text) return text;
+  }
   const semanticClass = [...element.classList].find(
     (name) =>
       /^[a-z]+(?:-[a-z]+)+$/.test(name) &&
