@@ -282,6 +282,19 @@
   outline: 1px solid color-mix(in oklch, var(--brand) 24%, transparent);
   outline-offset: -1px;
 }
+/* The same DOM geometry remains available for hit testing and immediate
+   fallback when the GPU context is unavailable. Only its paint is replaced. */
+[data-canvas-renderer='webgl'] [data-grid-overlays],
+[data-canvas-renderer='webgl'] .lineage-lines {
+  opacity: 0;
+}
+[data-canvas-renderer='webgl'] .selection-outline,
+[data-canvas-renderer='webgl'] .measurement-target {
+  border-color: transparent;
+}
+[data-canvas-renderer='dom'] > [data-webgl-canvas] {
+  visibility: hidden;
+}
 ::selection {
   background-color: color-mix(in oklab, var(--guide) 24%, var(--background));
   color: var(--foreground);
