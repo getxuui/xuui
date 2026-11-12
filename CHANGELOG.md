@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.1.0-alpha.7
+
+- Canvas grids, selection outlines, measurement targets, and version-history connections render on a shared WebGL surface. React previews stay live and interactive.
+- The renderer follows pan, zoom, layout changes, display density, and theme changes. It restores CSS/SVG graphics if WebGL is unavailable or its context is lost, then resumes WebGL after recovery.
+- Pixel grids are hidden below three screen pixels of spacing to keep zoomed-out overviews clear.
+- Added a Card version playground example with 24 live cards across six visual directions and four fictional revisions, linked into a branching history.
+
 ## 0.1.0-alpha.6
 
 - Agents can announce named variants in progress through MCP or `xuui progress`. Loading artboards show spinners, animated dot grids, and traveling gradients on their connectors and outlines.

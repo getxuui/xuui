@@ -1,0 +1,38 @@
+.canvas-card-demo {
+  width: 304px;
+}
+.canvas-card-demo .sunday-card {
+  background: var(--demo-surface);
+}
+.canvas-card-demo .leaf-study {
+  background: var(--demo-art);
+}
+.canvas-card-demo .leaf {
+  background: var(--demo-accent);
+}
+.canvas-card-demo .leaf:nth-of-type(even) {
+  opacity: 0.65;
+}
+.canvas-card-demo[data-demo-tone='dark'] .night-orbit,
+.canvas-card-demo[data-demo-tone='dark'] .card-eyebrow {
+  color: var(--demo-accent);
+}
+.canvas-card-demo[data-demo-tone='dark'] .card-description,
+.canvas-card-demo[data-demo-tone='dark'] .event-details,
+.canvas-card-demo[data-demo-tone='dark'] .details-button {
+  color: #d4dcd8;
+}
+.canvas-card-demo[data-demo-revision='2'] .card-content {
+  padding: 28px;
+}
+.canvas-card-demo[data-demo-revision='3'] h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.05em;
+}
+.canvas-card-demo[data-demo-revision='3'] .sun-disc {
+  background: #edcfa6;
+}
+.canvas-card-demo[data-demo-revision='4'] .reserve-button {
+  border-radius: 10px;
+  padding-block: 14px;
+}
